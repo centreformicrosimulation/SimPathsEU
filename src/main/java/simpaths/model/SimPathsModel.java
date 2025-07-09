@@ -1531,7 +1531,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentSingleMales,
                 Parameters.getCoeffLabourSupplyUtilityMales(),
-                new String[]{"Hrs_40plus_Male"},
+                new String[]{"AlignmentFixedCostMen"},
                 OccupancyExtended.Single_Male,
                 "single males"
         );
@@ -1541,7 +1541,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentACMales,
                 Parameters.getCoeffLabourSupplyUtilityACMales(),
-                new String[]{"Hrs_40plus_Male"},
+                new String[]{"AlignmentFixedCostMen"},
                 OccupancyExtended.Male_AC,
                 "single AC males"
         );
@@ -1551,7 +1551,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentACFemales,
                 Parameters.getCoeffLabourSupplyUtilityACFemales(),
-                new String[]{"Hrs_40plus_Female"},
+                new String[]{"AlignmentFixedCostWomen"},
                 OccupancyExtended.Female_AC,
                 "single AC females"
         );
@@ -1561,7 +1561,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentSingleFemales,
                 Parameters.getCoeffLabourSupplyUtilityFemales(),
-                new String[]{"Hrs_40plus_Female"},
+                new String[]{"AlignmentFixedCostWomen"},
                 OccupancyExtended.Single_Female,
                 "single females"
         );
@@ -1571,7 +1571,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentCouples,
                 Parameters.getCoeffLabourSupplyUtilityCouples(),
-                new String[]{"Hrs_40plus_Male","Hrs_40plus_Female"},
+                new String[]{"AlignmentFixedCostMen","AlignmentFixedCostWomen"},
                 OccupancyExtended.Couple,
                 "couples"
         );
@@ -1581,7 +1581,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentMaleWithDep,
                 Parameters.getCoeffLabourSupplyUtilityMalesWithDependent(),
-                new String[]{"Hrs_40plus_Male"},
+                new String[]{"AlignmentFixedCostMen"},
                 OccupancyExtended.Male_With_Dependent,
                 "males with dependents"
         );
@@ -1591,7 +1591,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         activityAlignment(
                 TimeSeriesVariable.UtilityAdjustmentFemaleWithDep,
                 Parameters.getCoeffLabourSupplyUtilityFemalesWithDependent(),
-                new String[]{"Hrs_40plus_Female"},
+                new String[]{"AlignmentFixedCostWomen"},
                 OccupancyExtended.Female_With_Dependent,
                 "females with dependents"
         );

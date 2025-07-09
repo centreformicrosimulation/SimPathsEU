@@ -43,6 +43,7 @@ public class ActivityAlignmentV2 implements IEvaluation {
         this.coefficientMap = coefficientMap;
         this.regressorsToModify = Arrays.asList(regressorsToModify.clone());
         this.subgroupFlag = subgroupFlag;
+        addFixedCostRegressorsIfNeeded(coefficientMap, this.regressorsToModify); // Call before copying original coefficients so the adjustment can be retained
         this.originalCoefficients = extractOriginalCoefficients(coefficientMap, this.regressorsToModify);
         this.targetAggregateShareOfEmployed = determineTargetShare(model.getYear(), subgroupFlag);
     }
@@ -67,6 +68,18 @@ public class ActivityAlignmentV2 implements IEvaluation {
             }
         }
         return originals;
+    }
+
+    /**
+     * Ensures that AlignmentFixedCostMen and AlignmentFixedCostWomen exist in the coefficient map if required.
+     */
+    private void addFixedCostRegressorsIfNeeded(MultiKeyCoefficientMap map, List<String> regressors) {
+        for (String reg : regressors) {
+            if ((reg.equals("AlignmentFixedCostMen") || reg.equals("AlignmentFixedCostWomen"))
+                    && map.getValue(reg) == null) {
+                map.replaceValue(reg, 0.0); // Or another appropriate default value
+            }
+        }
     }
 
     /**
@@ -143,7 +156,7 @@ public class ActivityAlignmentV2 implements IEvaluation {
 
     /**
      * Determines whether a BenefitUnit belongs to the subgroup defined by subgroupFlag.
-     * Mirrors the atRiskOfWork()/getAdultChildFlag() flow in your classification code.
+     * Mirrors the atRiskOfWork()/getAdultChildFlag() flow used by BenefitUnit class.
      *
      * Determines whether a BenefitUnit belongs to the subgroup defined by subgroupFlag.
      * Safely handles missing male/female members and retrieves the adult-child flag
