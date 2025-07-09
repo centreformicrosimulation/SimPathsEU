@@ -77,7 +77,13 @@ public class ActivityAlignmentV2 implements IEvaluation {
         for (String reg : regressors) {
             if ((reg.equals("AlignmentFixedCostMen") || reg.equals("AlignmentFixedCostWomen"))
                     && map.getValue(reg) == null) {
-                map.replaceValue(reg, 0.0); // Or another appropriate default value
+                // Infer the format from an existing coefficient
+                Object sample = map.getValue("IncomeDiv100");
+                if (sample instanceof Object[]) {
+                    map.replaceValue(reg, new Object[]{0.0});
+                } else {
+                    map.replaceValue(reg, 0.0);
+                }
             }
         }
     }
