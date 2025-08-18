@@ -822,7 +822,7 @@ public class Parameters {
         if (macroShocksOn) {
             switch (macroShockPopulation) {
                 case High:
-                    populationProjections = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", "population_high", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_high", 3, 50);
 
                     // Productivity sub-switch
                     switch (macroShockProductivity) {
@@ -830,14 +830,14 @@ public class Parameters {
                             // Green policy sub-switch
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_highpop_baseprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_highpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_highpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_highpop_baseprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
@@ -855,20 +855,20 @@ public class Parameters {
                     break;
 
                 case Low:
-                    populationProjections = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", "population_low", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_low", 3, 50);
 
                     switch (macroShockProductivity) {
                         case Baseline:
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_lowpop_baseprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_lowpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_lowpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_lowpop_baseprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
@@ -893,50 +893,50 @@ public class Parameters {
                         case Baseline:
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_baseprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_baseprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_baseprod", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_baseprod", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_baseprod", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_baseprod", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                             }
                             break;
                         case High:
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_highprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_highprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_highprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_highprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_highprod", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_highprod", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_highprod", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_highprod", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                             }
                             break;
@@ -1929,33 +1929,23 @@ public class Parameters {
     public static void loadTimeSeriesFactorMaps(Country country) {
 
 
-
-        // load time varying rates
-    //    priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_saving_returns", 1, 1);
-    //    priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
-    //    priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
-
-        // load time varying wage rates
-    //    wageRateFormalSocialCare = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_carer_hourly_wage", 1, 1);
-
         // load time varying indices
-        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
-        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
-        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
-   //     socialCareProvisionTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_care_adjustment", 1, 1);
-        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_cohabitation_adjustment", 1, 1);
-        retirementTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_retirement_adjustment", 1, 1);
-        disabilityTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_disability_adjustment", 1, 1);
-        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_students_adjustment", 1, 1);
-        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_fertility_adjustment", 1, 1);
-        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_smales", 1, 1);
-        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_acmales", 1, 1);
-        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_acfemales", 1, 1);
-        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_sfemales", 1, 1);
-        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_couples", 1, 1);
-        utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_malewdep", 1, 1);
-        utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_femalewdep", 1, 1);
-        utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_all", 1, 1);
+        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "gdp", 1, 1);
+        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "inflation", 1, 1);
+        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "wage_growth", 1, 1);
+        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "cohabitation_adjustment", 1, 1);
+        retirementTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "retirement_adjustment", 1, 1);
+        disabilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "disability_adjustment", 1, 1);
+        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "students_adjustment", 1, 1);
+        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "fertility_adjustment", 1, 1);
+        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_smales", 1, 1);
+        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acmales", 1, 1);
+        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acfemales", 1, 1);
+        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_sFemales", 1, 1);
+        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_couples", 1, 1);
+        utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_malewdep", 1, 1);
+        utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_femalewdep", 1, 1);
+        utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_all", 1, 1);
 
         // rebase indices to base year defined by BASE_PRICE_YEAR
         rebaseIndexMap(TimeSeriesVariable.GDP);
@@ -1963,18 +1953,18 @@ public class Parameters {
         rebaseIndexMap(TimeSeriesVariable.WageGrowth);
 
         // load year-specific fiscal policy parameters
-        socialCarePolicy = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "social care", 1, 8);
-        partneredShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "partnership", 1, 1);
-        retiredShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "retirement", 1, 1);
-        disabledShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "disability", 1, 1);
-        studentShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "students", 1, 1);
-        employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_smales", 1, 1);
-        employedShareACMales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_acmales", 1, 1);
-        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_sfemales", 1, 1);
-        employedShareACFemales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_acfemales", 1, 1);
-        employedShareCouples = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_couples", 1, 1);
-        employedShareMaleWithDep = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_malewdep", 1, 1);
-        employedShareFemaleWithDep = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_femalewdep", 1, 1);
+        socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "social care", 1, 8);
+        partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "partnership", 1, 1);
+        retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "retirement", 1, 1);
+        disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "disability", 1, 1);
+        studentShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "students", 1, 1);
+        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_smales", 1, 1);
+        employedShareACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_acmales", 1, 1);
+        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_sfemales", 1, 1);
+        employedShareACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_acfemales", 1, 1);
+        employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_couples", 1, 1);
+        employedShareMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_malewdep", 1, 1);
+        employedShareFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_femalewdep", 1, 1);
     }
 
     public static void instantiateAlignmentMaps() {
@@ -1997,15 +1987,16 @@ public class Parameters {
         TimeSeriesVariable index = getTimeSeriesVariable(UpratingCase.TaxDonor);
         switch (index) {
             case GDP -> {
-                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
+                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "gdp", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.GDP);
             }
             case WageGrowth -> {
-                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
+                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "wage_growth", 1, 1);
+
                 rebaseIndexMap(TimeSeriesVariable.WageGrowth);
             }
             case Inflation -> {
-                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
+                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "inflation", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.Inflation);
             }
         }
