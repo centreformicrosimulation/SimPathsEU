@@ -14,6 +14,8 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import simpaths.data.startingpop.DataParser;
 import simpaths.model.AnnuityRates;
 import simpaths.model.decisions.Grids;
@@ -26,6 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.lang.reflect.Field;
+import java.util.Map;
 
 import static microsim.statistics.regression.RegressionUtils.appendCoefficientMaps;
 
@@ -44,6 +48,7 @@ public class Parameters {
     private static String resolveCountryFile(Country country, String fileName) {
         return getCountryInputDir(country) + fileName;
     }
+
 
     // EUROMOD variables
 
@@ -145,6 +150,33 @@ public class Parameters {
 		//"ils_origy"			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
     };
 
+    // Country-specific parameters which are then set by the Excel file
+    public static int MIN_AGE_TO_HAVE_INCOME = 16; //Minimum age to have non-employment non-benefit income
+    public static int MAX_LABOUR_HOURS_IN_WEEK = 70;
+    public static int HOURS_IN_WEEK = 168; //This is used to calculate leisure in labour supply
+    public static boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
+    public static int maxAge;										// maximum age possible in simulation
+    public static int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
+    public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-time) education
+    public static int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
+    public static int MAX_AGE_TO_ENTER_EDUCATION = 35;
+    public static int MIN_AGE_COHABITATION = AGE_TO_BECOME_RESPONSIBLE;  	// Min age a person can marry
+    public static int MIN_AGE_TO_RETIRE = 50; //Minimum age to consider retirement
+    public static int DEFAULT_AGE_TO_RETIRE = 67; //if pension included, but retirement decision not
+    public static int MIN_AGE_FORMAL_SOCARE = 65; //Minimum age to receive formal social care
+    public static int MIN_AGE_FLEXIBLE_LABOUR_SUPPLY = 16; //Used when filtering people who can be "flexible in labour supply"
+    public static int MAX_AGE_FLEXIBLE_LABOUR_SUPPLY = 75;
+    public static double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
+    public static double ANNUITY_RATE_OF_RETURN = 0.015;
+    public static AnnuityRates annuityRates;
+    public static int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
+    public static double MIN_HOURLY_WAGE_RATE = 0.0;
+    public static double MAX_HOURLY_WAGE_RATE = 150.0;
+    public static double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
+    public static double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
+    public static double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
+
+
     //Parameters for managing tax and benefit imputations
     public static final int TAXDB_REGIMES = 6;
     private static Map<MatchFeature, Map<Integer, Integer>> taxdbCounter = new HashMap<MatchFeature, Map<Integer, Integer>>();			// records, for each of the three donor keys (first Integer), the increments (second Integer) associated with one unit change in characteristic (String).  The properties of taxdbCounter are specific to the KeyFunction used (and are populated by the associated function)
@@ -216,32 +248,8 @@ public class Parameters {
     public static final double WEEKS_PER_MONTH = 365.25/(7.*12.);	// = 4.348214286
     public static final double WEEKS_PER_YEAR = 365.25 / 7.;
 
-    public static final int HOURS_IN_WEEK = 24 * 7; //This is used to calculate leisure in labour supply
     //Is it possible for people to start going to the labour module (e.g. age 17) while they are living with parents (until age 18)?
     //Cannot see how its possible if it is the household that decides how much labour to supply.  If someone finishes school at 17, they need to leave home before they can enter the labour market.  So set age for finishing school and leaving home to 18.
-    public static final int MAX_LABOUR_HOURS_IN_WEEK = 70;
-    public static final boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
-    public static int maxAge;										// maximum age possible in simulation
-    public static final int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
-    public static final int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-time) education
-    public static final int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
-    public static final int MAX_AGE_TO_ENTER_EDUCATION = 35;
-    public static final int MIN_AGE_COHABITATION = AGE_TO_BECOME_RESPONSIBLE;  	// Min age a person can marry
-    public static final int MIN_AGE_TO_HAVE_INCOME = 16; //Minimum age to have non-employment non-benefit income
-    public static final int MIN_AGE_TO_RETIRE = 50; //Minimum age to consider retirement
-    public static final int DEFAULT_AGE_TO_RETIRE = 67; //if pension included, but retirement decision not
-    public static final int MIN_AGE_FORMAL_SOCARE = 65; //Minimum age to receive formal social care
-    public static final int MIN_AGE_FLEXIBLE_LABOUR_SUPPLY = 16; //Used when filtering people who can be "flexible in labour supply"
-    public static final int MAX_AGE_FLEXIBLE_LABOUR_SUPPLY = 75;
-    public static final double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
-    public static final double ANNUITY_RATE_OF_RETURN = 0.015;
-    public static AnnuityRates annuityRates;
-    public static final int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
-    public static final double MIN_HOURLY_WAGE_RATE = 0.0;
-    public static final double MAX_HOURLY_WAGE_RATE = 150.0;
-    public static final double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
-    public static final double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
-    public static final double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
     public static final int MIN_DIFFERENCE_AGE_MOTHER_CHILD_IN_ALIGNMENT = 15; //When assigning children to mothers in the population alignment, specify how much older (at the minimum) the mother must be than the child
     public static final int MAX_EM_DONOR_RATIO = 3; // Used by BenefitUnit => convertGrossToDisposable() to decide whether gross-to-net ratio should be applied or disposable income from the donor used directly
     public static final double PERCENTAGE_OF_MEDIAN_EM_DONOR = 0.2; // Used by BenefitUnit => convertGrossToDisposable() to decide whether gross-to-net ratio should be applied or disposable income from the donor used directly
@@ -765,6 +773,69 @@ public class Parameters {
     public static double realInterestRateInnov;
     public static double disposableIncomeFromLabourInnov;
 
+    private static MultiKeyCoefficientMap countrySpecificParameters;
+
+
+    public static class ParametersLoader {
+
+        public static void setParametersFromMap(Map<MultiKey<?>, Object> countrySpecificParameters) {
+            Class<?> parametersClass = Parameters.class;
+
+            for (Map.Entry<MultiKey<?>, Object> entry : countrySpecificParameters.entrySet()) {
+                MultiKey<?> multiKey = entry.getKey();
+                Object value = entry.getValue();
+
+                // Extract parameter name from MultiKey (adjust index as needed)
+                String paramName;
+                if (multiKey != null && multiKey.size() > 1) {
+                    paramName = multiKey.getKey(1).toString();  // Allow the MultiKey to be composed of several fields - e.g. the first could be some numerical ID
+                } else if (multiKey != null && multiKey.size() == 1) {
+                    paramName = multiKey.getKey(0).toString();  // However, currently only using the first column as the key
+                } else {
+                    throw new IllegalArgumentException("Invalid multi-key parameter defined in Excel: " + multiKey);
+                }
+
+                try {
+                    Field field = parametersClass.getDeclaredField(paramName);
+                    if ((field.getModifiers() & java.lang.reflect.Modifier.STATIC) != 0) {
+                        field.setAccessible(true);
+
+                        Class<?> fieldType = field.getType();
+
+                        Object convertedValue = convertValueToFieldType(value, fieldType);
+
+                        if (convertedValue != null) {
+                            field.set(null, convertedValue);
+                        }
+                    }
+                } catch (NoSuchFieldException e) {
+                    System.out.println("No such field: " + paramName);
+                } catch (IllegalAccessException e) {
+                    System.err.println("Failed to set field: " + paramName + " - " + e.getMessage());
+                }
+            }
+        }
+
+        private static Object convertValueToFieldType(Object value, Class<?> fieldType) {
+            if (value == null) return null;
+            if (fieldType.isAssignableFrom(value.getClass())) return value;
+            if (fieldType == int.class || fieldType == Integer.class) {
+                if (value instanceof Number) return ((Number) value).intValue();
+                if (value instanceof String) return Integer.parseInt((String) value);
+            } else if (fieldType == long.class || fieldType == Long.class) {
+                if (value instanceof Number) return ((Number) value).longValue();
+                if (value instanceof String) return Long.parseLong((String) value);
+            } else if (fieldType == double.class || fieldType == Double.class) {
+                if (value instanceof Number) return ((Number) value).doubleValue();
+                if (value instanceof String) return Double.parseDouble((String) value);
+            } else if (fieldType == String.class) {
+                return value.toString();
+            }
+            throw new IllegalArgumentException("Cannot convert " + value + " to " + fieldType);
+        }
+    }
+
+
 
     /**
      * METHOD TO LOAD PARAMETERS FOR GIVEN COUNTRY
@@ -783,6 +854,17 @@ public class Parameters {
         // display a dialog box to let the user know what is happening
         System.out.println("Loading model parameters");
         System.out.flush();
+
+        /**
+         * countrySpecificParameters map contains country-specific values of parameters declared in this Parameters class.
+         * setParametersFromMap method overrides the default values of these parameters set in this class with values read in from the Excel file.
+         */
+        System.out.println("Value is" + MIN_AGE_TO_HAVE_INCOME);
+
+        countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1, 1);
+        ParametersLoader.setParametersFromMap(countrySpecificParameters);
+
+        System.out.println("Value is" + MIN_AGE_TO_HAVE_INCOME);
 
         maxAge = maxAgeModel;
         startYear = startYearModel;
