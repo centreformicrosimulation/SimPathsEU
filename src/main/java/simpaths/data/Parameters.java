@@ -155,12 +155,12 @@ public class Parameters {
     public static int MAX_LABOUR_HOURS_IN_WEEK = 70;
     public static int HOURS_IN_WEEK = 168; //This is used to calculate leisure in labour supply
     public static boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
-    public static int maxAge;										// maximum age possible in simulation
+
     public static int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
     public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-time) education
     public static int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
     public static int MAX_AGE_TO_ENTER_EDUCATION = 35;
-    public static int MIN_AGE_COHABITATION = AGE_TO_BECOME_RESPONSIBLE;  	// Min age a person can marry
+
     public static int MIN_AGE_TO_RETIRE = 50; //Minimum age to consider retirement
     public static int DEFAULT_AGE_TO_RETIRE = 67; //if pension included, but retirement decision not
     public static int MIN_AGE_FORMAL_SOCARE = 65; //Minimum age to receive formal social care
@@ -168,7 +168,7 @@ public class Parameters {
     public static int MAX_AGE_FLEXIBLE_LABOUR_SUPPLY = 75;
     public static double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
     public static double ANNUITY_RATE_OF_RETURN = 0.015;
-    public static AnnuityRates annuityRates;
+
     public static int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
     public static double MIN_HOURLY_WAGE_RATE = 0.0;
     public static double MAX_HOURLY_WAGE_RATE = 150.0;
@@ -176,6 +176,11 @@ public class Parameters {
     public static double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
     public static double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
 
+
+    // Country-specific parameters which are handled without using excel input
+    public static int maxAge;					// maximum age possible in simulation; set in GUI menu
+    public static int MIN_AGE_COHABITATION;  	// Min age a person can marry
+    public static AnnuityRates annuityRates;    // is set later in AnnuityRates class by evaluating other parameters
 
     //Parameters for managing tax and benefit imputations
     public static final int TAXDB_REGIMES = 6;
@@ -819,20 +824,59 @@ public class Parameters {
         private static Object convertValueToFieldType(Object value, Class<?> fieldType) {
             if (value == null) return null;
             if (fieldType.isAssignableFrom(value.getClass())) return value;
+
+            // --- BOOLEAN ---
+            if (fieldType == boolean.class || fieldType == Boolean.class) {
+                if (value instanceof Boolean) return value;
+                if (value instanceof Number) return ((Number) value).intValue() != 0;
+                if (value instanceof String) {
+                    String s = ((String) value).trim();
+                    if (s.isEmpty()) return null; // keep default if Excel cell is blank
+                    Boolean b = parseFlexibleBoolean(s);
+                    if (b != null) return b;
+                }
+                throw new IllegalArgumentException("Cannot convert '" + value + "' to boolean");
+            }
+
+            // --- INT ---
             if (fieldType == int.class || fieldType == Integer.class) {
                 if (value instanceof Number) return ((Number) value).intValue();
                 if (value instanceof String) return Integer.parseInt((String) value);
-            } else if (fieldType == long.class || fieldType == Long.class) {
+            }
+
+            // --- LONG ---
+            else if (fieldType == long.class || fieldType == Long.class) {
                 if (value instanceof Number) return ((Number) value).longValue();
                 if (value instanceof String) return Long.parseLong((String) value);
-            } else if (fieldType == double.class || fieldType == Double.class) {
+            }
+
+            // --- DOUBLE ---
+            else if (fieldType == double.class || fieldType == Double.class) {
                 if (value instanceof Number) return ((Number) value).doubleValue();
                 if (value instanceof String) return Double.parseDouble((String) value);
-            } else if (fieldType == String.class) {
+            }
+
+            // --- STRING ---
+            else if (fieldType == String.class) {
                 return value.toString();
             }
+
             throw new IllegalArgumentException("Cannot convert " + value + " to " + fieldType);
         }
+
+        // Boolean parser from String
+        private static Boolean parseFlexibleBoolean(String s) {
+            String v = s.trim().toLowerCase();
+            switch (v) {
+                case "true": case "t": case "yes": case "y": case "1":
+                    return true;
+                case "false": case "f": case "no": case "n": case "0":
+                    return false;
+                default:
+                    return null; // signals "unrecognised" to caller
+            }
+        }
+
     }
 
 
@@ -859,16 +903,20 @@ public class Parameters {
          * countrySpecificParameters map contains country-specific values of parameters declared in this Parameters class.
          * setParametersFromMap method overrides the default values of these parameters set in this class with values read in from the Excel file.
          */
-        System.out.println("Value is" + MIN_AGE_TO_HAVE_INCOME);
+        //System.out.println("Value is " + MIN_AGE_TO_HAVE_INCOME);
+        //System.out.println("Value is " + USE_CONTINUOUS_LABOUR_SUPPLY_HOURS);
 
         countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1, 1);
         ParametersLoader.setParametersFromMap(countrySpecificParameters);
 
-        System.out.println("Value is" + MIN_AGE_TO_HAVE_INCOME);
+        //System.out.println("Value is " + MIN_AGE_TO_HAVE_INCOME);
+        //System.out.println("Value is " + USE_CONTINUOUS_LABOUR_SUPPLY_HOURS);
 
-        maxAge = maxAgeModel;
-        startYear = startYearModel;
-        endYear = endYearModel;
+        maxAge      = maxAgeModel;
+        startYear   = startYearModel;
+        endYear     = endYearModel;
+        MIN_AGE_COHABITATION = AGE_TO_BECOME_RESPONSIBLE;  	// Min age a person can marry
+
 
         EUROMODpolicySchedule = calculateEUROMODpolicySchedule(country);
         //taxDonorInputFileName = "population_" + country;
