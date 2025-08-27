@@ -1,8 +1,11 @@
 package simpaths.model.enums;
 
 public enum Country {
-	
-	EL("Greece", 7);			// Poland
+
+    EL("Greece", 7),
+    IT("Italy", 9),
+    HU("Hungary", 17),
+    PL("Poland", 18);
 	
 	//EUROMOD country codes for all EU countries
 //	Country	dct

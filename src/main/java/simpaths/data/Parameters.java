@@ -2697,7 +2697,14 @@ public class Parameters {
     }
     private static void setMapBounds(MapBounds map, String countryString) {
 
-        String rgn = countryString + "3";
+        String rgn = switch (countryString) {
+            case "EL" -> countryString + "3";
+            case "HU" -> countryString + "C";
+            case "IT" -> countryString + "C";
+            case "PL" -> countryString + "2";
+            default -> null;
+        };
+
         boolean searchBack = true;
         boolean searchForward = true;
         boolean searchAge;
