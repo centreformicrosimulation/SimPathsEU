@@ -205,6 +205,9 @@ public class Parameters {
     public static final double RateOfConvergenceFactor = 0.9;
     public static final int MAX_EMPLOYMENT_ALIGNMENT = 500; // the amount by which the coefficient used in the employment alignment can be shifted up or down;
 
+    //Childcare
+    public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
+
     // parameters to manage simulation of optimised decisions
     public static boolean projectLiquidWealth = false;
     public static boolean projectPensionWealth = false;
@@ -262,7 +265,7 @@ public class Parameters {
     public static final double PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF = 4; // Define cut-off on the GHQ12 Likert scale above which individuals are classified as psychologically distressed
 
     //Initial value for the savings rate and multiplier for capital income:
-    public static double SAVINGS_RATE; //This is set in the country-specific part of this file
+    public static double SAVINGS_RATE = 0.056; //This is set in the country-specific part of this file
 
     //public static int MAX_AGE_IN_EDUCATION;// = MAX_AGE;//30;			// Max age a person can stay in education	//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
     //public static int MAX_AGE_MARRIAGE;// = MAX_AGE;//75;  			// Max age a person can marry		//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
@@ -323,10 +326,10 @@ public class Parameters {
     //public static final String SELF_EMPLOY_SOCIAL_INSURANCE_VARIABLE_NAME = "SELF_EMPLOY_SOC_INSUR_CONTR_PER_HOUR";
     public static final String HOURS_WORKED_WEEKLY = "HOURS_WORKED_WEEKLY";
 
-    public static final double MIN_CAPITAL_INCOME_PER_MONTH = 0.0;
-    public static final double MAX_CAPITAL_INCOME_PER_MONTH = 4000.0;
-    public static final double MIN_PERSONAL_PENSION_PER_MONTH = 0.0;
-    public static final double MAX_PERSONAL_PENSION_PER_MONTH = 15000.0;
+    public static double MIN_CAPITAL_INCOME_PER_MONTH = 0.0;
+    public static double MAX_CAPITAL_INCOME_PER_MONTH = 4000.0;
+    public static double MIN_PERSONAL_PENSION_PER_MONTH = 0.0;
+    public static double MAX_PERSONAL_PENSION_PER_MONTH = 15000.0;
 
     private static String taxDonorInputFileName;
     private static String populationInitialisationInputFileName;
@@ -562,8 +565,6 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovarianceRetirementR1b;
 
     //Childcare
-
-    public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1a;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1b;
 
@@ -932,13 +933,9 @@ public class Parameters {
          * countrySpecificParameters map contains country-specific values of parameters declared in this Parameters class.
          * setParametersFromMap method overrides the default values of these parameters set in this class with values read in from the Excel file.
          */
-        //System.out.println("Value is " + MIN_AGE_TO_HAVE_INCOME);
-        //System.out.println("Value is " + USE_CONTINUOUS_LABOUR_SUPPLY_HOURS);
+
         countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1, 1);
         ParametersLoader.setParametersFromMap(countrySpecificParameters);
-
-        //System.out.println("Value is " + MIN_AGE_TO_HAVE_INCOME);
-        //System.out.println("Value is " + USE_CONTINUOUS_LABOUR_SUPPLY_HOURS);
 
         maxAge      = maxAgeModel;
         startYear   = startYearModel;
@@ -957,7 +954,6 @@ public class Parameters {
         instantiateAlignmentMaps();
 
         // scenario parameters
-        SAVINGS_RATE = 0.056;
         saveImperfectTaxDBMatches = taxDBMatches;
 
         flagDefaultToTimeSeriesAverages = defaultToTimeSeriesAverages;
@@ -1169,10 +1165,7 @@ public class Parameters {
         int columnsRetirementR1a = ParamUtils.getInt(columnsNumberParameters, "columnsRetirementR1a");
         int columnsRetirementR1b = ParamUtils.getInt(columnsNumberParameters, "columnsRetirementR1b");
 
-        System.out.println("columnsWagesMalesE Value is " + columnsWagesMalesE);
-        System.out.println("columnsWagesMalesNE Value is " + columnsWagesMalesNE);
-        System.out.println("columnsWagesMalesNE Value is " + columnsRetirementR1b);
-
+        //System.out.println("columnsWagesMalesE Value is " + columnsWagesMalesE);
 
         //The Raw maps contain the estimates and covariance matrices, from which we bootstrap at the start of each simulation
 
