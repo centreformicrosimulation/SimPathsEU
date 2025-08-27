@@ -34,6 +34,7 @@ import java.util.Map;
 import static microsim.statistics.regression.RegressionUtils.appendCoefficientMaps;
 
 
+
 /**
  *
  * CLASS TO STORE MODEL PARAMETERS FOR GLOBAL ACCESS
@@ -183,7 +184,7 @@ public class Parameters {
     public static AnnuityRates annuityRates;    // is set later in AnnuityRates class by evaluating other parameters
 
     //Parameters for managing tax and benefit imputations
-    public static final int TAXDB_REGIMES = 6;
+    public static int TAXDB_REGIMES = 6;
     private static Map<MatchFeature, Map<Integer, Integer>> taxdbCounter = new HashMap<MatchFeature, Map<Integer, Integer>>();			// records, for each of the three donor keys (first Integer), the increments (second Integer) associated with one unit change in characteristic (String).  The properties of taxdbCounter are specific to the KeyFunction used (and are populated by the associated function)
     private static List<DonorTaxUnit> donorPool;													// list of donors for tax imputation, in ascending order by private (original) income
     private static Map<Triple<Integer,Integer,Integer>,List<Integer>> taxdbReferences = new HashMap<>();	    // for Triple <system year, matching regime, regime index> returns a list of indices to donorPool that describes members of grouping, in ascending order by private income
@@ -265,18 +266,18 @@ public class Parameters {
 
     //public static int MAX_AGE_IN_EDUCATION;// = MAX_AGE;//30;			// Max age a person can stay in education	//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
     //public static int MAX_AGE_MARRIAGE;// = MAX_AGE;//75;  			// Max age a person can marry		//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
-    private static final int MIN_START_YEAR = 2011; //Minimum allowed starting point. Should correspond to the oldest initial population.
-    private static final int MAX_START_YEAR = 2020; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    private static int MIN_START_YEAR = 2011; //Minimum allowed starting point. Should correspond to the oldest initial population.
+    private static int MAX_START_YEAR = 2020; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int startYear;
     public static int endYear;
-    private static final int MIN_START_YEAR_TRAINING = 2019;
-    private static final int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
-    public static final int MIN_AGE_MATERNITY = 18;  			// Min age a person can give birth
-    public static final int MAX_AGE_MATERNITY = 44;  			// Max age a person can give birth
+    private static int MIN_START_YEAR_TRAINING = 2019;
+    private static int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    public static int MIN_AGE_MATERNITY = 18;  			// Min age a person can give birth
+    public static int MAX_AGE_MATERNITY = 44;  			// Max age a person can give birth
     public static final boolean FLAG_SINGLE_MOTHERS = true;
     public static boolean flagUnemployment = false;
 
-    public static final int BASE_PRICE_YEAR = 2015; 			// Base price year of model parameters
+    public static int BASE_PRICE_YEAR = 2015; 			// Base price year of model parameters
 
     public static double PROB_NEWBORN_IS_MALE = 0.5;            // Must be strictly greater than 0.0 and less than 1.0
 
@@ -562,7 +563,7 @@ public class Parameters {
 
     //Childcare
 
-    public static final int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
+    public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1a;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1b;
 
@@ -779,7 +780,34 @@ public class Parameters {
     public static double disposableIncomeFromLabourInnov;
 
     private static MultiKeyCoefficientMap countrySpecificParameters;
+    private static MultiKeyCoefficientMap columnsNumberParameters;
 
+
+    public final class ParamUtils {
+
+        private ParamUtils() {}
+
+        public static int getInt(MultiKeyCoefficientMap map, String key) {
+            Object v = map.getValue(key);
+            if (v instanceof Number) {
+                return ((Number) v).intValue();
+            }
+            return Integer.parseInt(String.valueOf(v).trim());
+        }
+
+        public static double getDouble(MultiKeyCoefficientMap map, String key) {
+            Object v = map.getValue(key);
+            if (v instanceof Number) {
+                return ((Number) v).doubleValue();
+            }
+            return Double.parseDouble(String.valueOf(v).trim());
+        }
+
+        public static String getString(MultiKeyCoefficientMap map, String key) {
+            Object v = map.getValue(key);
+            return (v == null) ? null : v.toString();
+        }
+    }
 
     public static class ParametersLoader {
 
@@ -877,6 +905,7 @@ public class Parameters {
             }
         }
 
+
     }
 
 
@@ -905,7 +934,6 @@ public class Parameters {
          */
         //System.out.println("Value is " + MIN_AGE_TO_HAVE_INCOME);
         //System.out.println("Value is " + USE_CONTINUOUS_LABOUR_SUPPLY_HOURS);
-
         countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1, 1);
         ParametersLoader.setParametersFromMap(countrySpecificParameters);
 
@@ -1104,41 +1132,47 @@ public class Parameters {
         mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_mortality.xlsx"), "MortalityByGenderAgeYear", 2, 111);
         setMapBounds(MapBounds.Mortality, countryString);
 
+        //Load country specific data on columns number in excel estimate files
+        columnsNumberParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "columns_number_parameters.xlsx"), "ColumnsNumberParameters", 1, 1);
 
-        //Load country specific data
-        int columnsWagesMalesNE = 19; //#
-        int columnsWagesMalesE = 20; //#
-        int columnsWagesFemalesNE = 19; //#
-        int columnsWagesFemalesE = 20; //#
-        int columnsEmploymentSelectionMalesNE = 19; //#
-        int columnsEmploymentSelectionMalesE = 18; //#
-        int columnsEmploymentSelectionFemalesNE = 19; //#
-        int columnsEmploymentSelectionFemalesE = 18; //#
-        int columnsLabourSupplyUtilityMales = 13; //#
-        int columnsLabourSupplyUtilityFemales = 13; //#
-        int columnsLabourSupplyUtilityMalesWithDependent = 11; //#
-        int columnsLabourSupplyUtilityFemalesWithDependent = 11; //#
-        int columnsLabourSupplyUtilityACMales = 9; //#
-        int columnsLabourSupplyUtilityACFemales = 9; //#
-        int columnsLabourSupplyUtilityCouples = 18; //#
-        int columnsHealthH1a = 24; //#
-        int columnsHealthH1b = 67; //#
-        int columnsHealthH2b = 28; //#
-        int columnsEducationE1a = 10; //#
-        int columnsEducationE1b = 15; //#
-        int columnsEducationE2a = 15; //#
-        int columnsPartnershipU1a = 10; //#
-        int columnsPartnershipU1b = 28; //#
-        int columnsPartnershipU2b = 31; //#
-        int columnsFertilityF1b = 28; //#
-        int columnsIncomeI3a_amount = 13; //#
-        int columnsIncomeI3b_amount = 23; //#
-        int columnsIncomeI3a_selection = 13; //#
-        int columnsIncomeI3b_selection = 23; //#
-        int columnsLeaveHomeP1a = 17; //#
-        int columnsHomeownership = 32; //#
-        int columnsRetirementR1a = 21; //#
-        int columnsRetirementR1b = 27; //#
+        int columnsWagesMalesE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesE");
+        int columnsWagesMalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesNE");
+        int columnsWagesFemalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesFemalesNE");
+        int columnsWagesFemalesE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesFemalesE");
+        int columnsEmploymentSelectionMalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionMalesNE");
+        int columnsEmploymentSelectionMalesE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionMalesE");
+        int columnsEmploymentSelectionFemalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionFemalesNE");
+        int columnsEmploymentSelectionFemalesE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionFemalesE");
+        int columnsLabourSupplyUtilityMales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityMales");
+        int columnsLabourSupplyUtilityFemales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityFemales");
+        int columnsLabourSupplyUtilityMalesWithDependent = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityMalesWithDependent");
+        int columnsLabourSupplyUtilityFemalesWithDependent = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityFemalesWithDependent");
+        int columnsLabourSupplyUtilityACMales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityACMales");
+        int columnsLabourSupplyUtilityACFemales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityACFemales");
+        int columnsLabourSupplyUtilityCouples = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityCouples");
+        int columnsHealthH1a = ParamUtils.getInt(columnsNumberParameters, "columnsHealthH1a");
+        int columnsHealthH1b = ParamUtils.getInt(columnsNumberParameters, "columnsHealthH1b");
+        int columnsHealthH2b = ParamUtils.getInt(columnsNumberParameters, "columnsHealthH2b");
+        int columnsEducationE1a = ParamUtils.getInt(columnsNumberParameters, "columnsEducationE1a");
+        int columnsEducationE1b = ParamUtils.getInt(columnsNumberParameters, "columnsEducationE1b");
+        int columnsEducationE2a = ParamUtils.getInt(columnsNumberParameters, "columnsEducationE2a");
+        int columnsPartnershipU1a = ParamUtils.getInt(columnsNumberParameters, "columnsPartnershipU1a");
+        int columnsPartnershipU1b = ParamUtils.getInt(columnsNumberParameters, "columnsPartnershipU1b");
+        int columnsPartnershipU2b = ParamUtils.getInt(columnsNumberParameters, "columnsPartnershipU2b");
+        int columnsFertilityF1b = ParamUtils.getInt(columnsNumberParameters, "columnsFertilityF1b");
+        int columnsIncomeI3a_amount = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3a_amount");
+        int columnsIncomeI3b_amount = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3b_amount");
+        int columnsIncomeI3a_selection = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3a_selection");
+        int columnsIncomeI3b_selection = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3b_selection");
+        int columnsLeaveHomeP1a = ParamUtils.getInt(columnsNumberParameters, "columnsLeaveHomeP1a");
+        int columnsHomeownership = ParamUtils.getInt(columnsNumberParameters, "columnsHomeownership");
+        int columnsRetirementR1a = ParamUtils.getInt(columnsNumberParameters, "columnsRetirementR1a");
+        int columnsRetirementR1b = ParamUtils.getInt(columnsNumberParameters, "columnsRetirementR1b");
+
+        System.out.println("columnsWagesMalesE Value is " + columnsWagesMalesE);
+        System.out.println("columnsWagesMalesNE Value is " + columnsWagesMalesNE);
+        System.out.println("columnsWagesMalesNE Value is " + columnsRetirementR1b);
+
 
         //The Raw maps contain the estimates and covariance matrices, from which we bootstrap at the start of each simulation
 
