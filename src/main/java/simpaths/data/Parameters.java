@@ -177,7 +177,10 @@ public class Parameters {
     public static double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
     public static double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
 
-
+    public static double KEY_FUNCTION_HU2_HI_INCOME = 339.0; // 67th percentile observed in the EM data for 2018
+    public static double KEY_FUNCTION_HU2_LO_INCOME = 154.0; // 33rd percentile observed in the EM data for 2018
+    public static int  KEY_FUNCTION_HU2_MID_AGE = 45;
+    public static int  KEY_FUNCTION_HU2_INCOME_REF_YEAR = 2018;
     // Country-specific parameters which are handled without using excel input
     public static int maxAge;					// maximum age possible in simulation; set in GUI menu
     public static int MIN_AGE_COHABITATION;  	// Min age a person can marry
