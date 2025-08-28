@@ -8,6 +8,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static simpaths.data.Parameters.KEY_FUNCTION_HU2_LO_INCOME;
+import static simpaths.data.Parameters.KEY_FUNCTION_HU2_HI_INCOME;
+import static simpaths.data.Parameters.KEY_FUNCTION_HU2_MID_AGE;
+import static simpaths.data.Parameters.KEY_FUNCTION_HU2_INCOME_REF_YEAR;
+
 
 /**
  *
@@ -20,10 +25,10 @@ public class KeyFunctionHU2 implements IKeyFunction {
     /**
      * ATTRIBUTES
      */
-    private final int MID_AGE = 45;
-    private final int INCOME_REF_YEAR = 2018;
-    private final double LO_INCOME = 154.0; // 33rd percentile observed in the EM data for 2018
-    private final double HI_INCOME = 339.0; // 67th percentile
+    private final int MID_AGE = KEY_FUNCTION_HU2_MID_AGE;
+    private final int INCOME_REF_YEAR = KEY_FUNCTION_HU2_INCOME_REF_YEAR;
+    private final double LO_INCOME = KEY_FUNCTION_HU2_LO_INCOME;
+    private final double HI_INCOME = KEY_FUNCTION_HU2_HI_INCOME;
 
 
     /**

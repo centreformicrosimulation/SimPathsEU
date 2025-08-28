@@ -82,12 +82,21 @@ public class SimPathsStart implements ExperimentBuilder {
 		}
 
 		//Adjust the country and year to the value read from Excel, which is updated when the database is rebuilt. Otherwise it will set the country and year to the last one used to build the database
-		MultiKeyCoefficientMap lastDatabaseCountryAndYear = ExcelAssistant.loadCoefficientMap("input" + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx", "Data", 1, 1);
+		MultiKeyCoefficientMap lastDatabaseCountryAndYear =	ExcelAssistant.loadCoefficientMap("input" + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx","Data", 1, 1);
+
 		if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[EL]"))) {
 			country = Country.EL;
+		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[IT]"))) {
+			country = Country.IT;
+		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[HU]"))) {
+			country = Country.HU;
+		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[PL]"))) {
+			country = Country.PL;
 		} else {
-			throw new IllegalArgumentException("Country not recognised. Restart the simulation and choose one of the available countries.");
+			throw new IllegalArgumentException("Country not recognised. Restart the simulation and choose one of the available countries (EL, IT, HU, PL).");
 		}
+
+
 		String valueYear = lastDatabaseCountryAndYear.getValue(country.toString()).toString();
 		startYear = Integer.parseInt(valueYear);
 

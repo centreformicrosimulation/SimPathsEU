@@ -9,7 +9,7 @@ public enum RegressionName {
 
     EducationE1a(RegressionType.Probit),
     EducationE1b(RegressionType.Probit),
-    EducationE2a(RegressionType.OrderedProbit),
+    EducationE2a(RegressionType.GenOrderedLogit),
 
     FertilityF1b(RegressionType.Probit),
 

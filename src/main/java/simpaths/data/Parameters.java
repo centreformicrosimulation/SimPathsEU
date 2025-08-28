@@ -14,6 +14,8 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import simpaths.data.startingpop.DataParser;
 import simpaths.model.AnnuityRates;
 import simpaths.model.decisions.Grids;
@@ -26,8 +28,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
+import java.lang.reflect.Field;
+import java.util.Map;
 
 import static microsim.statistics.regression.RegressionUtils.appendCoefficientMaps;
+
 
 
 /**
@@ -36,6 +41,15 @@ import static microsim.statistics.regression.RegressionUtils.appendCoefficientMa
  *
  */
 public class Parameters {
+
+    private static String getCountryInputDir(Country country) {
+        return INPUT_DIRECTORY + country + File.separator;
+    }
+
+    private static String resolveCountryFile(Country country, String fileName) {
+        return getCountryInputDir(country) + fileName;
+    }
+
 
     // EUROMOD variables
 
@@ -137,8 +151,43 @@ public class Parameters {
 		//"ils_origy"			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
     };
 
+    // Country-specific parameters which are then set by the Excel file
+    public static int MIN_AGE_TO_HAVE_INCOME = 16; //Minimum age to have non-employment non-benefit income
+    public static int MAX_LABOUR_HOURS_IN_WEEK = 70;
+    public static int HOURS_IN_WEEK = 168; //This is used to calculate leisure in labour supply
+    public static boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
+
+    public static int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
+    public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-time) education
+    public static int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
+    public static int MAX_AGE_TO_ENTER_EDUCATION = 35;
+
+    public static int MIN_AGE_TO_RETIRE = 50; //Minimum age to consider retirement
+    public static int DEFAULT_AGE_TO_RETIRE = 67; //if pension included, but retirement decision not
+    public static int MIN_AGE_FORMAL_SOCARE = 65; //Minimum age to receive formal social care
+    public static int MIN_AGE_FLEXIBLE_LABOUR_SUPPLY = 16; //Used when filtering people who can be "flexible in labour supply"
+    public static int MAX_AGE_FLEXIBLE_LABOUR_SUPPLY = 75;
+    public static double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
+    public static double ANNUITY_RATE_OF_RETURN = 0.015;
+
+    public static int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
+    public static double MIN_HOURLY_WAGE_RATE = 0.0;
+    public static double MAX_HOURLY_WAGE_RATE = 150.0;
+    public static double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
+    public static double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
+    public static double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
+
+    public static double KEY_FUNCTION_HU2_HI_INCOME = 339.0; // 67th percentile observed in the EM data for 2018
+    public static double KEY_FUNCTION_HU2_LO_INCOME = 154.0; // 33rd percentile observed in the EM data for 2018
+    public static int  KEY_FUNCTION_HU2_MID_AGE = 45;
+    public static int  KEY_FUNCTION_HU2_INCOME_REF_YEAR = 2018;
+    // Country-specific parameters which are handled without using excel input
+    public static int maxAge;					// maximum age possible in simulation; set in GUI menu
+    public static int MIN_AGE_COHABITATION;  	// Min age a person can marry
+    public static AnnuityRates annuityRates;    // is set later in AnnuityRates class by evaluating other parameters
+
     //Parameters for managing tax and benefit imputations
-    public static final int TAXDB_REGIMES = 6;
+    public static int TAXDB_REGIMES = 6;
     private static Map<MatchFeature, Map<Integer, Integer>> taxdbCounter = new HashMap<MatchFeature, Map<Integer, Integer>>();			// records, for each of the three donor keys (first Integer), the increments (second Integer) associated with one unit change in characteristic (String).  The properties of taxdbCounter are specific to the KeyFunction used (and are populated by the associated function)
     private static List<DonorTaxUnit> donorPool;													// list of donors for tax imputation, in ascending order by private (original) income
     private static Map<Triple<Integer,Integer,Integer>,List<Integer>> taxdbReferences = new HashMap<>();	    // for Triple <system year, matching regime, regime index> returns a list of indices to donorPool that describes members of grouping, in ascending order by private income
@@ -158,6 +207,9 @@ public class Parameters {
     public static final int MaxConvergenceAttempts = 2 * MinimumIterationsBeforeTestingConvergenceCriteria;		//Allow the equilibrium convergence criterion to fail the test this number of times before potentially terminating the simulation.
     public static final double RateOfConvergenceFactor = 0.9;
     public static final int MAX_EMPLOYMENT_ALIGNMENT = 500; // the amount by which the coefficient used in the employment alignment can be shifted up or down;
+
+    //Childcare
+    public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
 
     // parameters to manage simulation of optimised decisions
     public static boolean projectLiquidWealth = false;
@@ -208,54 +260,30 @@ public class Parameters {
     public static final double WEEKS_PER_MONTH = 365.25/(7.*12.);	// = 4.348214286
     public static final double WEEKS_PER_YEAR = 365.25 / 7.;
 
-    public static final int HOURS_IN_WEEK = 24 * 7; //This is used to calculate leisure in labour supply
     //Is it possible for people to start going to the labour module (e.g. age 17) while they are living with parents (until age 18)?
     //Cannot see how its possible if it is the household that decides how much labour to supply.  If someone finishes school at 17, they need to leave home before they can enter the labour market.  So set age for finishing school and leaving home to 18.
-    public static final int MAX_LABOUR_HOURS_IN_WEEK = 70;
-    public static final boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
-    public static int maxAge;										// maximum age possible in simulation
-    public static final int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
-    public static final int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-time) education
-    public static final int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
-    public static final int MAX_AGE_TO_ENTER_EDUCATION = 35;
-    public static final int MIN_AGE_COHABITATION = AGE_TO_BECOME_RESPONSIBLE;  	// Min age a person can marry
-    public static final int MIN_AGE_TO_HAVE_INCOME = 16; //Minimum age to have non-employment non-benefit income
-    public static final int MIN_AGE_TO_RETIRE = 50; //Minimum age to consider retirement
-    public static final int DEFAULT_AGE_TO_RETIRE = 67; //if pension included, but retirement decision not
-    public static final int MIN_AGE_FORMAL_SOCARE = 65; //Minimum age to receive formal social care
-    public static final int MIN_AGE_FLEXIBLE_LABOUR_SUPPLY = 16; //Used when filtering people who can be "flexible in labour supply"
-    public static final int MAX_AGE_FLEXIBLE_LABOUR_SUPPLY = 75;
-    public static final double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
-    public static final double ANNUITY_RATE_OF_RETURN = 0.015;
-    public static AnnuityRates annuityRates;
-    public static final int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
-    public static final double MIN_HOURLY_WAGE_RATE = 0.0;
-    public static final double MAX_HOURLY_WAGE_RATE = 150.0;
-    public static final double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
-    public static final double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
-    public static final double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
     public static final int MIN_DIFFERENCE_AGE_MOTHER_CHILD_IN_ALIGNMENT = 15; //When assigning children to mothers in the population alignment, specify how much older (at the minimum) the mother must be than the child
     public static final int MAX_EM_DONOR_RATIO = 3; // Used by BenefitUnit => convertGrossToDisposable() to decide whether gross-to-net ratio should be applied or disposable income from the donor used directly
     public static final double PERCENTAGE_OF_MEDIAN_EM_DONOR = 0.2; // Used by BenefitUnit => convertGrossToDisposable() to decide whether gross-to-net ratio should be applied or disposable income from the donor used directly
     public static final double PSYCHOLOGICAL_DISTRESS_GHQ12_CASES_CUTOFF = 4; // Define cut-off on the GHQ12 Likert scale above which individuals are classified as psychologically distressed
 
     //Initial value for the savings rate and multiplier for capital income:
-    public static double SAVINGS_RATE; //This is set in the country-specific part of this file
+    public static double SAVINGS_RATE = 0.056; //This is set in the country-specific part of this file
 
     //public static int MAX_AGE_IN_EDUCATION;// = MAX_AGE;//30;			// Max age a person can stay in education	//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
     //public static int MAX_AGE_MARRIAGE;// = MAX_AGE;//75;  			// Max age a person can marry		//Cannot set here, as MAX_AGE is not known yet.  Now set to MAX_AGE in buildObjects in Model class.
-    private static final int MIN_START_YEAR = 2011; //Minimum allowed starting point. Should correspond to the oldest initial population.
-    private static final int MAX_START_YEAR = 2020; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    private static int MIN_START_YEAR = 2011; //Minimum allowed starting point. Should correspond to the oldest initial population.
+    private static int MAX_START_YEAR = 2020; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int startYear;
     public static int endYear;
-    private static final int MIN_START_YEAR_TRAINING = 2019;
-    private static final int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
-    public static final int MIN_AGE_MATERNITY = 18;  			// Min age a person can give birth
-    public static final int MAX_AGE_MATERNITY = 44;  			// Max age a person can give birth
+    private static int MIN_START_YEAR_TRAINING = 2019;
+    private static int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    public static int MIN_AGE_MATERNITY = 18;  			// Min age a person can give birth
+    public static int MAX_AGE_MATERNITY = 44;  			// Max age a person can give birth
     public static final boolean FLAG_SINGLE_MOTHERS = true;
     public static boolean flagUnemployment = false;
 
-    public static final int BASE_PRICE_YEAR = 2015; 			// Base price year of model parameters
+    public static int BASE_PRICE_YEAR = 2015; 			// Base price year of model parameters
 
     public static double PROB_NEWBORN_IS_MALE = 0.5;            // Must be strictly greater than 0.0 and less than 1.0
 
@@ -301,10 +329,10 @@ public class Parameters {
     //public static final String SELF_EMPLOY_SOCIAL_INSURANCE_VARIABLE_NAME = "SELF_EMPLOY_SOC_INSUR_CONTR_PER_HOUR";
     public static final String HOURS_WORKED_WEEKLY = "HOURS_WORKED_WEEKLY";
 
-    public static final double MIN_CAPITAL_INCOME_PER_MONTH = 0.0;
-    public static final double MAX_CAPITAL_INCOME_PER_MONTH = 4000.0;
-    public static final double MIN_PERSONAL_PENSION_PER_MONTH = 0.0;
-    public static final double MAX_PERSONAL_PENSION_PER_MONTH = 15000.0;
+    public static double MIN_CAPITAL_INCOME_PER_MONTH = 0.0;
+    public static double MAX_CAPITAL_INCOME_PER_MONTH = 4000.0;
+    public static double MIN_PERSONAL_PENSION_PER_MONTH = 0.0;
+    public static double MAX_PERSONAL_PENSION_PER_MONTH = 15000.0;
 
     private static String taxDonorInputFileName;
     private static String populationInitialisationInputFileName;
@@ -540,8 +568,6 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovarianceRetirementR1b;
 
     //Childcare
-
-    public static final int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1a;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1b;
 
@@ -757,6 +783,136 @@ public class Parameters {
     public static double realInterestRateInnov;
     public static double disposableIncomeFromLabourInnov;
 
+    private static MultiKeyCoefficientMap countrySpecificParameters;
+    private static MultiKeyCoefficientMap columnsNumberParameters;
+
+
+    public final class ParamUtils {
+
+        private ParamUtils() {}
+
+        public static int getInt(MultiKeyCoefficientMap map, String key) {
+            Object v = map.getValue(key);
+            if (v instanceof Number) {
+                return ((Number) v).intValue();
+            }
+            return Integer.parseInt(String.valueOf(v).trim());
+        }
+
+        public static double getDouble(MultiKeyCoefficientMap map, String key) {
+            Object v = map.getValue(key);
+            if (v instanceof Number) {
+                return ((Number) v).doubleValue();
+            }
+            return Double.parseDouble(String.valueOf(v).trim());
+        }
+
+        public static String getString(MultiKeyCoefficientMap map, String key) {
+            Object v = map.getValue(key);
+            return (v == null) ? null : v.toString();
+        }
+    }
+
+    public static class ParametersLoader {
+
+        public static void setParametersFromMap(Map<MultiKey<?>, Object> countrySpecificParameters) {
+            Class<?> parametersClass = Parameters.class;
+
+            for (Map.Entry<MultiKey<?>, Object> entry : countrySpecificParameters.entrySet()) {
+                MultiKey<?> multiKey = entry.getKey();
+                Object value = entry.getValue();
+
+                // Extract parameter name from MultiKey (adjust index as needed)
+                String paramName;
+                if (multiKey != null && multiKey.size() > 1) {
+                    paramName = multiKey.getKey(1).toString();  // Allow the MultiKey to be composed of several fields - e.g. the first could be some numerical ID
+                } else if (multiKey != null && multiKey.size() == 1) {
+                    paramName = multiKey.getKey(0).toString();  // However, currently only using the first column as the key
+                } else {
+                    throw new IllegalArgumentException("Invalid multi-key parameter defined in Excel: " + multiKey);
+                }
+
+                try {
+                    Field field = parametersClass.getDeclaredField(paramName);
+                    if ((field.getModifiers() & java.lang.reflect.Modifier.STATIC) != 0) {
+                        field.setAccessible(true);
+
+                        Class<?> fieldType = field.getType();
+
+                        Object convertedValue = convertValueToFieldType(value, fieldType);
+
+                        if (convertedValue != null) {
+                            field.set(null, convertedValue);
+                        }
+                    }
+                } catch (NoSuchFieldException e) {
+                    System.out.println("No such field: " + paramName);
+                } catch (IllegalAccessException e) {
+                    System.err.println("Failed to set field: " + paramName + " - " + e.getMessage());
+                }
+            }
+        }
+
+        private static Object convertValueToFieldType(Object value, Class<?> fieldType) {
+            if (value == null) return null;
+            if (fieldType.isAssignableFrom(value.getClass())) return value;
+
+            // --- BOOLEAN ---
+            if (fieldType == boolean.class || fieldType == Boolean.class) {
+                if (value instanceof Boolean) return value;
+                if (value instanceof Number) return ((Number) value).intValue() != 0;
+                if (value instanceof String) {
+                    String s = ((String) value).trim();
+                    if (s.isEmpty()) return null; // keep default if Excel cell is blank
+                    Boolean b = parseFlexibleBoolean(s);
+                    if (b != null) return b;
+                }
+                throw new IllegalArgumentException("Cannot convert '" + value + "' to boolean");
+            }
+
+            // --- INT ---
+            if (fieldType == int.class || fieldType == Integer.class) {
+                if (value instanceof Number) return ((Number) value).intValue();
+                if (value instanceof String) return Integer.parseInt((String) value);
+            }
+
+            // --- LONG ---
+            else if (fieldType == long.class || fieldType == Long.class) {
+                if (value instanceof Number) return ((Number) value).longValue();
+                if (value instanceof String) return Long.parseLong((String) value);
+            }
+
+            // --- DOUBLE ---
+            else if (fieldType == double.class || fieldType == Double.class) {
+                if (value instanceof Number) return ((Number) value).doubleValue();
+                if (value instanceof String) return Double.parseDouble((String) value);
+            }
+
+            // --- STRING ---
+            else if (fieldType == String.class) {
+                return value.toString();
+            }
+
+            throw new IllegalArgumentException("Cannot convert " + value + " to " + fieldType);
+        }
+
+        // Boolean parser from String
+        private static Boolean parseFlexibleBoolean(String s) {
+            String v = s.trim().toLowerCase();
+            switch (v) {
+                case "true": case "t": case "yes": case "y": case "1":
+                    return true;
+                case "false": case "f": case "no": case "n": case "0":
+                    return false;
+                default:
+                    return null; // signals "unrecognised" to caller
+            }
+        }
+
+
+    }
+
+
 
     /**
      * METHOD TO LOAD PARAMETERS FOR GIVEN COUNTRY
@@ -776,9 +932,19 @@ public class Parameters {
         System.out.println("Loading model parameters");
         System.out.flush();
 
-        maxAge = maxAgeModel;
-        startYear = startYearModel;
-        endYear = endYearModel;
+        /**
+         * countrySpecificParameters map contains country-specific values of parameters declared in this Parameters class.
+         * setParametersFromMap method overrides the default values of these parameters set in this class with values read in from the Excel file.
+         */
+
+        countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1, 1);
+        ParametersLoader.setParametersFromMap(countrySpecificParameters);
+
+        maxAge      = maxAgeModel;
+        startYear   = startYearModel;
+        endYear     = endYearModel;
+        MIN_AGE_COHABITATION = AGE_TO_BECOME_RESPONSIBLE;  	// Min age a person can marry
+
 
         EUROMODpolicySchedule = calculateEUROMODpolicySchedule(country);
         //taxDonorInputFileName = "population_" + country;
@@ -791,7 +957,6 @@ public class Parameters {
         instantiateAlignmentMaps();
 
         // scenario parameters
-        SAVINGS_RATE = 0.056;
         saveImperfectTaxDBMatches = taxDBMatches;
 
         flagDefaultToTimeSeriesAverages = defaultToTimeSeriesAverages;
@@ -804,33 +969,7 @@ public class Parameters {
         donorPoolAveraging = donorPoolAveraging1;
         realInterestRateInnov = interestRateInnov1;
         disposableIncomeFromLabourInnov = disposableIncomeFromLabourInnov1;
-
-//		unemploymentRatesByRegion = new LinkedHashMap<>();
-//		unemploymentRates = ExcelAssistant.loadCoefficientMap("input/scenario_unemploymentRates.xlsx", countryString, 1, 46);
-        fixedRetireAge = ExcelAssistant.loadCoefficientMap("input/scenario_retirementAgeFixed.xlsx", countryString, 1, 2); //#
-        /*
-        rawProbSick = ExcelAssistant.loadCoefficientMap("input/scenario_probSick.xls", country.toString(), 2, 1);
-        for (Object o: rawProbSick.keySet()) {
-            MultiKey mk = (MultiKey)o;
-            int age = ((Number)mk.getKey(1)).intValue();
-            if (((String)mk.getKey(0)).equals(Gender.Female.toString())) {
-                if (age > femaleMaxAgeSick) {
-                    femaleMaxAgeSick = age;
-//				} else if(age < femaleMinAgeSick) {
-//					femaleMinAgeSick = age;
-                }
-            } else {
-                // gender in multikey must be male
-                if (age > maleMaxAgeSick) {
-                    maleMaxAgeSick = age;
-//				} else if(age < maleMinAgeSick) {
-//					maleMinAgeSick = age;
-                }
-            }
-        }
-
-        probSick = new MultiKeyMap();
-        */
+        fixedRetireAge = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_retirementAgeFixed.xlsx"), "Retirement_age", 1, 2);
 
         /*
         Code below introduces macro shocks in terms of population, productivity, and employment
@@ -840,7 +979,7 @@ public class Parameters {
         if (macroShocksOn) {
             switch (macroShockPopulation) {
                 case High:
-                    populationProjections = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", "population_high", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_high", 3, 50);
 
                     // Productivity sub-switch
                     switch (macroShockProductivity) {
@@ -848,14 +987,14 @@ public class Parameters {
                             // Green policy sub-switch
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_highpop_baseprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_highpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_highpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_highpop_baseprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_highpop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_highpop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
@@ -873,20 +1012,20 @@ public class Parameters {
                     break;
 
                 case Low:
-                    populationProjections = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", "population_low", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_low", 3, 50);
 
                     switch (macroShockProductivity) {
                         case Baseline:
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_lowpop_baseprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_lowpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_lowpop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_lowpop_baseprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_lowpop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_lowpop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
@@ -905,56 +1044,56 @@ public class Parameters {
 
                 case Baseline:
                 default:
-                    populationProjections = ExcelAssistant.loadCoefficientMap("input/align_popProjections.xlsx", countryString, 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_popProjections.xlsx"), "Population_projections", 3, 50);
 
                     switch (macroShockProductivity) {
                         case Baseline:
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_baseprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_baseprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_baseprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_baseprod", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_baseprod", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_baseprod", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_baseprod", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                             }
                             break;
                         case High:
                             switch (macroShockGreenPolicy) {
                                 case Yes:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_highprod_green", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_highprod_green", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_highprod_green", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_highprod_green", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod_green", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod_green", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod_green", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod_green", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod_green", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod_green", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                                 case No:
                                 default:
-                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_gdp_basepop_highprod", 1, 1);
-                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_wage_basepop_highprod", 1, 1);
+                                    upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "gdp_basepop_highprod", 1, 1);
+                                    upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "wage_basepop_highprod", 1, 1);
                                     rebaseIndexMap(TimeSeriesVariable.GDP);
                                     rebaseIndexMap(TimeSeriesVariable.WageGrowth);
-                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod", 1, 1);
-                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod", 1, 1);
-                                    employedShareCouples = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_highprod", 1, 1);
-                                    employedShare = ExcelAssistant.loadCoefficientMap("input/scenario_macro_shocks.xlsx", country.toString() + "_emp_basepop_baseprod_green", 1, 1);
+                                    employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod", 1, 1);
+                                    employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod", 1, 1);
+                                    employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_highprod", 1, 1);
+                                    employedShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "emp_basepop_baseprod_green", 1, 1);
                                     break;
                             }
                             break;
@@ -966,7 +1105,7 @@ public class Parameters {
                     break;
             }
         } else {
-            populationProjections = ExcelAssistant.loadCoefficientMap("input/align_popProjections.xlsx", countryString, 3, 50);
+            populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_popProjections.xlsx"), "Population_projections", 3, 50);
         }
 
 
@@ -974,131 +1113,122 @@ public class Parameters {
 
         //Alignment of education levels
         // Not currently used. Consider removing.
-        projectionsHighEdu = ExcelAssistant.loadCoefficientMap("input/align_educLevel.xlsx", countryString + "_High", 1, 2);
-        projectionsLowEdu = ExcelAssistant.loadCoefficientMap("input/align_educLevel.xlsx", countryString + "_Low", 1, 2);
+        projectionsHighEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "High", 1, 2);
+        projectionsLowEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "Low", 1, 2);
 
-        studentShareProjections = ExcelAssistant.loadCoefficientMap("input/align_student_under30.xlsx", countryString, 1, 40);
-
+        studentShareProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_student_under30.xlsx"), "Student_share", 1, 40);
         //Employment alignment
     //    employmentAlignment = ExcelAssistant.loadCoefficientMap("input/align_employment.xlsx", countryString, 2, 40);
 
         //Fertility rates:
-        fertilityProjectionsByYear = ExcelAssistant.loadCoefficientMap("input/projections_fertility.xlsx", countryString + "_FertilityByYear", 1, 90);
+        fertilityProjectionsByYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_fertility.xlsx"), "FertilityByYear", 1, 90);
         setMapBounds(MapBounds.Fertility, countryString);
 
         //RMSE
-        coefficientMapRMSE = ExcelAssistant.loadCoefficientMap("input/reg_RMSE.xlsx", countryString, 1, 1);
+        coefficientMapRMSE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_RMSE.xlsx"), "RMSE", 1, 1);
 
         //Mortality rates
-        mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap("input/projections_mortality.xlsx", countryString + "_MortalityByGenderAgeYear", 2, 111);
+        mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_mortality.xlsx"), "MortalityByGenderAgeYear", 2, 111);
         setMapBounds(MapBounds.Mortality, countryString);
 
+        //Load country specific data on columns number in excel estimate files
+        columnsNumberParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "columns_number_parameters.xlsx"), "ColumnsNumberParameters", 1, 1);
 
-        //Unemployment rates
-    //    unemploymentRatesMaleGraduatesByAgeYear = ExcelAssistant.loadCoefficientMap("input/reg_unemployment.xlsx", countryString + "_RatesMaleGraduates", 1, 49);
-    //    setMapBounds(MapBounds.UnemploymentMaleGraduates, countryString);
-    //    unemploymentRatesMaleNonGraduatesByAgeYear = ExcelAssistant.loadCoefficientMap("input/reg_unemployment.xlsx", countryString + "_RatesMaleNonGraduates", 1, 49);
-    //    setMapBounds(MapBounds.UnemploymentMaleNonGraduates, countryString);
-    //    unemploymentRatesFemaleGraduatesByAgeYear = ExcelAssistant.loadCoefficientMap("input/reg_unemployment.xlsx", countryString + "_RatesFemaleGraduates", 1, 49);
-    //    setMapBounds(MapBounds.UnemploymentFemaleGraduates, countryString);
-    //    unemploymentRatesFemaleNonGraduatesByAgeYear = ExcelAssistant.loadCoefficientMap("input/reg_unemployment.xlsx", countryString + "_RatesFemaleNonGraduates", 1, 49);
-    //    setMapBounds(MapBounds.UnemploymentFemaleNonGraduates, countryString);
+        int columnsWagesMalesE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesE");
+        int columnsWagesMalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesNE");
+        int columnsWagesFemalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesFemalesNE");
+        int columnsWagesFemalesE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesFemalesE");
+        int columnsEmploymentSelectionMalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionMalesNE");
+        int columnsEmploymentSelectionMalesE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionMalesE");
+        int columnsEmploymentSelectionFemalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionFemalesNE");
+        int columnsEmploymentSelectionFemalesE = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentSelectionFemalesE");
+        int columnsLabourSupplyUtilityMales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityMales");
+        int columnsLabourSupplyUtilityFemales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityFemales");
+        int columnsLabourSupplyUtilityMalesWithDependent = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityMalesWithDependent");
+        int columnsLabourSupplyUtilityFemalesWithDependent = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityFemalesWithDependent");
+        int columnsLabourSupplyUtilityACMales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityACMales");
+        int columnsLabourSupplyUtilityACFemales = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityACFemales");
+        int columnsLabourSupplyUtilityCouples = ParamUtils.getInt(columnsNumberParameters, "columnsLabourSupplyUtilityCouples");
+        int columnsHealthH1a = ParamUtils.getInt(columnsNumberParameters, "columnsHealthH1a");
+        int columnsHealthH1b = ParamUtils.getInt(columnsNumberParameters, "columnsHealthH1b");
+        int columnsHealthH2b = ParamUtils.getInt(columnsNumberParameters, "columnsHealthH2b");
+        int columnsEducationE1a = ParamUtils.getInt(columnsNumberParameters, "columnsEducationE1a");
+        int columnsEducationE1b = ParamUtils.getInt(columnsNumberParameters, "columnsEducationE1b");
+        int columnsEducationE2a = ParamUtils.getInt(columnsNumberParameters, "columnsEducationE2a");
+        int columnsPartnershipU1a = ParamUtils.getInt(columnsNumberParameters, "columnsPartnershipU1a");
+        int columnsPartnershipU1b = ParamUtils.getInt(columnsNumberParameters, "columnsPartnershipU1b");
+        int columnsPartnershipU2b = ParamUtils.getInt(columnsNumberParameters, "columnsPartnershipU2b");
+        int columnsFertilityF1b = ParamUtils.getInt(columnsNumberParameters, "columnsFertilityF1b");
+        int columnsIncomeI3a_amount = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3a_amount");
+        int columnsIncomeI3b_amount = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3b_amount");
+        int columnsIncomeI3a_selection = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3a_selection");
+        int columnsIncomeI3b_selection = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3b_selection");
+        int columnsLeaveHomeP1a = ParamUtils.getInt(columnsNumberParameters, "columnsLeaveHomeP1a");
+        int columnsHomeownership = ParamUtils.getInt(columnsNumberParameters, "columnsHomeownership");
+        int columnsRetirementR1a = ParamUtils.getInt(columnsNumberParameters, "columnsRetirementR1a");
+        int columnsRetirementR1b = ParamUtils.getInt(columnsNumberParameters, "columnsRetirementR1b");
 
-
-        //Load country specific data
-        int columnsWagesMalesNE = 19; //#
-        int columnsWagesMalesE = 20; //#
-        int columnsWagesFemalesNE = 19; //#
-        int columnsWagesFemalesE = 20; //#
-        int columnsEmploymentSelectionMalesNE = 19; //#
-        int columnsEmploymentSelectionMalesE = 18; //#
-        int columnsEmploymentSelectionFemalesNE = 19; //#
-        int columnsEmploymentSelectionFemalesE = 18; //#
-        int columnsLabourSupplyUtilityMales = 13; //#
-        int columnsLabourSupplyUtilityFemales = 13; //#
-        int columnsLabourSupplyUtilityMalesWithDependent = 11; //#
-        int columnsLabourSupplyUtilityFemalesWithDependent = 11; //#
-        int columnsLabourSupplyUtilityACMales = 9; //#
-        int columnsLabourSupplyUtilityACFemales = 9; //#
-        int columnsLabourSupplyUtilityCouples = 18; //#
-        int columnsHealthH1a = 24; //#
-        int columnsHealthH1b = 67; //#
-        int columnsHealthH2b = 28; //#
-        int columnsEducationE1a = 10; //#
-        int columnsEducationE1b = 15; //#
-        int columnsEducationE2a = 15; //#
-        int columnsPartnershipU1a = 10; //#
-        int columnsPartnershipU1b = 28; //#
-        int columnsPartnershipU2b = 31; //#
-        int columnsFertilityF1b = 28; //#
-        int columnsIncomeI3a_amount = 13; //#
-        int columnsIncomeI3b_amount = 23; //#
-        int columnsIncomeI3a_selection = 13; //#
-        int columnsIncomeI3b_selection = 23; //#
-        int columnsLeaveHomeP1a = 17; //#
-        int columnsHomeownership = 32; //#
-        int columnsRetirementR1a = 21; //#
-        int columnsRetirementR1b = 27; //#
+        //System.out.println("columnsWagesMalesE Value is " + columnsWagesMalesE);
 
         //The Raw maps contain the estimates and covariance matrices, from which we bootstrap at the start of each simulation
 
         // Wages
-        coeffCovarianceWagesMalesE = ExcelAssistant.loadCoefficientMap("input/reg_wages.xlsx", countryString + "_Wages_MalesE", 1, columnsWagesMalesE);
-        coeffCovarianceWagesMalesNE = ExcelAssistant.loadCoefficientMap("input/reg_wages.xlsx", countryString + "_Wages_MalesNE", 1, columnsWagesMalesNE);
-        coeffCovarianceWagesFemalesE = ExcelAssistant.loadCoefficientMap("input/reg_wages.xlsx", countryString + "_Wages_FemalesE", 1, columnsWagesFemalesE);
-        coeffCovarianceWagesFemalesNE = ExcelAssistant.loadCoefficientMap("input/reg_wages.xlsx", countryString + "_Wages_FemalesNE", 1, columnsWagesFemalesNE);
+        coeffCovarianceWagesMalesE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_MalesE", 1, columnsWagesMalesE);
+        coeffCovarianceWagesMalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_MalesNE", 1, columnsWagesMalesNE);
+        coeffCovarianceWagesFemalesE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_FemalesE", 1, columnsWagesFemalesE);
+        coeffCovarianceWagesFemalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_FemalesNE", 1, columnsWagesFemalesNE);
 
         //Labour Supply utility function coefficients
-        coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_Single_Males", 1, columnsLabourSupplyUtilityMales);
-        coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_Single_Females", 1, columnsLabourSupplyUtilityFemales);
-        coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_Males_With_Dep", 1, columnsLabourSupplyUtilityMalesWithDependent);
-        coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_Females_With_Dep", 1, columnsLabourSupplyUtilityFemalesWithDependent);
-        coeffLabourSupplyUtilityACMales = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_SingleAC_Males", 1, columnsLabourSupplyUtilityACMales);
-        coeffLabourSupplyUtilityACFemales = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_SingleAC_Females", 1, columnsLabourSupplyUtilityACFemales);
-        coeffLabourSupplyUtilityCouples = ExcelAssistant.loadCoefficientMap("input/reg_labourSupplyUtility.xlsx", countryString + "_Couples", 1, columnsLabourSupplyUtilityCouples);
+        coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_Males", 1, columnsLabourSupplyUtilityMales);
+        coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_Females", 1, columnsLabourSupplyUtilityFemales);
+        coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Males_With_Dep", 1, columnsLabourSupplyUtilityMalesWithDependent);
+        coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Females_With_Dep", 1, columnsLabourSupplyUtilityFemalesWithDependent);
+        coeffLabourSupplyUtilityACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleAC_Males", 1, columnsLabourSupplyUtilityACMales);
+        coeffLabourSupplyUtilityACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleAC_Females", 1, columnsLabourSupplyUtilityACFemales);
+        coeffLabourSupplyUtilityCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Couples", 1, columnsLabourSupplyUtilityCouples);
 
         //Heckman model employment selection
-        coeffCovarianceEmploymentSelectionMalesE = ExcelAssistant.loadCoefficientMap("input/reg_employmentSelection.xlsx", countryString + "_EmploymentSelection_MaleE", 1, columnsEmploymentSelectionMalesE);
-        coeffCovarianceEmploymentSelectionMalesNE = ExcelAssistant.loadCoefficientMap("input/reg_employmentSelection.xlsx", countryString + "_EmploymentSelection_MaleNE", 1, columnsEmploymentSelectionMalesNE);
-        coeffCovarianceEmploymentSelectionFemalesE = ExcelAssistant.loadCoefficientMap("input/reg_employmentSelection.xlsx", countryString + "_EmploymentSelection_FemaleE", 1, columnsEmploymentSelectionFemalesE);
-        coeffCovarianceEmploymentSelectionFemalesNE = ExcelAssistant.loadCoefficientMap("input/reg_employmentSelection.xlsx", countryString + "_EmploymentSelection_FemaleNE", 1, columnsEmploymentSelectionFemalesNE);
+        coeffCovarianceEmploymentSelectionMalesE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_employmentSelection.xlsx"), "EmploymentSelection_MaleE", 1, columnsEmploymentSelectionMalesE);
+        coeffCovarianceEmploymentSelectionMalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_employmentSelection.xlsx"), "EmploymentSelection_MaleNE", 1, columnsEmploymentSelectionMalesNE);
+        coeffCovarianceEmploymentSelectionFemalesE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_employmentSelection.xlsx"), "EmploymentSelection_FemaleE", 1, columnsEmploymentSelectionFemalesE);
+        coeffCovarianceEmploymentSelectionFemalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_employmentSelection.xlsx"), "EmploymentSelection_FemaleNE", 1, columnsEmploymentSelectionFemalesNE);
 
         //Health
-        coeffCovarianceHealthH1a = ExcelAssistant.loadCoefficientMap("input/reg_health.xlsx", countryString + "_H1a", 1, columnsHealthH1a);
-        coeffCovarianceHealthH1b = ExcelAssistant.loadCoefficientMap("input/reg_health.xlsx", countryString + "_H1b", 1, columnsHealthH1b);
-        coeffCovarianceHealthH2b = ExcelAssistant.loadCoefficientMap("input/reg_health.xlsx", countryString + "_H2b", 1, columnsHealthH2b);
+        coeffCovarianceHealthH1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_health.xlsx"), "H1a", 1, columnsHealthH1a);
+        coeffCovarianceHealthH1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_health.xlsx"), "H1b", 1, columnsHealthH1b);
+        coeffCovarianceHealthH2b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_health.xlsx"),  "H2b", 1, columnsHealthH2b);
 
         //Education
-        coeffCovarianceEducationE1a = ExcelAssistant.loadCoefficientMap("input/reg_education.xlsx", countryString + "_E1a", 1, columnsEducationE1a);
-        coeffCovarianceEducationE1b = ExcelAssistant.loadCoefficientMap("input/reg_education.xlsx", countryString + "_E1b", 1, columnsEducationE1b);
-        coeffCovarianceEducationE2a = ExcelAssistant.loadCoefficientMap("input/reg_education.xlsx", countryString + "_E2a", 1, columnsEducationE2a);
+        coeffCovarianceEducationE1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_education.xlsx"), "E1a", 1, columnsEducationE1a);
+        coeffCovarianceEducationE1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_education.xlsx"), "E1b", 1, columnsEducationE1b);
+        coeffCovarianceEducationE2a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_education.xlsx"), "E2a", 1, columnsEducationE2a);
 
         //Partnership
-        coeffCovariancePartnershipU1a = ExcelAssistant.loadCoefficientMap("input/reg_partnership.xlsx", countryString + "_U1a", 1, columnsPartnershipU1a);
-        coeffCovariancePartnershipU1b = ExcelAssistant.loadCoefficientMap("input/reg_partnership.xlsx", countryString + "_U1b", 1, columnsPartnershipU1b);
-        coeffCovariancePartnershipU2b = ExcelAssistant.loadCoefficientMap("input/reg_partnership.xlsx", countryString + "_U2b", 1, columnsPartnershipU2b);
+        coeffCovariancePartnershipU1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"),"U1a", 1, columnsPartnershipU1a);
+        coeffCovariancePartnershipU1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"), "U1b", 1, columnsPartnershipU1b);
+        coeffCovariancePartnershipU2b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"), "U2b", 1, columnsPartnershipU2b);
 
         //Partnership - parameters for matching based on wage and age differential
-        meanCovarianceParametricMatching = ExcelAssistant.loadCoefficientMap("input/scenario_parametricMatching.xlsx", countryString, 1, 1);
+        meanCovarianceParametricMatching = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_parametricMatching.xlsx"), "Parameters", 1, 1);
 
         //Fertility
-        coeffCovarianceFertilityF1b = ExcelAssistant.loadCoefficientMap("input/reg_fertility.xlsx", countryString + "_F1b", 1, columnsFertilityF1b);
+        coeffCovarianceFertilityF1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_fertility.xlsx"), "F1b", 1, columnsFertilityF1b);
 
         //Income
-        coeffCovarianceIncomeI3a_amount = ExcelAssistant.loadCoefficientMap("input/reg_income.xlsx", countryString + "_I3a_amount", 1, columnsIncomeI3a_amount);
-        coeffCovarianceIncomeI3b_amount = ExcelAssistant.loadCoefficientMap("input/reg_income.xlsx", countryString + "_I3b_amount", 1, columnsIncomeI3b_amount);
-        coeffCovarianceIncomeI3a_selection = ExcelAssistant.loadCoefficientMap("input/reg_income.xlsx", countryString + "_I3a_selection", 1, columnsIncomeI3a_selection);
-        coeffCovarianceIncomeI3b_selection = ExcelAssistant.loadCoefficientMap("input/reg_income.xlsx", countryString + "_I3b_selection", 1, columnsIncomeI3b_selection);
+        coeffCovarianceIncomeI3a_amount = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_income.xlsx"), "I3a_amount", 1, columnsIncomeI3a_amount);
+        coeffCovarianceIncomeI3b_amount = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_income.xlsx"), "I3b_amount", 1, columnsIncomeI3b_amount);
+        coeffCovarianceIncomeI3a_selection = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_income.xlsx"), "I3a_selection", 1, columnsIncomeI3a_selection);
+        coeffCovarianceIncomeI3b_selection = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_income.xlsx"), "I3b_selection", 1, columnsIncomeI3b_selection);
 
         //Leaving parental home
-        coeffCovarianceLeaveHomeP1a = ExcelAssistant.loadCoefficientMap("input/reg_leaveParentalHome.xlsx", countryString + "_P1a", 1, columnsLeaveHomeP1a);
+        coeffCovarianceLeaveHomeP1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_leaveParentalHome.xlsx"), "P1a", 1, columnsLeaveHomeP1a);
 
         //Homeownership
-        coeffCovarianceHomeownership = ExcelAssistant.loadCoefficientMap("input/reg_home_ownership.xlsx", countryString + "_HO1a", 1, columnsHomeownership);
+        coeffCovarianceHomeownership = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_home_ownership.xlsx"), "HO1a", 1, columnsHomeownership);
 
         //Retirement
-        coeffCovarianceRetirementR1a = ExcelAssistant.loadCoefficientMap("input/reg_retirement.xlsx", countryString + "_R1a", 1, columnsRetirementR1a);
-        coeffCovarianceRetirementR1b = ExcelAssistant.loadCoefficientMap("input/reg_retirement.xlsx", countryString + "_R1b", 1, columnsRetirementR1b);
+        coeffCovarianceRetirementR1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_retirement.xlsx"), "R1a", 1, columnsRetirementR1a);
+        coeffCovarianceRetirementR1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_retirement.xlsx"), "R1b", 1, columnsRetirementR1b);
 
 
         //Bootstrap the coefficients
@@ -1959,33 +2089,23 @@ public class Parameters {
     public static void loadTimeSeriesFactorMaps(Country country) {
 
 
-
-        // load time varying rates
-    //    priceMapRealSavingReturns = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_saving_returns", 1, 1);
-    //    priceMapRealDebtCostLow = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_debt_cost_low", 1, 1);
-    //    priceMapRealDebtCostHigh = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_debt_cost_hi", 1, 1);
-
-        // load time varying wage rates
-    //    wageRateFormalSocialCare = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_carer_hourly_wage", 1, 1);
-
         // load time varying indices
-        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
-        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
-        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
-   //     socialCareProvisionTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_care_adjustment", 1, 1);
-        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_cohabitation_adjustment", 1, 1);
-        retirementTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_retirement_adjustment", 1, 1);
-        disabilityTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_disability_adjustment", 1, 1);
-        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_students_adjustment", 1, 1);
-        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_fertility_adjustment", 1, 1);
-        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_smales", 1, 1);
-        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_acmales", 1, 1);
-        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_acfemales", 1, 1);
-        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_sfemales", 1, 1);
-        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_couples", 1, 1);
-        utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_malewdep", 1, 1);
-        utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_femalewdep", 1, 1);
-        utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_utility_adj_all", 1, 1);
+        upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "gdp", 1, 1);
+        upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "inflation", 1, 1);
+        upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "wage_growth", 1, 1);
+        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "cohabitation_adjustment", 1, 1);
+        retirementTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "retirement_adjustment", 1, 1);
+        disabilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "disability_adjustment", 1, 1);
+        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "students_adjustment", 1, 1);
+        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "fertility_adjustment", 1, 1);
+        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_smales", 1, 1);
+        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acmales", 1, 1);
+        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acfemales", 1, 1);
+        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_sFemales", 1, 1);
+        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_couples", 1, 1);
+        utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_malewdep", 1, 1);
+        utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_femalewdep", 1, 1);
+        utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_all", 1, 1);
 
         // rebase indices to base year defined by BASE_PRICE_YEAR
         rebaseIndexMap(TimeSeriesVariable.GDP);
@@ -1993,18 +2113,18 @@ public class Parameters {
         rebaseIndexMap(TimeSeriesVariable.WageGrowth);
 
         // load year-specific fiscal policy parameters
-        socialCarePolicy = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "social care", 1, 8);
-        partneredShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "partnership", 1, 1);
-        retiredShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "retirement", 1, 1);
-        disabledShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "disability", 1, 1);
-        studentShare = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "students", 1, 1);
-        employedShareSingleMales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_smales", 1, 1);
-        employedShareACMales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_acmales", 1, 1);
-        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_sfemales", 1, 1);
-        employedShareACFemales = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_acfemales", 1, 1);
-        employedShareCouples = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_couples", 1, 1);
-        employedShareMaleWithDep = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_malewdep", 1, 1);
-        employedShareFemaleWithDep = ExcelAssistant.loadCoefficientMap("input/policy parameters.xlsx", "employment_femalewdep", 1, 1);
+        socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "social care", 1, 8);
+        partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "partnership", 1, 1);
+        retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "retirement", 1, 1);
+        disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "disability", 1, 1);
+        studentShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "students", 1, 1);
+        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_smales", 1, 1);
+        employedShareACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_acmales", 1, 1);
+        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_sfemales", 1, 1);
+        employedShareACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_acfemales", 1, 1);
+        employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_couples", 1, 1);
+        employedShareMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_malewdep", 1, 1);
+        employedShareFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "employment_femalewdep", 1, 1);
     }
 
     public static void instantiateAlignmentMaps() {
@@ -2027,15 +2147,16 @@ public class Parameters {
         TimeSeriesVariable index = getTimeSeriesVariable(UpratingCase.TaxDonor);
         switch (index) {
             case GDP -> {
-                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_gdp", 1, 1);
+                upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "gdp", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.GDP);
             }
             case WageGrowth -> {
-                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_wage_growth", 1, 1);
+                upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "wage_growth", 1, 1);
+
                 rebaseIndexMap(TimeSeriesVariable.WageGrowth);
             }
             case Inflation -> {
-                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap("input/time_series_factor.xlsx", country.toString() + "_inflation", 1, 1);
+                upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "inflation", 1, 1);
                 rebaseIndexMap(TimeSeriesVariable.Inflation);
             }
         }
@@ -2579,7 +2700,14 @@ public class Parameters {
     }
     private static void setMapBounds(MapBounds map, String countryString) {
 
-        String rgn = countryString + "3";
+        String rgn = switch (countryString) {
+            case "EL" -> countryString + "3";
+            case "HU" -> countryString + "C";
+            case "IT" -> countryString + "C";
+            case "PL" -> countryString + "2";
+            default -> null;
+        };
+
         boolean searchBack = true;
         boolean searchForward = true;
         boolean searchAge;
