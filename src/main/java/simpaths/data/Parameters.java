@@ -1148,29 +1148,6 @@ public class Parameters {
         mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_mortality.xlsx"), "MortalityByGenderAgeYear", 2, columnsMortalityProbabilityByGenderAgeYear);
         setMapBounds(MapBounds.Mortality, countryString);
 
-        /*
-        //Alignment of education levels
-        // Not currently used. Consider removing.
-        projectionsHighEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "High", 1, 2);
-        projectionsLowEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "Low", 1, 2);
-
-        studentShareProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_student_under30.xlsx"), "Student_share", 1, 40);
-        //Employment alignment
-    //    employmentAlignment = ExcelAssistant.loadCoefficientMap("input/align_employment.xlsx", countryString, 2, 40);
-
-        //Fertility rates:
-        fertilityProjectionsByYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_fertility.xlsx"), "FertilityByYear", 1, 90);
-        setMapBounds(MapBounds.Fertility, countryString);
-
-        //RMSE
-        coefficientMapRMSE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_RMSE.xlsx"), "RMSE", 1, 1);
-
-        //Mortality rates
-        mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_mortality.xlsx"), "MortalityByGenderAgeYear", 2, 111);
-        setMapBounds(MapBounds.Mortality, countryString);
-        */
-
-
         int columnsWagesMalesE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesE");
         int columnsWagesMalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesNE");
         int columnsWagesFemalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesFemalesNE");
