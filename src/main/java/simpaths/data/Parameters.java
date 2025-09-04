@@ -211,6 +211,10 @@ public class Parameters {
     //Childcare
     public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
 
+    //Alignment parameters
+    public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
+    public static final double FERTILITY_ALIGNMENT_BOUND = 10.0;
+
     // parameters to manage simulation of optimised decisions
     public static boolean projectLiquidWealth = false;
     public static boolean projectPensionWealth = false;
@@ -975,11 +979,15 @@ public class Parameters {
         Code below introduces macro shocks in terms of population, productivity, and employment
 
          */
+
+        //Load country specific data on columns number in excel estimate and alignment files
+        columnsNumberParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "columns_number_parameters.xlsx"), "ColumnsNumberParameters", 1, 1);
+        int columnsPopulationProjections = ParamUtils.getInt(columnsNumberParameters, "columnsPopulationProjections");
             // Macro population switch
         if (macroShocksOn) {
             switch (macroShockPopulation) {
                 case High:
-                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_high", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_high", 3, columnsPopulationProjections);
 
                     // Productivity sub-switch
                     switch (macroShockProductivity) {
@@ -1012,7 +1020,7 @@ public class Parameters {
                     break;
 
                 case Low:
-                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_low", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_macro_shocks.xlsx"), "population_low", 3, columnsPopulationProjections);
 
                     switch (macroShockProductivity) {
                         case Baseline:
@@ -1044,7 +1052,7 @@ public class Parameters {
 
                 case Baseline:
                 default:
-                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_popProjections.xlsx"), "Population_projections", 3, 50);
+                    populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_popProjections.xlsx"), "Population_projections", 3, columnsPopulationProjections);
 
                     switch (macroShockProductivity) {
                         case Baseline:
@@ -1105,12 +1113,42 @@ public class Parameters {
                     break;
             }
         } else {
-            populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_popProjections.xlsx"), "Population_projections", 3, 50);
+            populationProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_popProjections.xlsx"), "Population_projections", 3, columnsPopulationProjections);
         }
 
 
         setMapBounds(MapBounds.Population, countryString);
 
+        // Load alignment targets
+        // Load columns numbers parameters required for loading alignment targets
+        int columnsProjectionsHighEdu = ParamUtils.getInt(columnsNumberParameters, "columnsProjectionsHighEdu");
+        int columnsProjectionsLowEdu = ParamUtils.getInt(columnsNumberParameters, "columnsProjectionsLowEdu");
+        int columnsStudentShareProjections = ParamUtils.getInt(columnsNumberParameters, "columnsStudentShareProjections");
+        int columnsEmploymentAlignment = ParamUtils.getInt(columnsNumberParameters, "columnsEmploymentAlignment");
+        int columnsFertilityProjectionsByYear = ParamUtils.getInt(columnsNumberParameters, "columnsFertilityProjectionsByYear");
+        int columnsCoefficientMapRMSE = ParamUtils.getInt(columnsNumberParameters, "columnsCoefficientMapRMSE");
+        int columnsMortalityProbabilityByGenderAgeYear = ParamUtils.getInt(columnsNumberParameters, "columnsMortalityProbabilityByGenderAgeYear");
+
+        // Not currently used. Consider removing.
+        projectionsHighEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "High", 1, columnsProjectionsHighEdu);
+        projectionsLowEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "Low", 1, columnsProjectionsLowEdu);
+
+        studentShareProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_student_under30.xlsx"), "Student_share", 1, columnsStudentShareProjections);
+        //Employment alignment
+        //employmentAlignment = ExcelAssistant.loadCoefficientMap("input/align_employment.xlsx", countryString, 2, columnsEmploymentAlignment);
+
+        //Fertility rates:
+        fertilityProjectionsByYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_fertility.xlsx"), "FertilityByYear", 1, columnsFertilityProjectionsByYear);
+        setMapBounds(MapBounds.Fertility, countryString);
+
+        //RMSE
+        coefficientMapRMSE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_RMSE.xlsx"), "RMSE", 1, columnsCoefficientMapRMSE);
+
+        //Mortality rates
+        mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_mortality.xlsx"), "MortalityByGenderAgeYear", 2, columnsMortalityProbabilityByGenderAgeYear);
+        setMapBounds(MapBounds.Mortality, countryString);
+
+        /*
         //Alignment of education levels
         // Not currently used. Consider removing.
         projectionsHighEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "High", 1, 2);
@@ -1130,9 +1168,8 @@ public class Parameters {
         //Mortality rates
         mortalityProbabilityByGenderAgeYear = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "projections_mortality.xlsx"), "MortalityByGenderAgeYear", 2, 111);
         setMapBounds(MapBounds.Mortality, countryString);
+        */
 
-        //Load country specific data on columns number in excel estimate files
-        columnsNumberParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "columns_number_parameters.xlsx"), "ColumnsNumberParameters", 1, 1);
 
         int columnsWagesMalesE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesE");
         int columnsWagesMalesNE = ParamUtils.getInt(columnsNumberParameters, "columnsWagesMalesNE");
@@ -2723,7 +2760,7 @@ public class Parameters {
                     case UnemploymentMaleNonGraduates -> (Number) unemploymentRatesMaleNonGraduatesByAgeYear.getValue(25, MIN_START_YEAR + ii);
                     case UnemploymentFemaleGraduates -> (Number) unemploymentRatesFemaleGraduatesByAgeYear.getValue(25, MIN_START_YEAR + ii);
                     case UnemploymentFemaleNonGraduates -> (Number) unemploymentRatesFemaleNonGraduatesByAgeYear.getValue(25, MIN_START_YEAR + ii);
-                    case Fertility -> (Number) fertilityProjectionsByYear.getValue("Value", MIN_START_YEAR + ii);
+                    case Fertility -> (Number)  fertilityProjectionsByYear.getValue("Value", MIN_START_YEAR + ii);
                     case Mortality -> (Number) mortalityProbabilityByGenderAgeYear.getValue("Female", 25, MIN_START_YEAR + ii);
                     default -> (Number) populationProjections.getValue("Female", rgn, 25, MIN_START_YEAR + ii);
                 };
