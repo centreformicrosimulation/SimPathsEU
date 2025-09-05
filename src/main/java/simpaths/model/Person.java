@@ -25,6 +25,7 @@ import java.math.RoundingMode;
 import java.util.*;
 
 import static simpaths.data.Parameters.getUnemploymentRateByGenderEducationAgeYear;
+import static simpaths.data.Parameters.FLAG_USE_F1A;
 
 @Entity
 public class Person implements EventListener, IDoubleSource, IIntSource, Weight, Comparable<Person> {
@@ -734,7 +735,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public void fertility(double probitAdjustment) {
-
         toGiveBirth = false;
         FertileFilter filter = new FertileFilter();
         if (filter.evaluate(this)) {
@@ -742,7 +742,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             double prob;
 
                 if (getDag() <= 29 && getLes_c4().equals(Les_c4.Student) && !isLeftEducation()) {
-                    //If age below or equal to 29 and in continuous education, cannot give birth (due to the lack of such cases observed in the data)
+                    //HU PL IT: If age below or equal to 29 and in continuous education follow process F1a
+                    if (FLAG_USE_F1A) {
+                        double score = Parameters.getRegFertilityF1a().getScore(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegFertilityF1a().getProbability(score + probitAdjustment);
+                    }
+                    //EL: If age below or equal to 29 and in continuous education, cannot give birth (due to the lack of such cases observed in the data)
+
                 } else {
                     //Otherwise if not in continuous education, follow process F1b
                     double score = Parameters.getRegFertilityF1b().getScore(this, Person.DoublesVariables.class);
