@@ -2173,6 +2173,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         GrossEarningsYearly,
         GrossLabourIncomeMonthly,
         InverseMillsRatio,
+        HUA, // Hungary
+        HUB,
+        HUC,
         ITC,			//Italy
         ITF,
         ITG,
@@ -3473,6 +3476,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Deh_c3_Medium_Dag -> {
                 return (Education.Medium.equals(deh_c3)) ? dag : 0.0;
             }
+            // Hungary
+            case HUA -> {
+                return Region.HUA.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case HUB -> {
+                return Region.HUC.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case HUC -> {
+                return Region.HUC.equals(getRegion()) ? 1.0 : 0.0;
+            }
             //Italy
             case ITC -> {
                 return (getRegion().equals(Region.ITC)) ? 1. : 0.;
@@ -3530,6 +3543,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return 0.;        //For our purpose, all our simulated people have a region, so this enum value is always going to be 0 (false).
                 //			return (getRegion().equals(Region.UKmissing)) ? 1. : 0.;		//For people whose region info is missing.  The UK survey did not record the region in the first two waves (2006 and 2007, each for 4 years). For all those individuals we have gender, education etc but not region. If we exclude them we lose a large part of the UK sample, so this is the trick to keep them in the estimates.
             }
+            // Poland
             case PL4 -> {
                 return Region.PL4.equals(getRegion()) ? 1.0 : 0.0;
             }

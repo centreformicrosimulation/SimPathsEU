@@ -1427,6 +1427,16 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         South_Islands_33,
         North_34,
         South_Islands_34,
+        North_40,
+        North_41,
+        North_42,
+        North_43,
+        North_44,
+        South_Islands_40,
+        South_Islands_41,
+        South_Islands_42,
+        South_Islands_43,
+        South_Islands_44,
 
 
                 //Other
@@ -1752,10 +1762,10 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 case MaleEduH_2 -> {
                     return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2) && getMale().getDeh_c3().equals(Education.High)) ? 1. : 0.;
                 }
-                case MaleEduM_3 -> {
+                case MaleEduM_3, MaleEduM_4  -> {
                     return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3) && getMale().getDeh_c3().equals(Education.Medium)) ? 1. : 0.;
                 }
-                case MaleEduH_3 -> {
+                case MaleEduH_3, MaleEduH_4 -> {
                     return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3) && getMale().getDeh_c3().equals(Education.High)) ? 1. : 0.;
                 }
                 case FemaleEduM_1 -> {
@@ -1770,10 +1780,10 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 case FemaleEduH_2 -> {
                     return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2) && getFemale().getDeh_c3().equals(Education.High)) ? 1. : 0.;
                 }
-                case FemaleEduM_3 -> {
+                case FemaleEduM_3, FemaleEduM_4 -> {
                     return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3) && getFemale().getDeh_c3().equals(Education.Medium)) ? 1. : 0.;
                 }
-                case FemaleEduH_3 -> {
+                case FemaleEduH_3, FemaleEduH_4 -> {
                     return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3) && getFemale().getDeh_c3().equals(Education.High)) ? 1. : 0.;
                 }
                 case FixedCostMale_NorthernRegions -> {
@@ -1814,11 +1824,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2)) ? 1 : 0;
                 }
 
-                case North_3 -> {
+                case North_3, North_4 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITC) || getRegion().equals(Region.ITH))) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
                 }
-                case South_Islands_3 -> {
+                case South_Islands_3, South_Islands_4 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITF) || getRegion().equals(Region.ITG))) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
                 }
@@ -1856,12 +1866,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2)) ? 1 : 0;
                 }
 
-                case North_13 -> {
+                case North_13, North_14 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITC) || getRegion().equals(Region.ITH))) &&
                             (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_1)) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
                 }
-                case South_Islands_13 -> {
+                case South_Islands_13, South_Islands_14 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITF) || getRegion().equals(Region.ITG))) &&
                             (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_1)) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
@@ -1900,12 +1910,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2)) ? 1 : 0;
                 }
 
-                case North_23 -> {
+                case North_23, North_24 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITC) || getRegion().equals(Region.ITH))) &&
                             (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2)) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
                 }
-                case South_Islands_23 -> {
+                case South_Islands_23, South_Islands_24 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITF) || getRegion().equals(Region.ITG))) &&
                             (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2)) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
@@ -1944,12 +1954,12 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_2)) ? 1 : 0;
                 }
 
-                case North_33 -> {
+                case North_33, North_34, North_40, North_41, North_42, North_43, North_44 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITC) || getRegion().equals(Region.ITH))) &&
                             (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
                 }
-                case South_Islands_33 -> {
+                case South_Islands_33, South_Islands_34, South_Islands_40, South_Islands_41, South_Islands_42, South_Islands_43, South_Islands_44 -> {
                     return (getRegion() != null && (getRegion().equals(Region.ITF) || getRegion().equals(Region.ITG))) &&
                             (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) &&
                             (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_IT_3)) ? 1 : 0;
