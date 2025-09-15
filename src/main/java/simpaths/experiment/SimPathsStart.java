@@ -494,8 +494,8 @@ public class SimPathsStart implements ExperimentBuilder {
 		country = cbCountry.getCountryEnum();
 		startYear = cbStartYear.getYear();
 
-		// Save the last selected country and year to Excel in the country-specific folder
-		String countryInputPath = "input" + File.separator + country.toString();
+		// Save the last selected country and year to Excel in the input folder
+		String countryInputPath = "input";
 
 		// Ensure the folder exists
 		File countryFolder = new File(countryInputPath);
