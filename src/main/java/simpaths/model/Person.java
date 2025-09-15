@@ -25,6 +25,7 @@ import java.math.RoundingMode;
 import java.util.*;
 
 import static simpaths.data.Parameters.getUnemploymentRateByGenderEducationAgeYear;
+import static simpaths.data.Parameters.FLAG_USE_F1A;
 
 @Entity
 public class Person implements EventListener, IDoubleSource, IIntSource, Weight, Comparable<Person> {
@@ -734,7 +735,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public void fertility(double probitAdjustment) {
-
         toGiveBirth = false;
         FertileFilter filter = new FertileFilter();
         if (filter.evaluate(this)) {
@@ -742,7 +742,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             double prob;
 
                 if (getDag() <= 29 && getLes_c4().equals(Les_c4.Student) && !isLeftEducation()) {
-                    //If age below or equal to 29 and in continuous education, cannot give birth (due to the lack of such cases observed in the data)
+                    //HU PL IT: If age below or equal to 29 and in continuous education follow process F1a
+                    if (FLAG_USE_F1A) {
+                        double score = Parameters.getRegFertilityF1a().getScore(this, Person.DoublesVariables.class);
+                        prob = Parameters.getRegFertilityF1a().getProbability(score + probitAdjustment);
+                    }
+                    //EL: If age below or equal to 29 and in continuous education, cannot give birth (due to the lack of such cases observed in the data)
+
                 } else {
                     //Otherwise if not in continuous education, follow process F1b
                     double score = Parameters.getRegFertilityF1b().getScore(this, Person.DoublesVariables.class);
@@ -2167,6 +2173,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         GrossEarningsYearly,
         GrossLabourIncomeMonthly,
         InverseMillsRatio,
+        HUA, // Hungary
+        HUB,
+        HUC,
         ITC,			//Italy
         ITF,
         ITG,
@@ -3467,6 +3476,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Deh_c3_Medium_Dag -> {
                 return (Education.Medium.equals(deh_c3)) ? dag : 0.0;
             }
+            // Hungary
+            case HUA -> {
+                return Region.HUA.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case HUB -> {
+                return Region.HUC.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case HUC -> {
+                return Region.HUC.equals(getRegion()) ? 1.0 : 0.0;
+            }
             //Italy
             case ITC -> {
                 return (getRegion().equals(Region.ITC)) ? 1. : 0.;
@@ -3524,6 +3543,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return 0.;        //For our purpose, all our simulated people have a region, so this enum value is always going to be 0 (false).
                 //			return (getRegion().equals(Region.UKmissing)) ? 1. : 0.;		//For people whose region info is missing.  The UK survey did not record the region in the first two waves (2006 and 2007, each for 4 years). For all those individuals we have gender, education etc but not region. If we exclude them we lose a large part of the UK sample, so this is the trick to keep them in the estimates.
             }
+            // Poland
             case PL4 -> {
                 return Region.PL4.equals(getRegion()) ? 1.0 : 0.0;
             }

@@ -13,6 +13,8 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Map;
 
+import static simpaths.data.Parameters.FLAG_USE_F1A;
+
 /**
  * class to manage expansion of expectations to account for each successive state variable
  */
@@ -193,9 +195,14 @@ public class ExpectationsFactory {
                         }
 
                         // expand expectations
-                        if ((Gender.Female == currentStates.getGenderCode() || anticipated[ii].getCohabitation()) && anticipated[ii].getStudent() != 1) {
+                        if (Gender.Female == currentStates.getGenderCode() || anticipated[ii].getCohabitation()) {
                             // birth possible
-                            expandExpectationsFertility(ii, stateIndexNextPeriod, jj, options, RegressionName.FertilityF1b);
+                            if (anticipated[ii].getStudent()==1 && FLAG_USE_F1A) {
+                                expandExpectationsFertility(ii, stateIndexNextPeriod, jj, options, RegressionName.FertilityF1a);
+                            } else {
+                                expandExpectationsFertility(ii, stateIndexNextPeriod, jj, options, RegressionName.FertilityF1b);
+                            }
+
                         } else {
                             // birth not possible
 

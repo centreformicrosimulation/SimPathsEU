@@ -9,6 +9,8 @@ import simpaths.model.enums.Region;
 import java.util.*;
 import java.util.random.RandomGenerator;
 
+import static simpaths.data.Parameters.EMPLOYMENT_ALIGNMENT_END_YEAR;
+
 
 //Significantly simplified LabourMarket module. Should just contain simple labour supply for now and matching with euromod donor population.
 public class LabourMarket {
@@ -66,7 +68,7 @@ public class LabourMarket {
                 }
             }
 
-            if (model.isAlignEmployment() & model.getYear() <= 2023 & !model.isMacroShocksOn()) {
+            if (model.isAlignEmployment() & model.getYear() <= EMPLOYMENT_ALIGNMENT_END_YEAR & !model.isMacroShocksOn()) {
                 model.activityAlignmentSingleMales();
                 model.activityAlignmentSingleACMales();
                 model.activityAlignmentSingleFemales();

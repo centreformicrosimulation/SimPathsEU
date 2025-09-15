@@ -81,24 +81,43 @@ public class SimPathsStart implements ExperimentBuilder {
 			return;
 		}
 
-		//Adjust the country and year to the value read from Excel, which is updated when the database is rebuilt. Otherwise it will set the country and year to the last one used to build the database
-		MultiKeyCoefficientMap lastDatabaseCountryAndYear =	ExcelAssistant.loadCoefficientMap("input" + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx","Data", 1, 1);
+		// Determine the country-specific input path
+		String countryInputPath = Parameters.INPUT_DIRECTORY + File.separator + country.toString();
+		String dbCountryYearPath = countryInputPath + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx";
 
-		if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[EL]"))) {
-			country = Country.EL;
-		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[IT]"))) {
-			country = Country.IT;
-		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[HU]"))) {
-			country = Country.HU;
-		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[PL]"))) {
-			country = Country.PL;
-		} else {
-			throw new IllegalArgumentException("Country not recognised. Restart the simulation and choose one of the available countries (EL, IT, HU, PL).");
+		// Load last used country and year from Excel, if it exists
+		MultiKeyCoefficientMap lastDatabaseCountryAndYear = null;
+		File dbFile = new File(dbCountryYearPath);
+		if (dbFile.exists()) {
+			lastDatabaseCountryAndYear = ExcelAssistant.loadCoefficientMap(dbCountryYearPath, "Data", 1, 1);
 		}
 
+		// If Excel file exists, read country and startYear; otherwise, use GUI to select
+		if (lastDatabaseCountryAndYear != null) {
+			// Determine the country from the Excel file
+			if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[EL]"))) {
+				country = Country.EL;
+			} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[IT]"))) {
+				country = Country.IT;
+			} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[HU]"))) {
+				country = Country.HU;
+			} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[PL]"))) {
+				country = Country.PL;
+			} else {
+				throw new IllegalArgumentException("Country not recognised in Excel file. Please select one of the available countries (EL, IT, HU, PL).");
+			}
 
-		String valueYear = lastDatabaseCountryAndYear.getValue(country.toString()).toString();
-		startYear = Integer.parseInt(valueYear);
+			// Set startYear from Excel
+			String valueYear = lastDatabaseCountryAndYear.getValue(country.toString()).toString();
+			startYear = Integer.parseInt(valueYear);
+		} else {
+			// File does not exist: first run, let user select country and year via GUI
+			System.out.println("No previous country/year file found in " + countryInputPath + ". Please select country and start year.");
+			chooseCountryAndStartYear(); // GUI will update `country` and `startYear` and create the Excel file
+		}
+
+		// From here on, use countryInputPath for all future file reads/writes
+		// e.g., EUROMODpolicySchedule.xlsx: countryInputPath + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx"
 
 		// start the JAS-mine simulation engine
 		final SimulationEngine engine = SimulationEngine.getInstance();
@@ -219,20 +238,38 @@ public class SimPathsStart implements ExperimentBuilder {
 		if (testList.size()==0)
 			Parameters.setTrainingFlag(true);
 
-		// Create EUROMODPolicySchedule input from files
-		if (!rewritePolicySchedule &&
-				!new File("input" + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx").exists()) {
-			throw new FileNotFoundException("Policy Schedule file '"+ File.separator + "input" + File.separator +
-					Parameters.EUROMODpolicyScheduleFilename + ".xlsx` doesn't exist. " +
+		// Build path for the country-specific input folder
+		String countryInputPath = "input" + File.separator + country.toString();
+
+        // Create EUROMODPolicySchedule input from files
+		File policyScheduleFile = new File(
+				countryInputPath + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx"
+		);
+
+		if (!rewritePolicySchedule && !policyScheduleFile.exists()) {
+			throw new FileNotFoundException("Policy Schedule file '" +
+					policyScheduleFile.getPath() + "' doesn't exist. " +
 					"Provide excel file or use `--rewrite-policy-schedule` to re-construct from available policy files.");
-		};
-		if (rewritePolicySchedule) writePolicyScheduleExcelFile();
-		//Save the last selected country and year to Excel to use in the model if GUI launched straight away
+		}
+
+		if (rewritePolicySchedule) {
+			writePolicyScheduleExcelFile();
+		}
+
+		// Save the last selected country and year to Excel to use in the model if GUI launched straight away
 		String[] columnNames = {"Country", "Year"};
 		Object[][] data = new Object[1][columnNames.length];
 		data[0][0] = country.toString();
 		data[0][1] = startYear;
-		XLSXfileWriter.createXLSX(Parameters.INPUT_DIRECTORY, Parameters.DatabaseCountryYearFilename, "Data", columnNames, data);
+
+		// Save into the same country-specific folder
+		XLSXfileWriter.createXLSX(
+				countryInputPath,
+				Parameters.DatabaseCountryYearFilename,
+				"Data",
+				columnNames,
+				data
+		);
 
 		// load uprating factors
 		Parameters.loadTimeSeriesFactorMaps(country);
@@ -271,7 +308,13 @@ public class SimPathsStart implements ExperimentBuilder {
 			row++;
 		}
 
-		XLSXfileWriter.createXLSX(Parameters.INPUT_DIRECTORY, Parameters.EUROMODpolicyScheduleFilename, country.toString(), columnNames, data);
+		XLSXfileWriter.createXLSX(
+				"input" + File.separator + country.toString(),
+				Parameters.EUROMODpolicyScheduleFilename,
+				country.toString(),
+				columnNames,
+				data
+		);
 	}
 
 
@@ -294,7 +337,7 @@ public class SimPathsStart implements ExperimentBuilder {
 		startUpOptionsStringsMap.put("Select tax and benefit systems for analysis", count++);
 		StartUpCheckBoxes startUpOptions = new StartUpCheckBoxes(startUpOptionsStringsMap);
 
-	    // combine button groups into a single form component
+		// combine button groups into a single form component
 		JInternalFrame initialisationFrame = new JInternalFrame();
 		BasicInternalFrameUI bi = (BasicInternalFrameUI)initialisationFrame.getUI();
 		bi.setNorthPane(null);
@@ -302,12 +345,11 @@ public class SimPathsStart implements ExperimentBuilder {
 		startUpOptions.setBorder(BorderFactory.createTitledBorder("options for policy environment and input database"));
 		initialisationFrame.setLayout(new BoxLayout(initialisationFrame.getContentPane(), BoxLayout.PAGE_AXIS));
 		initialisationFrame.add(startUpOptions);
-		JPanel border = new JPanel();
-		initialisationFrame.add(border);
+		initialisationFrame.add(new JPanel());
 		initialisationFrame.setVisible(true);
 
 		// text for GUI
-        String title = "Start-up Options";
+		String title = "Start-up Options";
 		String text = "<html><h2 style=\"text-align: center; font-size:120%;\">Choose the start-up processes for the simulation</h2>";
 
 		// sizing for GUI
@@ -325,160 +367,154 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		if (choices[0]) {
 			// choose the country and the simulation start year
-			// this information can be used when constructing a new donor population
-			// and referenced when adjusting the EUROMOD policy schedule (scenario plan).
 			Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations()), new String[]{"csv"}, false);
-			if (testList.size()==0)
+			if (testList.size() == 0)
 				Parameters.setTrainingFlag(true);
 			chooseCountryAndStartYear();
 		}
+
 		String taxDonorInputFilename = "tax_donor_population_" + country;
 		Parameters.setTaxDonorInputFileName(taxDonorInputFilename);
 
 		if (choices[0] || choices[1]) {
-			// rebuild databases for population cross-section used to initialise simulated population
 			DataParser.databaseFromCSV(country, showGui); // Initial database tables
 		}
 
 		if (choices[2]) {
-			// call to modify policies
-
-			// run EUROMOD
-			//CallEUROMOD.run();
-
-			//run EUROMOD Light
-			CallEMLight.run();
+			CallEMLight.run(); // run EUROMOD Light
 		}
 
 		if (choices[0] || choices[2] || choices[3] || choices[4]) {
-			// call to select policies
 
-			// load previously stored values for policy description and initiation year
-			MultiKeyCoefficientMap previousEUROMODfileInfo = ExcelAssistant.loadCoefficientMap("input" + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx", country.toString(), 1, 3);
+			// Load previously stored values for policy description and initiation year
+			String countryInputPath = "input" + File.separator + country.toString();
+			MultiKeyCoefficientMap previousEUROMODfileInfo = ExcelAssistant.loadCoefficientMap(
+					countryInputPath + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx",
+					country.toString(),
+					1,
+					3
+			);
+
 			Collection<File> euromodOutputTextFiles = FileUtils.listFiles(new File(Parameters.getEuromodOutputDirectory()), new String[]{"txt"}, false);
-			Iterator<File> fIter = euromodOutputTextFiles.iterator();
-			while (fIter.hasNext()) {
-				File file = fIter.next();
-				if (file.getName().endsWith("_EMHeader.txt")) {
-					fIter.remove();
-				}
-			}
+			euromodOutputTextFiles.removeIf(file -> file.getName().endsWith("_EMHeader.txt"));
 
 			// create table to allow user specification of policy environment
-	        String[] columnNames = {
+			String[] columnNames = {
 					Parameters.EUROMODpolicyScheduleHeadingFilename,
 					Parameters.EUROMODpolicyScheduleHeadingScenarioYearBegins.replace('_', ' '),
 					Parameters.EUROMODpolicyScheduleHeadingScenarioSystemYear.replace('_', ' '),
-	        		Parameters.EUROMODpolicySchedulePlanHeadingDescription
+					Parameters.EUROMODpolicySchedulePlanHeadingDescription
 			};
-	        Object[][] data = new Object[euromodOutputTextFiles.size()][columnNames.length];
-	        int row = 0;
-	        for (File file: euromodOutputTextFiles) {
-	        	String name = file.getName();
-	        	data[row][0] = name;
-        		if (previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioYearBegins) != null) {
-        			data[row][1] = previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioYearBegins).toString();
-	        	} else {
-	        		data[row][1] = "";
-	        	}
-				if (previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioSystemYear) != null) {
-					data[row][2] = previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioSystemYear).toString();
-				} else {
-					data[row][2] = "";
-				}
-        		if (previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicySchedulePlanHeadingDescription) != null) {
-        			data[row][3] = previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicySchedulePlanHeadingDescription).toString();
-	        	} else {
-	        		data[row][3] = "";
-	        	}
-	        	row++;
-	        }
 
-	        // create GUI display content
-	        String titleEUROMODtable = "Update EUROMOD Policy Schedule";
-	        String textEUROMODtable =
-				"<html><h2 style=\"text-align: center; font-size:120%;\">Select EUROMOD policies to use in simulation by entering a valid 'policy start year' and 'policy system year'</h2>" +
-				"<p style=\"text-align:center; font-size:120%;\">Policies for which no start year is provided will be omitted from the simulation.<br />" +
-				"<p style=\"text-align:center; font-size:120%;\">Policy system year must match the year selected in EUROMOD / UKMOD when creating the policy.<br />" +
-				"If no policy is selected for the start year of the simulation (<b>" + startYear + "</b>), then the earliest policy will be applied.<br />" +
-				"<b>Optional</b>: add a description of the scenario policy to record what the policy refers to.</p>";
-	        ScenarioTable tableEUROMODscenarios = new ScenarioTable(textEUROMODtable, columnNames, data);
+			Object[][] data = new Object[euromodOutputTextFiles.size()][columnNames.length];
+			int row = 0;
+			for (File file : euromodOutputTextFiles) {
+				String name = file.getName();
+				data[row][0] = name;
+				data[row][1] = previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioYearBegins) != null
+						? previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioYearBegins).toString()
+						: "";
+				data[row][2] = previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioSystemYear) != null
+						? previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicyScheduleHeadingScenarioSystemYear).toString()
+						: "";
+				data[row][3] = previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicySchedulePlanHeadingDescription) != null
+						? previousEUROMODfileInfo.getValue(name, Parameters.EUROMODpolicySchedulePlanHeadingDescription).toString()
+						: "";
+				row++;
+			}
 
-	        // pass content to display
-			FormattedDialogBoxNonStatic policyScheduleBox = new FormattedDialogBoxNonStatic(titleEUROMODtable, null, 900, 300 + euromodOutputTextFiles.size()*11, tableEUROMODscenarios, true);
+			String titleEUROMODtable = "Update EUROMOD Policy Schedule";
+			String textEUROMODtable =
+					"<html><h2 style=\"text-align: center; font-size:120%;\">Select EUROMOD policies to use in simulation by entering a valid 'policy start year' and 'policy system year'</h2>" +
+							"<p style=\"text-align:center; font-size:120%;\">Policies for which no start year is provided will be omitted from the simulation.<br />" +
+							"<p style=\"text-align:center; font-size:120%;\">Policy system year must match the year selected in EUROMOD / UKMOD when creating the policy.<br />" +
+							"If no policy is selected for the start year of the simulation (<b>" + startYear + "</b>), then the earliest policy will be applied.<br />" +
+							"<b>Optional</b>: add a description of the scenario policy to record what the policy refers to.</p>";
+			ScenarioTable tableEUROMODscenarios = new ScenarioTable(textEUROMODtable, columnNames, data);
 
-			//Store a copy in the input directory so that we have a record of the policy schedule for reference
-			XLSXfileWriter.createXLSX(Parameters.INPUT_DIRECTORY, Parameters.EUROMODpolicyScheduleFilename, country.toString(), columnNames, data);
-		}
+			FormattedDialogBoxNonStatic policyScheduleBox = new FormattedDialogBoxNonStatic(
+					titleEUROMODtable,
+					null,
+					900,
+					300 + euromodOutputTextFiles.size() * 11,
+					tableEUROMODscenarios,
+					true
+			);
 
-		if(choices[0] || choices[2] || choices[3] || choices[4]) {
-			// call to import new tax data
-			TaxDonorDataParser.constructAggregateTaxDonorPopulationCSVfile(country, showGui);
-			TaxDonorDataParser.databaseFromCSV(country, startYear, true); // Donor database tables
-			Parameters.loadTimeSeriesFactorForTaxDonor(country);
-			TaxDonorDataParser.populateDonorTaxUnitTables(country, showGui); // Populate tax unit donor tables from person data
+			// Store a copy in the country-specific input directory
+			XLSXfileWriter.createXLSX(
+					countryInputPath,
+					Parameters.EUROMODpolicyScheduleFilename,
+					country.toString(),
+					columnNames,
+					data
+			);
+
+			if (choices[0] || choices[2] || choices[3] || choices[4]) {
+				TaxDonorDataParser.constructAggregateTaxDonorPopulationCSVfile(country, showGui);
+				TaxDonorDataParser.databaseFromCSV(country, startYear, true);
+				Parameters.loadTimeSeriesFactorForTaxDonor(country);
+				TaxDonorDataParser.populateDonorTaxUnitTables(country, showGui);
+			}
 		}
 	}
 
-
 	/**
-	 *
 	 * METHOD FOR DISPLAYING GUI FOR SELECTING COUNTRY AND START YEAR OF SIMULATION
-	 *
 	 */
 	private static void chooseCountryAndStartYear() {
 
-		// set-up combo-boxes
-		String textC = null;
-		ComboBoxCountry cbCountry = new ComboBoxCountry(textC);
-		String textY = null;
-		ComboBoxYear cbStartYear = new ComboBoxYear(textY);
+		ComboBoxCountry cbCountry = new ComboBoxCountry(null);
+		ComboBoxYear cbStartYear = new ComboBoxYear(null);
 
-		// combine combo-boxes into a single form component
 		JInternalFrame countryAndYearFrame = new JInternalFrame();
 		BasicInternalFrameUI bi = (BasicInternalFrameUI)countryAndYearFrame.getUI();
 		bi.setNorthPane(null);
 		countryAndYearFrame.setBorder(null);
-        cbCountry.setBorder(BorderFactory.createTitledBorder("Country selection drop-down menu"));
-        cbStartYear.setBorder(BorderFactory.createTitledBorder("Start year selection drop-down menu"));
-        countryAndYearFrame.setLayout(new BoxLayout(countryAndYearFrame.getContentPane(), BoxLayout.PAGE_AXIS));
-        countryAndYearFrame.add(cbCountry);
-        JPanel border = new JPanel();
-        countryAndYearFrame.add(border);
-        countryAndYearFrame.add(cbStartYear);
-        JPanel border2 = new JPanel();
-        countryAndYearFrame.add(border2);
-        countryAndYearFrame.setVisible(true);
+		cbCountry.setBorder(BorderFactory.createTitledBorder("Country selection drop-down menu"));
+		cbStartYear.setBorder(BorderFactory.createTitledBorder("Start year selection drop-down menu"));
+		countryAndYearFrame.setLayout(new BoxLayout(countryAndYearFrame.getContentPane(), BoxLayout.PAGE_AXIS));
+		countryAndYearFrame.add(cbCountry);
+		countryAndYearFrame.add(new JPanel());
+		countryAndYearFrame.add(cbStartYear);
+		countryAndYearFrame.add(new JPanel());
+		countryAndYearFrame.setVisible(true);
 
-		// text for GUI
 		String title = "Country and Start Year";
 		String text = "<html><h2 style=\"text-align: center; font-size:120%;\">Select simulation country and start year</h2>";
 
-		// sizing for GUI
 		int height = 350, width = 600;
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		if (screenSize.width < 850) {
 			width = (int) (screenSize.width * 0.95);
 		}
 
-		// display GUI
 		FormattedDialogBox.create(title, text, width, height, countryAndYearFrame, true, true, true);
 
-		//Set country and start year from dialog box.  These values will appear in JAS-mine GUI.
-        //TODO: There is a danger that these values could be reset in the JAS-mine GUI.  While the
-        // reset of the start year is not a problem, the country could create erroneous results
-        // (i.e. the incorrect regression coefficients would be applied to the population).
-        // Therefore, we should pass some sort of setting to the model blocking the alteration of
-        // the country if possible.  Could this be done by making the setCountry method ineffective
-        // when the country has been set by the user in the dialog box in the start class?
-      	country = cbCountry.getCountryEnum();	 //Temporarily commented out to disallow choice of the country
+		country = cbCountry.getCountryEnum();
 		startYear = cbStartYear.getYear();
 
-		//Save the last selected country and year to Excel to use in the model if GUI launched straight away
+		// Save the last selected country and year to Excel in the input folder
+		String countryInputPath = "input";
+
+		// Ensure the folder exists
+		File countryFolder = new File(countryInputPath);
+		if (!countryFolder.exists()) {
+			countryFolder.mkdirs();
+		}
+
 		String[] columnNames = {"Country", "Year"};
 		Object[][] data = new Object[1][columnNames.length];
 		data[0][0] = country.toString();
 		data[0][1] = startYear;
-		XLSXfileWriter.createXLSX(Parameters.INPUT_DIRECTORY, Parameters.DatabaseCountryYearFilename, "Data", columnNames, data);
+
+		XLSXfileWriter.createXLSX(
+				countryInputPath,
+				Parameters.DatabaseCountryYearFilename,
+				"Data",
+				columnNames,
+				data
+		);
+
 	}
 }

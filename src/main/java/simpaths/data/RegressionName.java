@@ -11,6 +11,7 @@ public enum RegressionName {
     EducationE1b(RegressionType.Probit),
     EducationE2a(RegressionType.GenOrderedLogit),
 
+    FertilityF1a(RegressionType.Probit),
     FertilityF1b(RegressionType.Probit),
 
     PartnershipU1a(RegressionType.Probit),
