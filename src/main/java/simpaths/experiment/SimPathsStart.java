@@ -82,8 +82,8 @@ public class SimPathsStart implements ExperimentBuilder {
 		}
 
 		// Determine the country-specific input path
-		String countryInputPath = Parameters.INPUT_DIRECTORY + File.separator + country.toString();
-		String dbCountryYearPath = countryInputPath + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx";
+		String dbCountryYearPath = Parameters.INPUT_DIRECTORY	 + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx";
+
 
 		// Load last used country and year from Excel, if it exists
 		MultiKeyCoefficientMap lastDatabaseCountryAndYear = null;
@@ -112,7 +112,7 @@ public class SimPathsStart implements ExperimentBuilder {
 			startYear = Integer.parseInt(valueYear);
 		} else {
 			// File does not exist: first run, let user select country and year via GUI
-			System.out.println("No previous country/year file found in " + countryInputPath + ". Please select country and start year.");
+			System.out.println("No previous country/year file found in " + dbCountryYearPath + ". Please select country and start year.");
 			chooseCountryAndStartYear(); // GUI will update `country` and `startYear` and create the Excel file
 		}
 
