@@ -12,26 +12,25 @@ public enum Labour implements IntegerValuedEnum {
     //int categoryId, int femaleMin, int femaleMax, int maleMin, int maleMax
     ZERO(0, 0, 0, 0, 0),  // 0 hours for both genders
 
-    //EL
-    CATEGORY_EL_1(1, 1, 39,   1, 39),   // [1-39]
-    CATEGORY_EL_2(2, 40, 40,  40, 40),  // [40]
-    CATEGORY_EL_3(3, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK,  41, Parameters.MAX_LABOUR_HOURS_IN_WEEK),  // [41+]
-
-    //IT
-    CATEGORY_IT_1(1, 1, 29,   1, 35),   // [1-29] vs [1-35]
-    CATEGORY_IT_2(2, 30, 35,  36, 39),  // [30-35] vs [36-39]
-    CATEGORY_IT_3(3, 36, 39,  40, 49),  // [36-39] vs [40-49]
-    CATEGORY_IT_4(4, 40, 55, 50, 65), // [40+] vs [50+]
-
-    //PL; same as EL
-    CATEGORY_PL_1(1, 1, 39, 1, 39),  //sub categoryId 20 to 1
-    CATEGORY_PL_2(2, 40, 40, 40, 40),
-    CATEGORY_PL_3(3, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK),
-
     //HU; same as EL
-    CATEGORY_HU_1(1, 1, 39, 1, 39),
-    CATEGORY_HU_2(2, 40, 40, 40, 40),
-    CATEGORY_HU_3(3, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK);
+    CATEGORY_HU_1(11, 1, 39, 1, 39),
+    CATEGORY_HU_2(12, 40, 40, 40, 40),
+    CATEGORY_HU_3(13, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK),
+    //PL; same as EL
+    CATEGORY_PL_1(21, 1, 39, 1, 39),  //sub categoryId 20 to 1
+    CATEGORY_PL_2(22, 40, 40, 40, 40),
+    CATEGORY_PL_3(23, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK),
+    //IT
+    CATEGORY_IT_1(31, 1, 29,   1, 35),   // [1-29] vs [1-35]
+    CATEGORY_IT_2(32, 30, 35,  36, 39),  // [30-35] vs [36-39]
+    CATEGORY_IT_3(33, 36, 39,  40, 49),  // [36-39] vs [40-49]
+    CATEGORY_IT_4(34, 40, 55, 50, 65), // [40+] vs [50+]
+    //EL
+    CATEGORY_EL_1(41, 1, 39,   1, 39),   // [1-39]
+    CATEGORY_EL_2(42, 40, 40,  40, 40),  // [40]
+    CATEGORY_EL_3(43, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK,  41, Parameters.MAX_LABOUR_HOURS_IN_WEEK);  // [41+]
+
+
 
 
     private final int categoryId;
