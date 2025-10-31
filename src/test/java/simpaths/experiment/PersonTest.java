@@ -1,0 +1,391 @@
+package simpaths.experiment;
+
+import simpaths.data.ManagerRegressions;
+import simpaths.data.Parameters;
+import simpaths.data.RegressionName;
+import simpaths.model.BenefitUnit;
+import simpaths.model.Person;
+import simpaths.model.SimPathsModel;
+import simpaths.model.enums.Education;
+import simpaths.model.enums.Indicator;
+import simpaths.model.enums.Les_c4;
+import simpaths.model.Innovations;
+
+import microsim.statistics.regression.BinomialRegression;
+import microsim.statistics.regression.GeneralisedOrderedRegression;
+import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested; // Added: For nested test structure
+import org.junit.jupiter.api.DisplayName; // Added: For descriptive names
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * Unit tests for the Person class, focusing on education transitions.
+ * This test uses Mockito to isolate Person from its complex dependencies
+ * (SimPathsModel, Parameters, Innovations).
+ */
+public class PersonTest {
+
+    // Assuming these static constants exist in Parameters.java for the tests to function
+    private static final int MIN_AGE_TO_LEAVE_EDUCATION = 16;
+    private static final int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
+
+    private Person testPerson;
+
+    // --- Mocks for Dependencies ---
+    private SimPathsModel mockModel;
+    private Innovations mockInnovations;
+    private BenefitUnit mockBenefitUnit;
+
+    // Using the actual regression types for strong type checking and accuracy
+    private BinomialRegression mockBinomialRegression;
+    private GeneralisedOrderedRegression<Education> mockGeneralisedOrderedRegression;
+
+    // --- Critical Constructor Mocking Helper ---
+
+    /**
+     * Helper to mock static dependencies that are called inside the Person constructor,
+     * specifically to prevent the NullPointerException related to Parameter initialization.
+     */
+    private void mockStaticDependenciesForConstructor(Runnable action) {
+        // Mock the multivariate distribution needed by Person constructor's setMarriageTargets()
+        MultivariateNormalDistribution mockMND = Mockito.mock(MultivariateNormalDistribution.class);
+
+        try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
+            // Using explicit lambda call for robust static stubbing
+            parametersMock.when(() -> Parameters.getWageAndAgeDifferentialMultivariateNormalDistribution(Mockito.anyLong()))
+                    .thenReturn(mockMND);
+
+            // Execute the rest of the setup (including new Person() and field injection)
+            action.run();
+        }
+    }
+
+
+    // Reflection utility to set final/private fields for test isolation
+    private void setPrivateField(Object target, String fieldName, Object value) throws Exception {
+        Field field = target.getClass().getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
+    }
+
+    /**
+     * Helper method to configure the regression mock for setEducationLevel().
+     */
+    private void setupEducationLevelRegressionMock(Education expectedEducationLevel, double draw) throws Exception {
+        // Mock random draw for setEducationLevel to ensure assignment happens
+        Mockito.when(mockInnovations.getDoubleDraw(30)).thenReturn(draw);
+
+        // Mock the static dependency on Parameters and ManagerRegressions
+        try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class);
+             MockedStatic<ManagerRegressions> managerRegressionsMock = Mockito.mockStatic(ManagerRegressions.class)) {
+
+            // E2a returns GeneralisedOrderedRegression
+            parametersMock.when(Parameters::getRegEducationE2a).thenReturn(mockGeneralisedOrderedRegression);
+
+            // Set up probabilities map (simplified logic to ensure 'draw' selects 'expectedEducationLevel')
+            Map<Education, Double> mockProbs = new HashMap<>();
+
+            // Calculate mock cumulative probabilities based on the desired outcome and draw
+            double pLow = 0.3;
+            double pMed = 0.6;
+
+            if (expectedEducationLevel == Education.Low) {
+                pLow = Math.max(draw + 0.1, 0.3);
+                pMed = Math.max(pLow + 0.3, 0.6);
+            } else if (expectedEducationLevel == Education.Medium) {
+                pLow = Math.min(draw - 0.1, 0.3);
+                pMed = Math.max(draw + 0.1, 0.6);
+            } else if (expectedEducationLevel == Education.High) {
+                pLow = Math.min(draw - 0.3, 0.3);
+                pMed = Math.min(draw - 0.1, 0.6);
+            }
+
+            mockProbs.put(Education.Low, pLow);
+            mockProbs.put(Education.Medium, pMed);
+            mockProbs.put(Education.High, 1.0);
+
+            // Stub the static call to return our deterministic probabilities map
+            managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
+                    .thenReturn(mockProbs);
+
+            // This nested mockStatic block is sufficient to set up the necessary stubbing.
+        }
+    }
+
+
+    /**
+     * Setup method to be executed before each test method.
+     */
+    @BeforeEach
+    public void setUp() throws Exception {
+        // We wrap the entire setup in a mock block to handle the static dependency called by the Person constructor.
+        mockStaticDependenciesForConstructor(() -> {
+            try {
+                // 1. Initialize Mocks
+                mockModel = Mockito.mock(SimPathsModel.class);
+                mockInnovations = Mockito.mock(Innovations.class);
+                mockBenefitUnit = Mockito.mock(BenefitUnit.class);
+
+                // Initialize regression mocks with specific types
+                mockBinomialRegression = Mockito.mock(BinomialRegression.class);
+                mockGeneralisedOrderedRegression = Mockito.mock(GeneralisedOrderedRegression.class);
+
+                // 2. Set up basic predictable environment
+                Mockito.when(mockModel.getYear()).thenReturn(2025);
+                Mockito.when(mockModel.isAlignInSchool()).thenReturn(false);
+
+                // 3. Initialize Person and inject Mocks using Reflection
+                testPerson = new Person(1L, 123L);
+
+                setPrivateField(testPerson, "model", mockModel);
+                setPrivateField(testPerson, "innovations", mockInnovations);
+                setPrivateField(testPerson, "benefitUnit", mockBenefitUnit);
+
+                // Mock the critical dependency from BenefitUnit (Set<Person> is empty for simplicity)
+                Mockito.when(mockBenefitUnit.getChildren()).thenReturn(java.util.Collections.emptySet());
+            } catch (Exception e) {
+                throw new RuntimeException("Setup failed during initialization or field injection.", e);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
+    // NESTED TESTS FOR inSchool()
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("InSchoolTests: E1a/E1b Flow")
+    class InSchoolTests {
+
+        @Test
+        @DisplayName("OUTCOME A: Lagged Student < Min Age (Always Stays)")
+        public void remainsBelowMinAge() throws Exception {
+            testPerson.setDag(MIN_AGE_TO_LEAVE_EDUCATION - 1);
+            testPerson.setLes_c4_lag1(Les_c4.Student);
+            assertTrue(testPerson.inSchool(), "Person must remain a student if below MIN_AGE_TO_LEAVE_EDUCATION (OUTCOME A).");
+            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(24);
+        }
+
+        @Test
+        @DisplayName("OUTCOME B: Lagged Student, Stays in E1a (Continue Spell)")
+        public void continuesCurrentSpellE1a() throws Exception {
+            final double PROBABILITY_TO_STAY = 0.9;
+            final double INNOVATION_TO_STAY = 0.1;
+
+            testPerson.setDag(25);
+            testPerson.setLes_c4_lag1(Les_c4.Student);
+            testPerson.setLes_c4(Les_c4.Student);
+
+            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
+                parametersMock.when(() -> Parameters.getRegEducationE1a()).thenReturn(mockBinomialRegression);
+                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_STAY);
+                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_STAY);
+
+                assertTrue(testPerson.inSchool(), "Person remains in school (OUTCOME B).");
+                assertEquals(Les_c4.Student, testPerson.getLes_c4());
+                assertFalse(testPerson.isToLeaveSchool());
+            }
+        }
+
+        @Test
+        @DisplayName("E2 Trigger: Lagged Student, Fails E1a (Leaves Spell)")
+        public void triggersE2FromE1aFailure() throws Exception {
+            final double PROBABILITY_TO_STAY = 0.5;
+            final double INNOVATION_TO_LEAVE = 0.95;
+
+            testPerson.setDag(25);
+            testPerson.setLes_c4_lag1(Les_c4.Student);
+
+            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
+                parametersMock.when(() -> Parameters.getRegEducationE1a()).thenReturn(mockBinomialRegression);
+                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_STAY);
+                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_LEAVE);
+
+                assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
+                assertTrue(testPerson.isToLeaveSchool(), "toLeaveSchool flag should be true.");
+            }
+        }
+
+        @Test
+        @DisplayName("E2 Trigger: Lagged Student, at Max Age (Forced Exit)")
+        public void triggersE2FromMaxAge() throws Exception {
+            testPerson.setDag(MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION);
+            testPerson.setLes_c4_lag1(Les_c4.Student);
+
+            assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
+            assertTrue(testPerson.isToLeaveSchool(), "toLeaveSchool flag should be true.");
+            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(24);
+        }
+
+        @Test
+        @DisplayName("OUTCOME C: Lagged Retired (Cannot Re-enter)")
+        public void cannotEnterIfLaggedRetired() throws Exception {
+            testPerson.setLes_c4_lag1(Les_c4.Retired);
+
+            assertFalse(testPerson.inSchool(), "Retired person cannot be student (OUTCOME C).");
+            assertFalse(testPerson.isToLeaveSchool());
+            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(24);
+        }
+
+        @Test
+        @DisplayName("OUTCOME E: Lagged Not Student, Succeeds in E1b (Becomes Student)")
+        public void becomesStudentE1bSuccess() throws Exception {
+            final double PROBABILITY_TO_BECOME_STUDENT = 0.8;
+            final double INNOVATION_TO_BECOME_STUDENT = 0.1;
+
+            testPerson.setLes_c4_lag1(Les_c4.NotEmployed);
+            testPerson.setLes_c4(Les_c4.NotEmployed);
+
+            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
+                parametersMock.when(() -> Parameters.getRegEducationE1b()).thenReturn(mockBinomialRegression);
+                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_BECOME_STUDENT);
+                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_BECOME_STUDENT);
+
+                assertTrue(testPerson.inSchool(), "Person becomes a student (OUTCOME E).");
+                assertEquals(Les_c4.Student, testPerson.getLes_c4());
+                assertEquals(Indicator.True, testPerson.getDed());
+                assertEquals(Indicator.True, testPerson.getDer());
+            }
+        }
+
+        @Test
+        @DisplayName("OUTCOME D: Lagged Not Student, Fails in E1b (Remains Unchanged)")
+        public void remainsUnchangedE1bFailure() throws Exception {
+            final double PROBABILITY_TO_BECOME_STUDENT = 0.2;
+            final double INNOVATION_REMAIN_UNCHANGED = 0.9;
+
+            testPerson.setLes_c4_lag1(Les_c4.EmployedOrSelfEmployed);
+            testPerson.setLes_c4(Les_c4.EmployedOrSelfEmployed);
+
+            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
+                parametersMock.when(() -> Parameters.getRegEducationE1b()).thenReturn(mockBinomialRegression);
+                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_BECOME_STUDENT);
+                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_REMAIN_UNCHANGED);
+
+                assertFalse(testPerson.inSchool(), "Person remains in current status (OUTCOME D).");
+                assertEquals(Les_c4.EmployedOrSelfEmployed, testPerson.getLes_c4());
+                assertFalse(testPerson.isToLeaveSchool());
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // NESTED TESTS FOR setEducationLevel()
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("SetEducationLevelTests: E2 Flow Logic")
+    class SetEducationLevelTests {
+
+        @Test
+        @DisplayName("OUTCOME F (First Spell): Adopts New Level (e.g., Low -> High)")
+        public void firstSpellAdoptsNewLevel() throws Exception {
+            testPerson.setDeh_c3(Education.Low);
+            testPerson.setDer(Indicator.False);
+
+            setupEducationLevelRegressionMock(Education.High, 0.9);
+
+            testPerson.setEducationLevel();
+
+            assertEquals(Education.High, testPerson.getDeh_c3(), "First spell should always adopt the new regression result (OUTCOME F).");
+        }
+
+        @Test
+        @DisplayName("OUTCOME F (Return Spell Improvement): Adopts New, Higher Level")
+        public void returnSpellAdoptsHigherLevel() throws Exception {
+            testPerson.setDeh_c3(Education.Low);
+            testPerson.setDer(Indicator.True);
+
+            setupEducationLevelRegressionMock(Education.Medium, 0.6);
+
+            testPerson.setEducationLevel();
+
+            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Return spell must adopt the new level because it is higher than current (OUTCOME F).");
+        }
+
+        @Test
+        @DisplayName("OUTCOME G (Return Spell Downgrade): Retains Current Level (e.g., Medium -> Low)")
+        public void returnSpellRetainsCurrentLevelOnDowngrade() throws Exception {
+            testPerson.setDeh_c3(Education.Medium);
+            testPerson.setDer(Indicator.True);
+
+            setupEducationLevelRegressionMock(Education.Low, 0.2);
+
+            testPerson.setEducationLevel();
+
+            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Return spell must retain the current level because the new level is not higher (OUTCOME G).");
+        }
+
+        @Test
+        @DisplayName("OUTCOME G (Return Spell Same Level): Retains Current Level")
+        public void returnSpellRetainsCurrentLevelOnSameLevel() throws Exception {
+            testPerson.setDeh_c3(Education.Medium);
+            testPerson.setDer(Indicator.True);
+
+            setupEducationLevelRegressionMock(Education.Medium, 0.5);
+
+            testPerson.setEducationLevel();
+
+            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Return spell must retain the current level because the new level is not strictly higher (OUTCOME G).");
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // NESTED TESTS FOR leavingSchool()
+    // -------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("LeavingSchoolTests: Final State Transitions")
+    class LeavingSchoolTests {
+
+        @Test
+        @DisplayName("When toLeaveSchool=True: Executes all state transitions")
+        public void successfulExitExecution() throws Exception {
+            testPerson.setToLeaveSchool(true);
+            testPerson.setDag(20);
+            testPerson.setDeh_c3(Education.Low);
+            testPerson.setDed(Indicator.True);
+            testPerson.setDer(Indicator.False);
+            setPrivateField(testPerson, "leftEducation", false);
+            testPerson.setLes_c4(Les_c4.Student);
+            testPerson.setLes_c4_lag1(Les_c4.Student);
+
+            setupEducationLevelRegressionMock(Education.Medium, 0.5);
+
+            testPerson.leavingSchool();
+
+            assertFalse(testPerson.isToLeaveSchool(), "toLeaveSchool should be reset to false.");
+            assertEquals(Indicator.False, testPerson.getDed(), "Ded should be set to False.");
+            assertEquals(Indicator.False, testPerson.getDer(), "Der should be set to False.");
+            assertTrue(testPerson.isLeftEducation(), "leftEducation flag should be true.");
+            assertEquals(Les_c4.NotEmployed, testPerson.getLes_c4(), "Activity status should be set to NotEmployed.");
+            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Education level should be assigned to Medium.");
+            assertEquals(Indicator.True, testPerson.getSedex(), "Sedex should be set to true.");
+        }
+
+        @Test
+        @DisplayName("When toLeaveSchool=False: Skips execution and leaves state intact")
+        public void noExecution() throws Exception {
+            testPerson.setToLeaveSchool(false);
+            testPerson.setLes_c4(Les_c4.EmployedOrSelfEmployed);
+            testPerson.setDeh_c3(Education.High);
+
+            testPerson.leavingSchool();
+
+            assertEquals(Les_c4.EmployedOrSelfEmployed, testPerson.getLes_c4(), "Activity status should remain unchanged.");
+            assertEquals(Education.High, testPerson.getDeh_c3(), "Education level must remain unchanged.");
+            assertFalse(testPerson.isLeftEducation(), "leftEducation flag should remain false (default state).");
+            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(30);
+        }
+    }
+}
