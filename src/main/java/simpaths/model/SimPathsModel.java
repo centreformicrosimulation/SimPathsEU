@@ -3,6 +3,8 @@ package simpaths.model;
 
 // import Java packages
 import java.io.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -22,9 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import simpaths.data.IEvaluation;
 import simpaths.data.MahalanobisDistance;
 import simpaths.data.RootSearch;
+import simpaths.data.RootSearch2;
 import simpaths.data.startingpop.Processed;
 import simpaths.experiment.SimPathsCollector;
-import simpaths.model.decisions.DecisionParams;
+import simpaths.model.decisions.*;
 import microsim.alignment.outcome.ResamplingAlignment;
 import microsim.event.*;
 import microsim.event.EventListener;
@@ -44,7 +47,6 @@ import microsim.engine.SimulationEngine;
 
 // import LABOURsim packages
 import simpaths.data.Parameters;
-import simpaths.model.decisions.ManagerPopulateGrids;
 import simpaths.model.enums.*;
 import simpaths.model.taxes.DonorTaxUnit;
 import simpaths.model.taxes.DonorTaxUnitPolicy;
@@ -169,7 +171,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
 
-    private boolean alignEmployment = false; //true; //Set to true to align employment share
+    private boolean alignEmployment = true; //true; //Set to true to align employment share
 
     public boolean addRegressionStochasticComponent = true; //If set to true, and regression contains ResStanDev variable, will evaluate the regression score including stochastic part, and omits the stochastic component otherwise.
 
@@ -1467,6 +1469,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     public void disabilityAlignment() {
         DisabilityAlignment disabilityAlignment = new DisabilityAlignment(persons);
         double disabilityAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.DisabilityAdjustment);
+
+        System.out.println("Disability alignment has started");
+        // start timer
+        Instant beforeDsbltRS2 = Instant.now();
+
         RootSearch search = getRootSearch(disabilityAdjustment, disabilityAlignment, 5.0E-3, 5.0E-3, 2);
 
         // update and exit
@@ -1474,6 +1481,14 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.DisabilityAdjustment); // If adjustment is altered from the initial value, update the map
             System.out.println("Disability adjustment value was " + search.getTarget()[0]);
         }
+
+        // stop timer
+        Instant afterDsbltRS2 = Instant.now();
+
+        // display time to complete
+        Duration durationTotalRS2 = Duration.between(beforeDsbltRS2, afterDsbltRS2);
+        System.out.println("Disability alignment completed in " +
+                String.format("%.3f", (double)durationTotalRS2.toSeconds()/60.0) + " minutes");
     }
 
     public void activityAlignmentMacroShock() {
@@ -1501,7 +1516,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 persons, benefitUnits, coefficientMaps, regressorsToModify, initialUtilityAdjustment
         );
 
-        RootSearch search = getRootSearch(initialUtilityAdjustment, activityAlignment, 1.0E-2, 1.0E-2, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
+        RootSearch search = getRootSearch(initialUtilityAdjustment, activityAlignment, 5.0E-1, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
 
         if (search.isTargetAltered()) {
             double newAdjustment = search.getTarget()[0];
@@ -1520,9 +1535,40 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             OccupancyExtended occupancy, // benefit unit occupancy extended to allow all types used in labour supply module
             String occupancyLabel // displays the type of benefit unit to which adjustment is applied
     ) {
+        //double utilityAdjustment = Parameters.getValuePreferPrev(getYear(), adjustmentMap);
         double utilityAdjustment = Parameters.getTimeSeriesValue(getYear(), adjustmentMap);
+        System.out.println("Utility adjustment for " + occupancyLabel + " has started");
+
+        // start timer
+        Instant beforeRS2 = Instant.now();
+
+
+
+
+
         ActivityAlignmentV2 activityAlignment = new ActivityAlignmentV2(benefitUnits, coefficientMap, regressionCoefficientName, occupancy);
-        RootSearch search = getRootSearch(utilityAdjustment, activityAlignment, 1.0E-2, 1.0E-2, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
+        RootSearch2 search = getRootSearch2(utilityAdjustment, activityAlignment, 0.5, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
+
+        System.out.println("=== Root Search Summary ===");
+        System.out.println("Root found at: " + search.getTarget()[0]);
+        System.out.println("Target altered: " + search.isTargetAltered());
+        System.out.println("Iterations: " + search.getIterationCount());
+
+        for (RootSearch2.IterationInfo it : search.getIterationHistory()) {
+            System.out.printf("Iter %3d | x=% .6f | f(x)=% .3e | step=% .3e | funcTol=%-5s | ordTol=%-5s%n",
+                    it.getIteration(), it.getX(), it.getFx(), it.getStep(),
+                    it.isFuncTolMet(), it.isOrdTolMet());
+        }
+
+        // stop timer
+        Instant afterRS2 = Instant.now();
+
+        // display time to complete
+        Duration durationTotalRS2 = Duration.between(beforeRS2, afterRS2);
+        System.out.println("Utility adjustment for " + occupancyLabel + " completed in " +
+                String.format("%.3f", (double)durationTotalRS2.toSeconds()/60.0) + " minutes");
+
+
         if (search.isTargetAltered()) {
             Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], adjustmentMap);
             System.out.println("Utility adjustment for " + occupancyLabel + " was " + search.getTarget()[0]);
@@ -1639,6 +1685,26 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         search.evaluate();
         return search;
     }
+
+
+    @NotNull
+    private static RootSearch2 getRootSearch2(double initialAdjustment, IEvaluation alignmentClass, double epsOrdinates, double epsFunction, double modifier) {
+        double minVal = initialAdjustment - modifier;
+        double maxVal = initialAdjustment + modifier;
+        return getRootSearch2(initialAdjustment, minVal, maxVal, alignmentClass, epsOrdinates, epsFunction);
+    }
+
+    @NotNull
+    private static RootSearch2 getRootSearch2(double initialAdjustment, double minVal, double maxVal, IEvaluation alignmentClass, double epsOrdinates, double epsFunction) {
+        double[] startVal = new double[] {initialAdjustment}; // Starting values for the adjustment
+        double[] lowerBound = new double[] {minVal};
+        double[] upperBound = new double[] {maxVal};
+        RootSearch2 search = new RootSearch2(lowerBound, upperBound, startVal, alignmentClass, epsOrdinates, epsFunction);
+        search.evaluate();
+        return search;
+    }
+
+
 
 
     /**
@@ -1829,6 +1895,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         double minVal = Math.max(-FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment - FERTILITY_ALIGNMENT_BOUND);
         double maxVal = Math.min(FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment + FERTILITY_ALIGNMENT_BOUND);
 
+        System.out.println("Fertility alignment has started");
+        // start timer
+        Instant beforeFrtltRS2 = Instant.now();
+
         // run search
         RootSearch search = getRootSearch(0.0, minVal, maxVal, fertilityAlignment, 5.0E-3, 5.0E-3); // epsOrdinates and epsFunction determine the stopping condition for the search. For partnershipAlignment error term is the difference between target and observed share of partnered individuals.
 
@@ -1837,6 +1907,14 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             Parameters.setAlignmentValue(getYear(), search.getTarget()[0], AlignmentVariable.FertilityAlignment); // If adjustment is altered from the initial value, update the map
             System.out.println("Fertility adjustment value was " + search.getTarget()[0]);
         }
+
+        // stop timer
+        Instant afterFrtltRS2 = Instant.now();
+
+        // display time to complete
+        Duration durationTotalRS2 = Duration.between(beforeFrtltRS2, afterFrtltRS2);
+        System.out.println("Fertiility alignment completed in " +
+                String.format("%.3f", (double)durationTotalRS2.toSeconds()/60.0) + " minutes");
     }
 
 

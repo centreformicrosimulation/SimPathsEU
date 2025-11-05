@@ -21,6 +21,7 @@ import jakarta.persistence.Persistence;
 import simpaths.data.FormattedDialogBox;
 import simpaths.data.Parameters;
 import simpaths.model.enums.Country;
+import simpaths.model.enums.Gender;
 import simpaths.model.enums.Region;
 import simpaths.model.taxes.*;
 
@@ -632,6 +633,7 @@ public class TaxDonorDataParser {
 
                 counter++;
                 int age = 0, numberMembersOver17 = 0, numberChildrenUnder5 = 0, numberChildren5To9 = 0;
+                Gender dgn = Gender.Male;  //it is default gender value for Tax unit; needed only to evaluate flagSPA
                 int numberChildren10To17 = 0, dlltsd1 = 0, dlltsd2 = 0, careProvision = -1;
                 double hoursWorkedPerWeek1 = 0.0, hoursWorkedPerWeek2 = 0.0;
                 boolean flagInitialiseDemographics = true;
@@ -658,10 +660,19 @@ public class TaxDonorDataParser {
                         bennt += person.getPolicy(fromYear).getNonMonetaryBenefitsAmount();
                         childcare += person.getPolicy(fromYear).getChildcareCostPerMonth();
                         int agePerson = person.getAge();
-                        if (flagInitialiseDemographics) {
-                            // need to instantiate variables to evaluate keys
+                        Gender genderPerson = person.getDgn();
 
-                            age = Math.max(age, agePerson);
+
+                        if (flagInitialiseDemographics) {
+                            // need to instantiate variables to evaluate key
+                            if (Parameters.getStatePensionAge(systemYear, dgn) <= age) {dgn = genderPerson;} // if flagSPA = 1 then update dgn
+
+                            // update age and dgn together using the same selection rule (max age)
+                            if (agePerson > age) {
+                                age = agePerson;
+                                dgn = genderPerson;
+                            }
+
                             if (agePerson < 5) {
                                 numberChildrenUnder5 += 1;
                             } else if (agePerson < 10) {
@@ -691,11 +702,18 @@ public class TaxDonorDataParser {
                             if (cphere>careProvision)
                                 careProvision = cphere;
                         } else {
-                            ageTest = Math.max(ageTest, agePerson);
+                            // recompute tests for invariance on later years
+                            if (agePerson > ageTest) {
+                                ageTest = agePerson;
+                            }
                         }
                     }
-                    if (!flagInitialiseDemographics && ageTest!=age)
-                        throw new RuntimeException("Demographic characteristics vary across system years derived from EUROMOD");
+
+                    if (!flagInitialiseDemographics) {
+                        if (ageTest != age )
+                            throw new RuntimeException("Demographic characteristics vary across system years derived from EUROMOD");
+                    }
+
                     flagInitialiseDemographics = false;
                     double secondIncome = Math.max(0.0, origIncome - principalIncome);
                     DonorTaxUnitPolicy taxUnitPolicy = taxUnit.getPolicyByFromYear(fromYear);
@@ -707,7 +725,7 @@ public class TaxDonorDataParser {
                         double childcareCostPerWeek = childcare / Parameters.WEEKS_PER_MONTH;
                         double secondIncomePerWeek = secondIncome / Parameters.WEEKS_PER_MONTH;
                         DonorKeys keys = new DonorKeys();
-                        KeyFunction keyFunction = new KeyFunction(systemYear, systemYear, age, numberMembersOver17, numberChildrenUnder5,
+                        KeyFunction keyFunction = new KeyFunction(systemYear, systemYear, age, dgn, numberMembersOver17, numberChildrenUnder5,
                                 numberChildren5To9, numberChildren10To17, hoursWorkedPerWeek1, hoursWorkedPerWeek2, dlltsd1, dlltsd2,
                                 careProvision, originalIncomePerWeek, secondIncomePerWeek, childcareCostPerWeek);
                         keys.evaluate(keyFunction);

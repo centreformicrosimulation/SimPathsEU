@@ -1,6 +1,7 @@
 package simpaths.model.taxes;
 
 import jakarta.persistence.*;
+import simpaths.model.enums.Gender;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -23,6 +24,8 @@ public class DonorPerson {
     private Set<DonorPersonPolicy> policies = new LinkedHashSet<>();
 
     @Column(name = "DAG") private Integer age;
+    //@Column(name = "DGN") private Gender dgn;
+    @Column(name = "DGN") private String dgnRaw;
     @Column(name = "WEIGHT") private Double weight;
     @Column(name = "HOURS_WORKED_WEEKLY") private Integer hoursWorkedWeekly;
     @Column(name = "DLLTSD") private Integer dlltsd;
@@ -42,6 +45,21 @@ public class DonorPerson {
         return this.id;
     }
     public Integer getAge() { return this.age; }
+
+
+    public Gender getDgn() {
+        if (dgnRaw == null) return null;
+        String v = dgnRaw.trim().toUpperCase();
+        return switch (v) {
+            case "FEMALE" -> Gender.Female;
+            case "MALE" -> Gender.Male;
+            default -> throw new IllegalStateException("Unknown gender value in DB: " + dgnRaw);
+        };
+    }
+
+
+    /** If you ever need the raw DB text */
+    public String getDgnRaw() { return dgnRaw; }
     public int getHoursWorkedWeekly() { return this.hoursWorkedWeekly; }
     public int getDlltsd() { return this.dlltsd; }
     public int getCarer() { return 0; }

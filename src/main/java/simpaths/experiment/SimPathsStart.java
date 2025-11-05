@@ -454,6 +454,7 @@ public class SimPathsStart implements ExperimentBuilder {
 				TaxDonorDataParser.constructAggregateTaxDonorPopulationCSVfile(country, showGui);
 				TaxDonorDataParser.databaseFromCSV(country, startYear, true);
 				Parameters.loadTimeSeriesFactorForTaxDonor(country);
+                Parameters.defineCountryString(country);
 				TaxDonorDataParser.populateDonorTaxUnitTables(country, showGui);
 			}
 		}

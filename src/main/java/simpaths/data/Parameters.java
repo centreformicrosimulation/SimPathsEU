@@ -26,6 +26,7 @@ import simpaths.model.taxes.database.TaxDonorDataParser;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.util.*;
 import java.lang.reflect.Field;
@@ -64,91 +65,91 @@ public class Parameters {
     // The only financial statistics that vary by system should consequently be policy dependant variables,
     // (described below under DONOR_POLICY_VARIABLES). The model performs checks to ensure that these conditions are
     // met when it loads in data.
-    public static final String[] DONOR_STATIC_VARIABLES = new String[] {
-		"idhh",					//id of household
-		"idperson", 			//id of person
-		"idfather", 			//id of father
-		"idmother", 			//id of mother
-		"idpartner", 			//id of partner
-		"dag", 					//age
-		"dct", 					//country
-		"deh", 					//highest education level
-		"dgn", 					//gender
-		"drgn1", 			    //region (NUTS1)
-		"dwt", 					//household weight
-		"les", 					//labour employment status + health status
-		"lcs", 					//labour civil servant dummy indicator
-    //    "lcr01",                //carer status for benefits (0 no 1 yes)
-		"lhw", 					//hours worked per week
-		"ddi",					//disability status
-        "yem", 					//employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
-        "yse", 					//self-employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
+    public static final String[] DONOR_STATIC_VARIABLES = new String[]{
+            "idhh",                    //id of household
+            "idperson",            //id of person
+            "idfather",            //id of father
+            "idmother",            //id of mother
+            "idpartner",            //id of partner
+            "dag",                    //age
+            "dct",                    //country
+            "deh",                    //highest education level
+            "dgn",                    //gender
+            "drgn1",                //region (NUTS1)
+            "dwt",                    //household weight
+            "les",                    //labour employment status + health status
+            "lcs",                    //labour civil servant dummy indicator
+            //    "lcr01",                //carer status for benefits (0 no 1 yes)
+            "lhw",                    //hours worked per week
+            "ddi",                    //disability status
+            "yem",                    //employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
+            "yse",                    //self-employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
     };
 
-    public static final String[] DONOR_POLICY_VARIABLES = new String[] {
-    //    "xcc",                  //childcare costs
-        "ils_earns",			//EUROMOD output variable:- total labour earnings (employment + self-employment income + potentially other labour earnings like temporary employment, depending on country classification)
-        "ils_origy",			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
-		"ils_dispy",			//Disposable income : from EUROMOD output data after tax / benefit transfers (monthly time-scale)
-		"ils_benmt",			//EUROMOD output variable: income list: monetary benefits
-		"ils_bennt",			//EUROMOD output variable: income list: non-monetary benefits
+    public static final String[] DONOR_POLICY_VARIABLES = new String[]{
+            //    "xcc",                  //childcare costs
+            "ils_earns",            //EUROMOD output variable:- total labour earnings (employment + self-employment income + potentially other labour earnings like temporary employment, depending on country classification)
+            "ils_origy",            //EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
+            "ils_dispy",            //Disposable income : from EUROMOD output data after tax / benefit transfers (monthly time-scale)
+            "ils_benmt",            //EUROMOD output variable: income list: monetary benefits
+            "ils_bennt",            //EUROMOD output variable: income list: non-monetary benefits
     };
 
-    public static final String[] HOUSEHOLD_VARIABLES_INITIAL = new String[] {
-		"idhh",				//id of household (can contain multiple benefit units)
+    public static final String[] HOUSEHOLD_VARIABLES_INITIAL = new String[]{
+            "idhh",                //id of household (can contain multiple benefit units)
     };
 
-    public static final String[] BENEFIT_UNIT_VARIABLES_INITIAL = new String[] {
-		"idhh",				//id of household (can contain multiple benefit units)
-		"idbenefitunit",	//id of a benefit unit
-		"drgn1", 			//region (NUTS1)
-		"ydses_c5",			//household income quantile
-		"dhh_owned",		//flag indicating if benefit unit owns a house
+    public static final String[] BENEFIT_UNIT_VARIABLES_INITIAL = new String[]{
+            "idhh",                //id of household (can contain multiple benefit units)
+            "idbenefitunit",    //id of a benefit unit
+            "drgn1",            //region (NUTS1)
+            "ydses_c5",            //household income quantile
+            "dhh_owned",        //flag indicating if benefit unit owns a house
     };
 
-    public static final String[] PERSON_VARIABLES_INITIAL = new String[] {
-		"idhh",					//id of household (can contain multiple benefit units)
-		"idbenefitunit",		//id of a benefit unit
-		"idperson", 			//id of person
-		"dwt", 					//household weight
-		"idfather", 			//id of father
-		"idmother", 			//id of mother
-		"dag", 					//age
-		"deh_c3", 				//highest education level
-		"dehm_c3",				//highest education level of mother
-		"dehf_c3",				//highest education level of father
-		"ded",					//in education dummy
-		"der",					//return to education dummy
-		"dhe",					//health status
-		"dcpyy",				//years in partnership
-		"dcpagdf",				//partners age difference
-		"dnc02",				//number children aged 0-2
-		"dnc",					//number children
-		"ypnbihs_dv",			//gross personal non-benefit income
-		"yptciihs_dv",			//gross personal non-employment non-benefit income
-		"ypncp",  				//gross personal capital income
-		"ypnoab",				//gross personal pension (public / occupational) income
-		"yplgrs_dv",			//gross personal employment income
-		"ynbcpdf_dv",			//difference partner income
-		"dlltsd",				//long-term sick or disabled
-		"sedex",				//year left education
-		"stm",					//system variable - year
-		"swv",					//system variable - wave
-		"dgn", 					//gender
-		"les_c4", 				//labour employment status
-        "l1_les_c4",            //lag(1) of labour employment status
-		"lhw", 					//hours worked per week
-		"adultchildflag",		//flag indicating adult child living at home in the data
-		"dhh_owned",			//flag indicating if individual is a homeowner
-		"obs_earnings_hourly", //initial value of hourly earnings from the data
-		"l1_obs_earnings_hourly", //lag(1) of initial value of hourly earnings from the data
-        "liwwh",                    // number of years in employment
-		//"yem", 					//employment income
-		//"yse", 					//self-employment income
+    public static final String[] PERSON_VARIABLES_INITIAL = new String[]{
+            "idhh",                    //id of household (can contain multiple benefit units)
+            "idbenefitunit",        //id of a benefit unit
+            "idperson",            //id of person
+            "dwt",                    //household weight
+            "idfather",            //id of father
+            "idmother",            //id of mother
+            "dag",                    //age
+            "deh_c3",                //highest education level
+            "dehm_c3",                //highest education level of mother
+            "dehf_c3",                //highest education level of father
+            "ded",                    //in education dummy
+            "der",                    //return to education dummy
+            "dhe",                    //health status
+            "dcpyy",                //years in partnership
+            "dcpagdf",                //partners age difference
+            "dnc02",                //number children aged 0-2
+            "dnc",                    //number children
+            "ypnbihs_dv",            //gross personal non-benefit income
+            "yptciihs_dv",            //gross personal non-employment non-benefit income
+            "ypncp",                //gross personal capital income
+            "ypnoab",                //gross personal pension (public / occupational) income
+            "yplgrs_dv",            //gross personal employment income
+            "ynbcpdf_dv",            //difference partner income
+            "dlltsd",                //long-term sick or disabled
+            "sedex",                //year left education
+            "stm",                    //system variable - year
+            "swv",                    //system variable - wave
+            "dgn",                    //gender
+            "les_c4",                //labour employment status
+            "l1_les_c4",            //lag(1) of labour employment status
+            "lhw",                    //hours worked per week
+            "adultchildflag",        //flag indicating adult child living at home in the data
+            "dhh_owned",            //flag indicating if individual is a homeowner
+            "obs_earnings_hourly", //initial value of hourly earnings from the data
+            "l1_obs_earnings_hourly", //lag(1) of initial value of hourly earnings from the data
+            "liwwh",                    // number of years in employment
+            //"yem", 					//employment income
+            //"yse", 					//self-employment income
 
-		//From EUROMOD output data before tax / benefit transfers, so not affected by EUROMOD policy scenario (monthly time-scale).  We just use them calculated from EUROMOD output because EUROMOD has the correct way of aggregating each country's different component definitions
-		//"ils_earns", 			//EUROMOD output variable:- total labour earnings (employment + self-employment income + potentially other labour earnings like temporary employment, depending on country classification)
-		//"ils_origy"			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
+            //From EUROMOD output data before tax / benefit transfers, so not affected by EUROMOD policy scenario (monthly time-scale).  We just use them calculated from EUROMOD output because EUROMOD has the correct way of aggregating each country's different component definitions
+            //"ils_earns", 			//EUROMOD output variable:- total labour earnings (employment + self-employment income + potentially other labour earnings like temporary employment, depending on country classification)
+            //"ils_origy"			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
     };
 
     // Country-specific parameters which are then set by the Excel file
@@ -162,8 +163,8 @@ public class Parameters {
     public static int HOURS_IN_WEEK = 168; //This is used to calculate leisure in labour supply
     public static boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
 
-    public static int AGE_TO_BECOME_RESPONSIBLE = 18;			// Age become reference person of own benefit unit
-    public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;		// Minimum age for a person to leave (full-time) education
+    public static int AGE_TO_BECOME_RESPONSIBLE = 18;            // Age become reference person of own benefit unit
+    public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;        // Minimum age for a person to leave (full-time) education
     public static int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
     public static int MAX_AGE_TO_ENTER_EDUCATION = 35;
 
@@ -175,7 +176,7 @@ public class Parameters {
     public static double SHARE_OF_WEALTH_TO_ANNUITISE_AT_RETIREMENT = 0.25;
     public static double ANNUITY_RATE_OF_RETURN = 0.015;
 
-    public static int MIN_HOURS_FULL_TIME_EMPLOYED = 25;	// used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
+    public static int MIN_HOURS_FULL_TIME_EMPLOYED = 25;    // used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
     public static double MIN_HOURLY_WAGE_RATE = 0.0;
     public static double MAX_HOURLY_WAGE_RATE = 150.0;
     public static double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
@@ -184,34 +185,34 @@ public class Parameters {
 
     public static double KEY_FUNCTION_HU2_HI_INCOME = 339.0; // 67th percentile observed in the EM data for 2018
     public static double KEY_FUNCTION_HU2_LO_INCOME = 154.0; // 33rd percentile observed in the EM data for 2018
-    public static int  KEY_FUNCTION_HU2_MID_AGE = 45;
-    public static int  KEY_FUNCTION_HU2_INCOME_REF_YEAR = 2018;
+    public static int KEY_FUNCTION_HU2_MID_AGE = 45;
+    public static int KEY_FUNCTION_HU2_INCOME_REF_YEAR = 2018;
     // Country-specific parameters which are handled without using excel input
-    public static int maxAge;					// maximum age possible in simulation; set in GUI menu
-    public static int MIN_AGE_COHABITATION;  	// Min age a person can marry
+    public static int maxAge;                    // maximum age possible in simulation; set in GUI menu
+    public static int MIN_AGE_COHABITATION;    // Min age a person can marry
     public static AnnuityRates annuityRates;    // is set later in AnnuityRates class by evaluating other parameters
 
     //Parameters for managing tax and benefit imputations
     public static int TAXDB_REGIMES = 6;
-    private static Map<MatchFeature, Map<Integer, Integer>> taxdbCounter = new HashMap<MatchFeature, Map<Integer, Integer>>();			// records, for each of the three donor keys (first Integer), the increments (second Integer) associated with one unit change in characteristic (String).  The properties of taxdbCounter are specific to the KeyFunction used (and are populated by the associated function)
-    private static List<DonorTaxUnit> donorPool;													// list of donors for tax imputation, in ascending order by private (original) income
-    private static Map<Triple<Integer,Integer,Integer>,List<Integer>> taxdbReferences = new HashMap<>();	    // for Triple <system year, matching regime, regime index> returns a list of indices to donorPool that describes members of grouping, in ascending order by private income
+    private static Map<MatchFeature, Map<Integer, Integer>> taxdbCounter = new HashMap<MatchFeature, Map<Integer, Integer>>();            // records, for each of the three donor keys (first Integer), the increments (second Integer) associated with one unit change in characteristic (String).  The properties of taxdbCounter are specific to the KeyFunction used (and are populated by the associated function)
+    private static List<DonorTaxUnit> donorPool;                                                    // list of donors for tax imputation, in ascending order by private (original) income
+    private static Map<Triple<Integer, Integer, Integer>, List<Integer>> taxdbReferences = new HashMap<>();        // for Triple <system year, matching regime, regime index> returns a list of indices to donorPool that describes members of grouping, in ascending order by private income
     private static MahalanobisDistance mdDualIncome;
     private static MahalanobisDistance mdChildcare;
     private static MahalanobisDistance mdDualIncomeChildcare;
 
     //Labour Demand/Supply Convergence parameters
-    public static final double INITIAL_DECAY_FACTOR = 1.;	//Initialisation of field that is used to check whether labour market equilibrium is progressing fast enough (is multiplied by a factor at each iteration when needed, so the factor gets exponentially smaller)
-    public static final DemandAdjustment demandAdjustment = DemandAdjustment.PopulationGrowth;		//Choose the method by which we derive the factor applied to the converged labour demand in order to get the initial labour demand at the following timestep
-    public static final double ETA = 0.2;		//(eta in Matteo's document).  If excess labour demand is greater than this value (0.1 == 10%), then iterate convergence procedure again
-    public static final double CHI_minus = 0.1;		//Lambda in Matteo's document is adjusted by reducing by lambda -> lambda * (1 - CHI_minus), or increasing lambda by lambda -> lambda * (1 + CHI_plus)
-    public static final double CHI_plus = 0.1;		//Lambda in Matteo's document is adjusted by reducing by lambda -> lambda * (1 - CHI_minus), or increasing lambda by lambda -> lambda * (1 + CHI_plus)
-    public static final Map<Education, Double> adjustmentFactorByEducation;	//Lambda_s in Matteo's document, where s is the education level
-    public static final double initialLambda = ETA/5.;	//Ensure adjustment is smaller than relative excess labour demand threshold
-    public static final int MinimumIterationsBeforeTestingConvergenceCriteria = 20;	//Run this number of iterations to accumulate estimates of (aggregate) labour supply (cross) elasticities before testing the convergence criterion (i.e. the norm of (supply * demand elasticities) matrix < 1)
-    public static final int MaxConvergenceAttempts = 2 * MinimumIterationsBeforeTestingConvergenceCriteria;		//Allow the equilibrium convergence criterion to fail the test this number of times before potentially terminating the simulation.
+    public static final double INITIAL_DECAY_FACTOR = 1.;    //Initialisation of field that is used to check whether labour market equilibrium is progressing fast enough (is multiplied by a factor at each iteration when needed, so the factor gets exponentially smaller)
+    public static final DemandAdjustment demandAdjustment = DemandAdjustment.PopulationGrowth;        //Choose the method by which we derive the factor applied to the converged labour demand in order to get the initial labour demand at the following timestep
+    public static final double ETA = 0.2;        //(eta in Matteo's document).  If excess labour demand is greater than this value (0.1 == 10%), then iterate convergence procedure again
+    public static final double CHI_minus = 0.1;        //Lambda in Matteo's document is adjusted by reducing by lambda -> lambda * (1 - CHI_minus), or increasing lambda by lambda -> lambda * (1 + CHI_plus)
+    public static final double CHI_plus = 0.1;        //Lambda in Matteo's document is adjusted by reducing by lambda -> lambda * (1 - CHI_minus), or increasing lambda by lambda -> lambda * (1 + CHI_plus)
+    public static final Map<Education, Double> adjustmentFactorByEducation;    //Lambda_s in Matteo's document, where s is the education level
+    public static final double initialLambda = ETA / 5.;    //Ensure adjustment is smaller than relative excess labour demand threshold
+    public static final int MinimumIterationsBeforeTestingConvergenceCriteria = 20;    //Run this number of iterations to accumulate estimates of (aggregate) labour supply (cross) elasticities before testing the convergence criterion (i.e. the norm of (supply * demand elasticities) matrix < 1)
+    public static final int MaxConvergenceAttempts = 2 * MinimumIterationsBeforeTestingConvergenceCriteria;        //Allow the equilibrium convergence criterion to fail the test this number of times before potentially terminating the simulation.
     public static final double RateOfConvergenceFactor = 0.9;
-    public static final int MAX_EMPLOYMENT_ALIGNMENT = 500; // the amount by which the coefficient used in the employment alignment can be shifted up or down;
+    public static final int MAX_EMPLOYMENT_ALIGNMENT = 5; // the amount by which the coefficient used in the employment alignment can be shifted up or down;
 
     //Childcare
     public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
@@ -228,45 +229,42 @@ public class Parameters {
     public static Grids grids = null;
 
     static {
-        adjustmentFactorByEducation = new LinkedHashMap<Education, Double>();		//Initialise adjustment factor to the same value for all education levels
-        for (Education edu: Education.values()) {
+        adjustmentFactorByEducation = new LinkedHashMap<Education, Double>();        //Initialise adjustment factor to the same value for all education levels
+        for (Education edu : Education.values()) {
             adjustmentFactorByEducation.put(edu, initialLambda);
         }
     }
 
     public static void resetAdjustmentFactorByEducation() {
-        for(Education edu: Education.values()) {
+        for (Education edu : Education.values()) {
             adjustmentFactorByEducation.put(edu, initialLambda);
         }
     }
 
     public static final double childrenNumDiscrepancyConstraint(double numberOfChildren) {
-        if(numberOfChildren <= 1) {
+        if (numberOfChildren <= 1) {
             return 0.;
-        }
-        else if(numberOfChildren <= 3) {
+        } else if (numberOfChildren <= 3) {
             return 1.;
-        }
-        else if(numberOfChildren <= 5) {
+        } else if (numberOfChildren <= 5) {
             return 2.;
-        }
-        else {
+        } else {
             return 3.;
         }
     }
 
-    public static final double AgeDiscrepancyConstraint = 10;	//Difference of age must equal of be below this value (so we allow 10 year cumulated age difference)
-    public static final TreeSet<Double> EarningsDiscrepancyConstraint = new TreeSet<>(Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05));	//Proportional difference
+    public static final double AgeDiscrepancyConstraint = 10;    //Difference of age must equal of be below this value (so we allow 10 year cumulated age difference)
+    public static final TreeSet<Double> EarningsDiscrepancyConstraint = new TreeSet<>(Arrays.asList(0.01, 0.02, 0.03, 0.04, 0.05));    //Proportional difference
 
     //Initial matching differential bounds - the initial bounds that a match must satisfy, before being relaxed
-    public static final double UNMATCHED_TOLERANCE_THRESHOLD = 0.1;		//Smallest proportion of a gender left unmatched (we take the minimum of the male proportion and female proportions).  If there are more than this, we will relax the constraints (e.g. the bounds on age difference and potential earnings difference) until this target has been reached
+    public static final double UNMATCHED_TOLERANCE_THRESHOLD = 0.1;        //Smallest proportion of a gender left unmatched (we take the minimum of the male proportion and female proportions).  If there are more than this, we will relax the constraints (e.g. the bounds on age difference and potential earnings difference) until this target has been reached
     public static final int MAXIMUM_ATTEMPTS_MATCHING = 10;
     public static final double RELAXATION_FACTOR = 1.5;
 
     public static final int AGE_DIFFERENCE_INITIAL_BOUND = 999;
     public static final double POTENTIAL_EARNINGS_DIFFERENCE_INITIAL_BOUND = 999.;
 
-    public static final double WEEKS_PER_MONTH = 365.25/(7.*12.);	// = 4.348214286
+    public static final double WEEKS_PER_MONTH = 365.25 / (7. * 12.);    // = 4.348214286
     public static final double WEEKS_PER_YEAR = 365.25 / 7.;
 
     //Is it possible for people to start going to the labour module (e.g. age 17) while they are living with parents (until age 18)?
@@ -287,12 +285,12 @@ public class Parameters {
     public static int endYear;
     private static int MIN_START_YEAR_TRAINING = 2019;
     private static int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
-    public static int MIN_AGE_MATERNITY = 18;  			// Min age a person can give birth
-    public static int MAX_AGE_MATERNITY = 44;  			// Max age a person can give birth
+    public static int MIN_AGE_MATERNITY = 18;            // Min age a person can give birth
+    public static int MAX_AGE_MATERNITY = 44;            // Max age a person can give birth
     public static final boolean FLAG_SINGLE_MOTHERS = true;
     public static boolean flagUnemployment = false;
 
-    public static int BASE_PRICE_YEAR = 2015; 			// Base price year of model parameters
+    public static int BASE_PRICE_YEAR = 2015;            // Base price year of model parameters
 
     public static double PROB_NEWBORN_IS_MALE = 0.5;            // Must be strictly greater than 0.0 and less than 1.0
 
@@ -351,7 +349,7 @@ public class Parameters {
     public static final int IMPERFECT_THRESHOLD = 5999;
 
 
-    /////////////////////////////////////////////////////////////////// INITIALISATION OF DATA STRUCTURES //////////////////////////////////
+    /// //////////////////////////////////////////////////////////////// INITIALISATION OF DATA STRUCTURES //////////////////////////////////
     public static Map<Integer, String> EUROMODpolicySchedule = new TreeMap<Integer, String>();
     public static Map<Integer, Pair<String, Integer>> EUROMODpolicyScheduleSystemYearMap = new TreeMap<>(); // This map stores year from which policy applies, and then a Pair of <name of policy, policy system year as specified in EM>. This is used when uprating values from the policy system year to a current simulated year.
     private static MultiKeyMap<Object, Double> fertilityRateByRegionYear;
@@ -379,11 +377,11 @@ public class Parameters {
     public static MultiKeyMap upratingFactorsMap = new MultiKeyMap<>();
 
     //Education level projections
-    private static MultiKeyCoefficientMap projectionsHighEdu;			//Alignment projections for High Education
-    private static MultiKeyCoefficientMap projectionsLowEdu;			//Alignment projections for Medium Education
+    private static MultiKeyCoefficientMap projectionsHighEdu;            //Alignment projections for High Education
+    private static MultiKeyCoefficientMap projectionsLowEdu;            //Alignment projections for Medium Education
 
     //Student share projections for alignment
-    private static MultiKeyCoefficientMap studentShareProjections;		//Alignment projections for Student share of population
+    private static MultiKeyCoefficientMap studentShareProjections;        //Alignment projections for Student share of population
 
     //Employment alignment targets
     private static MultiKeyCoefficientMap employmentAlignment;
@@ -392,7 +390,7 @@ public class Parameters {
     private static MultiKeyCoefficientMap meanCovarianceParametricMatching;
 
     private static MultiKeyCoefficientMap fixedRetireAge;
-//	private static MultiKeyCoefficientMap rawProbSick;
+    //	private static MultiKeyCoefficientMap rawProbSick;
     private static MultiKeyCoefficientMap unemploymentRates;
 //	private static MultiKeyMap probSick;
 
@@ -428,7 +426,7 @@ public class Parameters {
 
     private static MultiKeyCoefficientMap employmentsFurloughedFlex;
 
-    /////////////////////////////////////////////////////////////////// REGRESSION COEFFICIENTS //////////////////////////////////////////
+    /// //////////////////////////////////////////////////////////////// REGRESSION COEFFICIENTS //////////////////////////////////////////
 
     //Health
     private static MultiKeyCoefficientMap coeffCovarianceHealthH1a;
@@ -570,7 +568,7 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffC19LS_S3;
 
     //Leaving parental home
-    private static  MultiKeyCoefficientMap coeffCovarianceLeaveHomeP1a;
+    private static MultiKeyCoefficientMap coeffCovarianceLeaveHomeP1a;
 
     //Retirement
     private static MultiKeyCoefficientMap coeffCovarianceRetirementR1a;
@@ -580,7 +578,7 @@ public class Parameters {
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1a;
     private static MultiKeyCoefficientMap coeffCovarianceChildcareC1b;
 
-    ///////////////////////////////////////////////////////////STATISTICS FOR VALIDATION/////////////////////////////////////////////
+    /// ////////////////////////////////////////////////////////STATISTICS FOR VALIDATION/////////////////////////////////////////////
     //Share of students by age
     private static MultiKeyCoefficientMap validationStudentsByAge;
 
@@ -642,7 +640,7 @@ public class Parameters {
     //Hours worked weekly by education and gender (for employed persons)
     private static MultiKeyCoefficientMap hourlyWageByGenderAndEducation;
 
-    /////////////////////////////////////////////////////////////////// REGRESSION OBJECTS //////////////////////////////////////////
+    /// //////////////////////////////////////////////////////////////// REGRESSION OBJECTS //////////////////////////////////////////
 
     //Health
     private static GeneralisedOrderedRegression regHealthH1a;
@@ -732,9 +730,9 @@ public class Parameters {
     private static LinearRegression regWagesMalesNE;
     private static LinearRegression regWagesFemales, regWagesFemalesE, regWagesFemalesNE;
 
-    private static LinearRegression regEmploymentSelectionMale, regEmploymentSelectionMaleE, regEmploymentSelectionMaleNE;		//To calculate Inverse Mills Ratio for Heckman Two-Step Procedure
-    private static LinearRegression regEmploymentSelectionFemale, regEmploymentSelectionFemaleE, regEmploymentSelectionFemaleNE;	//To calculate Inverse Mills Ratio for Heckman Two-Step Procedure
-    private static NormalDistribution standardNormalDistribution;	//To sample the inverse mills ratio
+    private static LinearRegression regEmploymentSelectionMale, regEmploymentSelectionMaleE, regEmploymentSelectionMaleNE;        //To calculate Inverse Mills Ratio for Heckman Two-Step Procedure
+    private static LinearRegression regEmploymentSelectionFemale, regEmploymentSelectionFemaleE, regEmploymentSelectionFemaleNE;    //To calculate Inverse Mills Ratio for Heckman Two-Step Procedure
+    private static NormalDistribution standardNormalDistribution;    //To sample the inverse mills ratio
 
     private static LinearRegression regLabourSupplyUtilityMales;
     private static LinearRegression regLabourSupplyUtilityFemales;
@@ -797,9 +795,11 @@ public class Parameters {
     private static MultiKeyCoefficientMap columnsNumberParameters;
 
 
+
     public final class ParamUtils {
 
-        private ParamUtils() {}
+        private ParamUtils() {
+        }
 
         public static int getInt(MultiKeyCoefficientMap map, String key) {
             Object v = map.getValue(key);
@@ -844,7 +844,7 @@ public class Parameters {
 
                 try {
                     Field field = parametersClass.getDeclaredField(paramName);
-                    if ((field.getModifiers() & java.lang.reflect.Modifier.STATIC) != 0) {
+                    if ((field.getModifiers() & Modifier.STATIC) != 0) {
                         field.setAccessible(true);
 
                         Class<?> fieldType = field.getType();
@@ -910,9 +910,17 @@ public class Parameters {
         private static Boolean parseFlexibleBoolean(String s) {
             String v = s.trim().toLowerCase();
             switch (v) {
-                case "true": case "t": case "yes": case "y": case "1":
+                case "true":
+                case "t":
+                case "yes":
+                case "y":
+                case "1":
                     return true;
-                case "false": case "f": case "no": case "n": case "0":
+                case "false":
+                case "f":
+                case "no":
+                case "n":
+                case "0":
                     return false;
                 default:
                     return null; // signals "unrecognised" to caller
@@ -922,7 +930,7 @@ public class Parameters {
 
     }
 
-
+    public static void defineCountryString(Country country) {COUNTRY_STRING  =country.toString(); }
 
     /**
      * METHOD TO LOAD PARAMETERS FOR GIVEN COUNTRY
@@ -930,6 +938,7 @@ public class Parameters {
      * @param country
      * @param macroShockPopulation
      */
+
     public static void loadParameters(Country country, int maxAgeModel, boolean enableIntertemporalOptimisations,
                                       boolean projectFormalChildcare, boolean projectSocialCare, boolean donorPoolAveraging1,
                                       boolean fixTimeTrend, boolean defaultToTimeSeriesAverages, boolean taxDBMatches,
@@ -2375,6 +2384,35 @@ public class Parameters {
             return map.getValue(stringKey1, stringKey2, year);
     }
 
+    /*
+    public static double getValuePreferPrev(int year, TimeSeriesVariable variableType) {
+    MultiKeyCoefficientMap map = getTimeSeriesValueMap(variableType);
+
+    Object prev = getObjectFromTimeSeriesValueMap(year - 1, null, null, map);
+    if (prev != null) return ((Number) prev).doubleValue();
+
+    Object cur = getObjectFromTimeSeriesValueMap(year, null, null, map);
+    if (cur != null) return ((Number) cur).doubleValue();
+
+    return 0.0; // or whatever default makes sense
+}
+
+public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVariable variableType) {
+    MultiKeyCoefficientMap map = getTimeSeriesValueMap(variableType);
+
+    // If last year's value exists, use it; otherwise use the new target
+    Object prev = getObjectFromTimeSeriesValueMap(year - 1, null, null, map);
+    Object valueToWrite = (prev != null) ? prev : newTarget;
+
+    Object existing = getObjectFromTimeSeriesValueMap(year, null, null, map);
+    if (existing == null) {
+        map.putValue(year, valueToWrite);
+    } else if (!existing.equals(valueToWrite)) {
+        map.replaceValue(year, valueToWrite);
+    }
+}
+     */
+
     public static void putTimeSeriesValue(int year, Object valPut, TimeSeriesVariable variableType) {
         putTimeSeriesValue(year, null, null, valPut, variableType);
     }
@@ -2840,18 +2878,86 @@ public class Parameters {
         }
     }
 
-    public static int getStatePensionAge(int year, int age) {
+    public static int getStatePensionAge(int year, Gender dgn) {
 
-        int spa;
-        if (year - age + 65 < 2019) {
-            spa = 65;
-        } else if (year - age + 66 < 2027) {
-            spa = 66;
-        } else if (year - age + 67 < 2045) {
-            spa = 67;
-        } else {
-            spa = 68;
+        int spa = -9;
+
+        switch (COUNTRY_STRING) {
+
+            case "PL":                                      // Poland
+                if (dgn == Gender.Male) {
+                    // Men: 65 (<2016), 66 (2016-2017), 65 (2018+)
+                    if      (year >= 2005 && year < 2016)   spa = 65;
+                    else if (year >= 2016 && year < 2018)   spa = 66;
+                    else if (year >= 2018 )                 spa = 65;
+                } else if (dgn == Gender.Female){
+                    // Women: 60 (<2016), 61 (2016-2017), 60 (2018+)
+                    if      (year >= 2005 && year < 2016)   spa = 60;
+                    else if (year >= 2016 && year < 2018)   spa = 61;
+                    else if (year >= 2018 )                 spa = 60;
+                }
+                break;
+
+            case "EL":                                      // Greece
+                if (dgn == Gender.Male) {
+                    // Men: 65 (<2013), 67 (2013+)
+                    if      (year >= 2005 && year < 2013)   spa = 65;
+                    else if (year >= 2013  )                spa = 67;
+                } else if (dgn == Gender.Female){
+                    // Women: 60 (<2009), 61 (2010), 63 (2011), 65 (2012), 67 (2013+)
+                    if      (year >= 2005 && year < 2010)   spa = 60;
+                    else if (year == 2010)                  spa = 61;
+                    else if (year == 2011)                  spa = 63;
+                    else if (year == 2012)                  spa = 65;
+                    else if (year >= 2013 )                 spa = 67;
+                }
+                break;
+
+            case "IT":                                      // Italy
+                if (dgn == Gender.Male) {
+                    // Men: 65 (<2012), 66 (2012–2018), 67 (2019+)
+                    if      (year >= 2005 && year < 2012)   spa = 65;
+                    else if (year >= 2012 && year < 2019)   spa = 66;
+                    else if (year >= 2019 )                 spa = 67;
+                } else if (dgn == Gender.Female) {
+                    // Women: 60 (<2012), 62 (2012), 63 (2013–2014), 65 (2015–2017), 66 (2018), 67 (2019+)
+                    if      (year >= 2005 && year < 2012)   spa = 60;
+                    else if (year == 2012)                  spa = 62;
+                    else if (year >= 2013 && year < 2015)   spa = 63;
+                    else if (year >= 2015 && year < 2018)   spa = 65;
+                    else if (year == 2018)                  spa = 66;
+                    else if (year >= 2019 )                 spa = 67;
+                }
+                break;
+
+            case "HU":                                      // Hungary
+                if (dgn == Gender.Male) {
+                    // Men: 62 (<2014), 63 (2014–2016), 64 (2017–2020), 65 (2021+)
+                    if      (year >= 2005 && year < 2014)   spa = 62;
+                    else if (year >= 2014 && year < 2017)   spa = 63;
+                    else if (year >= 2017 && year < 2021)   spa = 64;
+                    else if (year >= 2021 )                 spa = 65;
+                } else if (dgn == Gender.Female) {
+                    // Women: 60 (<2010), 62 (2010–2013), 63 (2014–2016), 64 (2017–2020), 65 (2021+)
+                if          (year >= 2005 && year < 2010)   spa = 60;
+                    else if (year >= 2010 && year < 2014)   spa = 62;
+                    else if (year >= 2014 && year < 2017)   spa = 63;
+                    else if (year >= 2017 && year < 2021)   spa = 64;
+                    else if (year >= 2021 )                 spa = 65;
+                }
+                break;
+
+            default:
+                throw new IllegalStateException("No PSA rules for country=" + COUNTRY_STRING);
         }
+
+        // Throw if nothing matched
+        if (spa == -9) {
+            throw new IllegalStateException(
+                "Could not determine state pension age for: " + "country=" + COUNTRY_STRING + ", gender=" + dgn + ", year=" + year);
+        }
+
+
         return spa;
     }
 

@@ -2,6 +2,7 @@ package simpaths.model.taxes;
 
 import simpaths.data.Parameters;
 import simpaths.model.decisions.DecisionParams;
+import simpaths.model.enums.Gender;
 import simpaths.model.enums.UpratingCase;
 
 import java.util.Arrays;
@@ -54,12 +55,12 @@ public class KeyFunctionHU2 implements IKeyFunction {
      * @param originalIncomePerWeek original income per week of family (possibly negative)
      * @return Integer list of keys, ordered from most fine (0) to most coarse (2)
      */
-    public Integer[] evaluateKeys(int simYear, int priceYear, int age, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9,
-                                      int numberChildren10To17, double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman, int dlltsdMan, int dlltsdWoman,
-                                      int careProvision, double originalIncomePerWeek, double secondIncomePerWeek, double childcareCostPerWeek) {
+    public Integer[] evaluateKeys(int simYear, int priceYear, int age, Gender dgn, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9,
+                                  int numberChildren10To17, double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman, int dlltsdMan, int dlltsdWoman,
+                                  int careProvision, double originalIncomePerWeek, double secondIncomePerWeek, double childcareCostPerWeek) {
 
         // initialise working variables
-        int spa = Parameters.getStatePensionAge(simYear, age);
+        int spa = Parameters.getStatePensionAge(simYear, dgn);
         Map<MatchFeature, Map<Integer, Integer>> taxdbCounter = getTaxdbCounter();
         Map<MatchFeature, Map<Integer, Integer>> units = new HashMap<>();
         Integer[] result = new Integer[Parameters.TAXDB_REGIMES];
