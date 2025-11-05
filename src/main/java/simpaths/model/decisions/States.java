@@ -21,6 +21,7 @@ public class States {
     int ageYears;           // age in years for state
     double[] states;        // vector to store combination of state variables (except age), in order as defined for axes in Grids
     GridScale scale;        // dimensional specifications of array used to store states
+    Gender dgn;
 
 
     public States(GridScale scale, int ageYears) {
@@ -28,6 +29,7 @@ public class States {
         // initialise object attributes
         this.scale = scale;
         this.ageYears = ageYears;
+        this.dgn = dgn;
         ageIndex = ageYears - Parameters.AGE_TO_BECOME_RESPONSIBLE;
         if (ageIndex == scale.simLifeSpan) {
             states = new double[1];
@@ -41,6 +43,7 @@ public class States {
         // initialise copy
         ageIndex = originalStates.ageIndex;
         ageYears = originalStates.ageYears;
+        dgn = originalStates.dgn;
         states = new double[originalStates.states.length];
         System.arraycopy(originalStates.states, 0, states, 0, originalStates.states.length);
         scale = originalStates.scale;
@@ -53,6 +56,7 @@ public class States {
         // initialise state vector and working variables
         Person refPerson = benefitUnit.getRefPersonForDecisions();
         ageYears = Math.min(refPerson.getDag(), DecisionParams.maxAge);
+        dgn = refPerson.getDgn();
         ageIndex = ageYears - Parameters.AGE_TO_BECOME_RESPONSIBLE;
         if (ageIndex == scale.simLifeSpan) {
             states = new double[1];

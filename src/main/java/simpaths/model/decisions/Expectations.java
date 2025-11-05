@@ -40,6 +40,7 @@ public class Expectations {
 
     // next period characteristics
     int ageYearsThisPeriod;         // age in years for current period
+    Gender dgn;
     int ageIndexNextPeriod;         // age index for state expectations
     int ageYearsNextPeriod;         // age in years for next period expectations
     int numberExpected;             // number of state combinations comprising expectations, conditional on survival
@@ -72,6 +73,7 @@ public class Expectations {
 
         // prospective characteristics (deterministic)
         ageYearsThisPeriod = currentStates.ageYears;
+        dgn = currentStates.dgn;
         ageIndexNextPeriod = currentStates.ageIndex + 1;
         ageYearsNextPeriod = ageYearsThisPeriod + 1;
         numberExpected = 1;
@@ -556,7 +558,7 @@ public class Expectations {
 
         // evaluate disposable income
         double originalIncomePerMonth = originalIncomePerWeek * Parameters.WEEKS_PER_MONTH;
-        TaxEvaluation evaluatedTransfers = new TaxEvaluation(year, ageYearsNextPeriod, numberAdults, numberChildrenUnder5, numberChildrenAged5To9,
+        TaxEvaluation evaluatedTransfers = new TaxEvaluation(year, ageYearsNextPeriod, dgn, numberAdults, numberChildrenUnder5, numberChildrenAged5To9,
                 numberChildrenAged10To17, hoursWorkPerWeek1, hoursWorkPerWeek2, disability1, disability2, careProvision, originalIncomePerMonth, secondIncomePerMonth,
                 childcareCostPerMonth, socialCareCostPerMonth, liquidWealth, -1.0);
 
