@@ -3172,6 +3172,28 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         return atRiskOfWork;
     }
 
+
+    public double fracEmployed() {
+        double  fracEmployed    = 0.0;
+        int     femaleQuantity  = 0;
+        int     maleQuantity    = 0;
+        int     femaleEmployed  = 0;
+        int     maleEmployed    = 0;
+        Person male = getMale();
+        Person female = getFemale();
+        if(female != null) {
+            femaleQuantity = 1;
+            if (Les_c4.EmployedOrSelfEmployed.equals(female.getLes_c4())) {femaleEmployed = 1;};
+        }
+        if( male != null) {
+            maleQuantity = 1;
+            if (Les_c4.EmployedOrSelfEmployed.equals(male.getLes_c4())) {maleEmployed = 1;}
+        }
+
+        fracEmployed = (femaleEmployed + maleEmployed) /  (double) (femaleQuantity + maleQuantity);
+        return fracEmployed;
+    }
+
     public boolean isEmployed() {
         boolean isEmployed = false;
         Person male = getMale();
