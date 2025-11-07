@@ -149,7 +149,8 @@ public class ActivityAlignmentV2 implements IEvaluation {
     }
 
     /**
-     * Computes the simulated employment share for benefit units in the specified subgroup.
+     * Currently UNUSED
+     * Computes the simulated employment share for benefit units in the specified subgroup using employment boolean of each BU
      */
     private double computeSimulatedShare() {
         long[] counts = benefitUnits.stream()
@@ -159,6 +160,10 @@ public class ActivityAlignmentV2 implements IEvaluation {
                         (a, b) -> { a[0] += b[0]; a[1] += b[1]; });
         return counts[0] > 0 ? (double) counts[1] / counts[0] : 0.0;
     }
+
+    /**
+     * Computes the simulated employment share for benefit units in the specified subgroup using employment fraction of each BU
+     */
 
     private double computeSimulatedShareUsingFraction() {
         double[] totals = benefitUnits.stream()
