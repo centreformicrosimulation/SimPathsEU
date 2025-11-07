@@ -16,6 +16,7 @@ import microsim.statistics.regression.GeneralisedOrderedRegression;
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Nested; // Added: For nested test structure
 import org.junit.jupiter.api.DisplayName; // Added: For descriptive names
@@ -34,6 +35,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * (SimPathsModel, Parameters, Innovations).
  */
 public class PersonTest {
+
+    // Static mock reference for Parameters
+    private MockedStatic<Parameters> parametersMock;
+    private MockedStatic<ManagerRegressions> managerRegressionsMock;
 
     // Assuming these static constants exist in Parameters.java for the tests to function
     private static final int MIN_AGE_TO_LEAVE_EDUCATION = 16;
@@ -58,16 +63,14 @@ public class PersonTest {
      */
     private void mockStaticDependenciesForConstructor(Runnable action) {
         // Mock the multivariate distribution needed by Person constructor's setMarriageTargets()
-        MultivariateNormalDistribution mockMND = Mockito.mock(MultivariateNormalDistribution.class);
+        double[] mockWageAgeValues = new double[]{0.0, 0.0};
 
-        try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
-            // Using explicit lambda call for robust static stubbing
-            parametersMock.when(() -> Parameters.getWageAndAgeDifferentialMultivariateNormalDistribution(Mockito.anyLong()))
-                    .thenReturn(mockMND);
+        // Using explicit lambda call for robust static stubbing
+        parametersMock.when(() -> Parameters.getWageAndAgeDifferentialMultivariateNormalDistribution(Mockito.anyLong()))
+                .thenReturn(mockWageAgeValues);
 
-            // Execute the rest of the setup (including new Person() and field injection)
+        // Execute the rest of the setup (including new Person() and field injection)
             action.run();
-        }
     }
 
 
@@ -86,40 +89,25 @@ public class PersonTest {
         Mockito.when(mockInnovations.getDoubleDraw(30)).thenReturn(draw);
 
         // Mock the static dependency on Parameters and ManagerRegressions
-        try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class);
-             MockedStatic<ManagerRegressions> managerRegressionsMock = Mockito.mockStatic(ManagerRegressions.class)) {
 
-            // E2a returns GeneralisedOrderedRegression
-            parametersMock.when(Parameters::getRegEducationE2a).thenReturn(mockGeneralisedOrderedRegression);
-
-            // Set up probabilities map (simplified logic to ensure 'draw' selects 'expectedEducationLevel')
+        // Set up probabilities map (simplified logic to ensure 'draw' selects 'expectedEducationLevel')
             Map<Education, Double> mockProbs = new HashMap<>();
+            mockProbs.put(Education.Low, 0.3);
+            mockProbs.put(Education.Medium, 0.3);
+            mockProbs.put(Education.High, 0.4);
 
-            // Calculate mock cumulative probabilities based on the desired outcome and draw
-            double pLow = 0.3;
-            double pMed = 0.6;
+        // Mock regression to return the probabilities map
+        Mockito.when(mockGeneralisedOrderedRegression.getProbabilities(Mockito.any(), Mockito.any()))
+                .thenReturn((Map) mockProbs);
 
-            if (expectedEducationLevel == Education.Low) {
-                pLow = Math.max(draw + 0.1, 0.3);
-                pMed = Math.max(pLow + 0.3, 0.6);
-            } else if (expectedEducationLevel == Education.Medium) {
-                pLow = Math.min(draw - 0.1, 0.3);
-                pMed = Math.max(draw + 0.1, 0.6);
-            } else if (expectedEducationLevel == Education.High) {
-                pLow = Math.min(draw - 0.3, 0.3);
-                pMed = Math.min(draw - 0.1, 0.6);
-            }
+        // Stub the static call to return our deterministic probabilities map
+         managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
+                .thenReturn(mockProbs);
 
-            mockProbs.put(Education.Low, pLow);
-            mockProbs.put(Education.Medium, pMed);
-            mockProbs.put(Education.High, 1.0);
+        // Mock Parameters static method to return regression
+        parametersMock.when(Parameters::getRegEducationE2a)
+                .thenReturn(mockGeneralisedOrderedRegression);
 
-            // Stub the static call to return our deterministic probabilities map
-            managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
-                    .thenReturn(mockProbs);
-
-            // This nested mockStatic block is sufficient to set up the necessary stubbing.
-        }
     }
 
 
@@ -128,6 +116,15 @@ public class PersonTest {
      */
     @BeforeEach
     public void setUp() throws Exception {
+
+        // Static mock setup first
+        parametersMock = Mockito.mockStatic(Parameters.class);
+        parametersMock.when(Parameters::getRegEducationE2a)
+                .thenReturn(mockGeneralisedOrderedRegression);
+
+        // Static mock setup for ManagerRegressions
+        managerRegressionsMock = Mockito.mockStatic(ManagerRegressions.class);
+
         // We wrap the entire setup in a mock block to handle the static dependency called by the Person constructor.
         mockStaticDependenciesForConstructor(() -> {
             try {
@@ -150,6 +147,8 @@ public class PersonTest {
                 setPrivateField(testPerson, "model", mockModel);
                 setPrivateField(testPerson, "innovations", mockInnovations);
                 setPrivateField(testPerson, "benefitUnit", mockBenefitUnit);
+                setPrivateField(testPerson, "leftEducation", Boolean.FALSE);
+                setPrivateField(testPerson, "toLeaveSchool", Boolean.FALSE);
 
                 // Mock the critical dependency from BenefitUnit (Set<Person> is empty for simplicity)
                 Mockito.when(mockBenefitUnit.getChildren()).thenReturn(java.util.Collections.emptySet());
@@ -157,6 +156,16 @@ public class PersonTest {
                 throw new RuntimeException("Setup failed during initialization or field injection.", e);
             }
         });
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        if (parametersMock != null) {
+            parametersMock.close();
+        }
+        if (managerRegressionsMock != null) {
+            managerRegressionsMock.close();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -186,15 +195,13 @@ public class PersonTest {
             testPerson.setLes_c4_lag1(Les_c4.Student);
             testPerson.setLes_c4(Les_c4.Student);
 
-            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
-                parametersMock.when(() -> Parameters.getRegEducationE1a()).thenReturn(mockBinomialRegression);
-                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_STAY);
-                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_STAY);
+               parametersMock.when(() -> Parameters.getRegEducationE1a()).thenReturn(mockBinomialRegression);
+               Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_STAY);
+               Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_STAY);
 
-                assertTrue(testPerson.inSchool(), "Person remains in school (OUTCOME B).");
-                assertEquals(Les_c4.Student, testPerson.getLes_c4());
-                assertFalse(testPerson.isToLeaveSchool());
-            }
+               assertTrue(testPerson.inSchool(), "Person remains in school (OUTCOME B).");
+               assertEquals(Les_c4.Student, testPerson.getLes_c4());
+               assertFalse(testPerson.isToLeaveSchool());
         }
 
         @Test
@@ -206,14 +213,12 @@ public class PersonTest {
             testPerson.setDag(25);
             testPerson.setLes_c4_lag1(Les_c4.Student);
 
-            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
-                parametersMock.when(() -> Parameters.getRegEducationE1a()).thenReturn(mockBinomialRegression);
-                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_STAY);
-                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_LEAVE);
+               parametersMock.when(() -> Parameters.getRegEducationE1a()).thenReturn(mockBinomialRegression);
+               Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_STAY);
+               Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_LEAVE);
 
-                assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
-                assertTrue(testPerson.isToLeaveSchool(), "toLeaveSchool flag should be true.");
-            }
+               assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
+               assertTrue(testPerson.isToLeaveSchool(), "toLeaveSchool flag should be true.");
         }
 
         @Test
@@ -246,16 +251,14 @@ public class PersonTest {
             testPerson.setLes_c4_lag1(Les_c4.NotEmployed);
             testPerson.setLes_c4(Les_c4.NotEmployed);
 
-            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
-                parametersMock.when(() -> Parameters.getRegEducationE1b()).thenReturn(mockBinomialRegression);
-                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_BECOME_STUDENT);
-                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_BECOME_STUDENT);
+               parametersMock.when(() -> Parameters.getRegEducationE1b()).thenReturn(mockBinomialRegression);
+               Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_BECOME_STUDENT);
+               Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_TO_BECOME_STUDENT);
 
-                assertTrue(testPerson.inSchool(), "Person becomes a student (OUTCOME E).");
-                assertEquals(Les_c4.Student, testPerson.getLes_c4());
-                assertEquals(Indicator.True, testPerson.getDed());
-                assertEquals(Indicator.True, testPerson.getDer());
-            }
+               assertTrue(testPerson.inSchool(), "Person becomes a student (OUTCOME E).");
+               assertEquals(Les_c4.Student, testPerson.getLes_c4());
+               assertEquals(Indicator.True, testPerson.getDed());
+               assertEquals(Indicator.True, testPerson.getDer());
         }
 
         @Test
@@ -267,15 +270,13 @@ public class PersonTest {
             testPerson.setLes_c4_lag1(Les_c4.EmployedOrSelfEmployed);
             testPerson.setLes_c4(Les_c4.EmployedOrSelfEmployed);
 
-            try (MockedStatic<Parameters> parametersMock = Mockito.mockStatic(Parameters.class)) {
-                parametersMock.when(() -> Parameters.getRegEducationE1b()).thenReturn(mockBinomialRegression);
-                Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_BECOME_STUDENT);
-                Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_REMAIN_UNCHANGED);
+               parametersMock.when(() -> Parameters.getRegEducationE1b()).thenReturn(mockBinomialRegression);
+               Mockito.when(mockBinomialRegression.getProbability(Mockito.anyDouble())).thenReturn(PROBABILITY_TO_BECOME_STUDENT);
+               Mockito.when(mockInnovations.getDoubleDraw(24)).thenReturn(INNOVATION_REMAIN_UNCHANGED);
 
-                assertFalse(testPerson.inSchool(), "Person remains in current status (OUTCOME D).");
-                assertEquals(Les_c4.EmployedOrSelfEmployed, testPerson.getLes_c4());
-                assertFalse(testPerson.isToLeaveSchool());
-            }
+               assertFalse(testPerson.inSchool(), "Person remains in current status (OUTCOME D).");
+               assertEquals(Les_c4.EmployedOrSelfEmployed, testPerson.getLes_c4());
+               assertFalse(testPerson.isToLeaveSchool());
         }
     }
 
@@ -356,7 +357,6 @@ public class PersonTest {
             testPerson.setDeh_c3(Education.Low);
             testPerson.setDed(Indicator.True);
             testPerson.setDer(Indicator.False);
-            setPrivateField(testPerson, "leftEducation", false);
             testPerson.setLes_c4(Les_c4.Student);
             testPerson.setLes_c4_lag1(Les_c4.Student);
 

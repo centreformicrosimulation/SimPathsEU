@@ -1343,7 +1343,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             // No
             else{
-                return true; // The indiviual remains a student *OUTCOME A*
+                return true; // The individual remains a student *OUTCOME A*
             }
 
         }
