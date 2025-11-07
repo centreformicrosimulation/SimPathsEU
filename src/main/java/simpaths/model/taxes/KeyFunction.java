@@ -1,5 +1,7 @@
 package simpaths.model.taxes;
 
+import simpaths.model.enums.Gender;
+
 import java.security.InvalidParameterException;
 import java.util.Map;
 
@@ -15,7 +17,9 @@ public class KeyFunction {
     /**
      * ATTRIBUTES
      */
-    private int simYear = -999, priceYear = -999, age, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17;
+    private int simYear = -999, priceYear = -999, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17;
+    private int age;
+    private Gender dgn;
     private int dlltsdMan = -1, dlltsdWoman = -1, careProvision = -1;
     private double hoursWorkedPerWeekMan, hoursWorkedPerWeekWoman, originalIncomePerWeek, secondIncomePerWeek, childcareCostPerWeek;
 
@@ -29,6 +33,8 @@ public class KeyFunction {
     public KeyFunction() {
         this.keyFunction = new KeyFunctionHU2();
     }
+
+
     public KeyFunction(int simYear, int priceYear, int age, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9, int numberChildren10To17,
                        double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman, int dlltsdMan, int dlltsdWoman, int careProvision, double originalIncomePerWeek) {
 
@@ -75,12 +81,16 @@ public class KeyFunction {
         this.dlltsdWoman = dlltsdWoman;
         this.careProvision = careProvision;
     }
-    public KeyFunction(int simYear, int priceYear, int age, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9, int numberChildren10To17,
+    public KeyFunction(int simYear, int priceYear, int age, Gender dgn, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9, int numberChildren10To17,
                        double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman, int dlltsdMan, int dlltsdWoman, int careProvision, double originalIncomePerWeek,
                        double secondIncomePerWeek, double childcareCostPerWeek) {
 
         this(simYear, priceYear, age, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17,
                 hoursWorkedPerWeekMan, hoursWorkedPerWeekWoman, dlltsdMan, dlltsdWoman, careProvision, originalIncomePerWeek);
+        if (dgn == null) {
+            throw new RuntimeException("Key function supplied null gender");
+        }
+        this.dgn = dgn;
         this.childcareCostPerWeek = childcareCostPerWeek;
         this.secondIncomePerWeek = Math.max(0.0, Math.min(secondIncomePerWeek, originalIncomePerWeek - secondIncomePerWeek));
     }
@@ -103,6 +113,9 @@ public class KeyFunction {
     public void setAge(int age) {
         this.age = age;
     }
+
+    public Gender getDgn() { return dgn; }
+    public void setDgn(Gender dgn) { this.dgn = dgn; }
 
     public int getNumberMembersOver17() {
         return numberMembersOver17;
@@ -201,7 +214,7 @@ public class KeyFunction {
             throw new InvalidParameterException("call to evaluate donor keys before KeyFunction populated");
         }
         //return keyFunction.evaluateKeys(simYear, priceYear, age, numberMembersOver17, numberChildrenUnder5, numberChildren5To17, hoursWorkedPerWeekMan, hoursWorkedPerWeekWoman, dlltsdMan, dlltsdWoman, originalIncomePerWeek);
-        return keyFunction.evaluateKeys(simYear, priceYear, age, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17,
+        return keyFunction.evaluateKeys(simYear, priceYear, age, dgn, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17,
                 hoursWorkedPerWeekMan, hoursWorkedPerWeekWoman, dlltsdMan, dlltsdWoman, careProvision, originalIncomePerWeek, secondIncomePerWeek, childcareCostPerWeek);
     }
 

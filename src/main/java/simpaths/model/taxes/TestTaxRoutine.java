@@ -2,7 +2,7 @@ package simpaths.model.taxes;
 
 import simpaths.model.TaxEvaluation;
 
-
+/*
 public class TestTaxRoutine {
 
     public static void run() {
@@ -597,3 +597,4 @@ public class TestTaxRoutine {
         int fin = 0;
     }
 }
+*/

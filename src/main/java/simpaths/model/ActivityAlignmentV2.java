@@ -118,7 +118,7 @@ public class ActivityAlignmentV2 implements IEvaluation {
     public double evaluate(double[] args) {
         double adjustment = args[0];
         adjustCoefficients(adjustment);
-        return targetAggregateShareOfEmployed - computeSimulatedShare();
+        return targetAggregateShareOfEmployed - computeSimulatedShareUsingFraction();
     }
 
     /**
@@ -158,6 +158,24 @@ public class ActivityAlignmentV2 implements IEvaluation {
                         (a, bu) -> { a[0]++; if (bu.isEmployed()) a[1]++; },
                         (a, b) -> { a[0] += b[0]; a[1] += b[1]; });
         return counts[0] > 0 ? (double) counts[1] / counts[0] : 0.0;
+    }
+
+    private double computeSimulatedShareUsingFraction() {
+        double[] totals = benefitUnits.stream()
+                .filter(this::matchesSubgroup)
+                .collect(
+                        () -> new double[2], // [0] = count of units, [1] = sum of fracEmployed
+                        (a, bu) -> {
+                            a[0]++; // count unit
+                            a[1] += bu.fracEmployed(); // accumulate fractional employment
+                        },
+                        (a, b) -> {
+                            a[0] += b[0];
+                            a[1] += b[1];
+                        }
+                );
+
+        return totals[0] > 0 ? totals[1] / totals[0] : 0.0;
     }
 
     /**

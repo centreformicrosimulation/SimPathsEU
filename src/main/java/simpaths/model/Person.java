@@ -59,10 +59,20 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Enumerated(EnumType.STRING) private SampleEntry sampleEntry;
     @Enumerated(EnumType.STRING) private SampleExit sampleExit = SampleExit.NotYet;  //entry to sample via international immigration
 
+    @Column(name="immutable_mother_id")
+    private Long idMotherImmutable;
+
+    @Column(name="immutable_father_id")
+    private Long idFatherImmutable;
+
+    public Long getIdMotherImmutable() { return idMotherImmutable; }
+    public Long getIdFatherImmutable() { return idFatherImmutable; }
+
     // person level variables
     private int dag; //Age
     private Dcpst dcpst;
     @Enumerated(EnumType.STRING) private Indicator adultchildflag;
+    @Enumerated(EnumType.STRING) private Indicator staywparentsflag;
     @Transient private boolean ioFlag;         // true if a dummy person instantiated for IO decision solution
     @Enumerated(EnumType.STRING) private Gender dgn;             // gender
     @Enumerated(EnumType.STRING) private Education deh_c3;       //Education level
@@ -239,6 +249,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     // used to create new people who enter the simulation during UpdateMaternityStatus
+    // it is the “birth constructor” — used when the simulation generates a new child (e.g., during UpdateMaternityStatus)
     public Person(Gender gender, Person mother) {
 
         this(personIdCounter++, (long)(100000*mother.getFertilityRandomUniform2()));
@@ -254,6 +265,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             idFather = mother.getPartner().getId();
             dehf_c3 = mother.getPartner().getDeh_c3();
         }
+
+        idMotherImmutable = idMother;        // set once
+        idFatherImmutable = idFather;        // set once
 
         liwwh = 0;
         yptciihs_dv = 0.0;
@@ -306,6 +320,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 idOriginalBU = originalPerson.benefitUnit.getId();
             }
         }
+
+        // keep true ancestry
+        this.idMotherImmutable = originalPerson.idMotherImmutable != null
+                ? originalPerson.idMotherImmutable
+                : originalPerson.idMother;   // fallback if legacy data
+        this.idFatherImmutable = originalPerson.idFatherImmutable != null
+                ? originalPerson.idFatherImmutable
+                : originalPerson.idFather;   // fallback if legacy data
 
         this.sampleEntry = sampleEntry;
 
@@ -575,6 +597,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         labourSupplyWeekly_L1 = getLabourSupplyWeekly();
 
         hoursWorkedWeekly = null;	//Not to be updated as labourSupplyWeekly contains this information.
+
+        // NEW: seed immutable parents from existing IDs for EVERYONE (adults and minors)
+        if (idMotherImmutable == null) idMotherImmutable = idMother;
+        if (idFatherImmutable == null) idFatherImmutable = idFather;
+
         updateVariables(true);
     }
 
@@ -837,25 +864,77 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             sampleExit = SampleExit.Death;
     }
 
-    //This process should be applied to those at the age to become responsible / leave home OR above if they have the adultChildFlag set to True (i.e. people can move out, but not move back in).
+    // This process should be applied to those at the age to become responsible / leave home OR above if they have the adultChildFlag set to True (i.e. people can move out, but not move back in).
+    /// Adult child: an adult who lives with parents who are not yet in need of care
+    /// (e.g. at least one parent is below pension age and not yet retired)
     private void considerLeavingHome() {
 
         //For those who are moving out, evaluate whether they should have stayed with parents and if yes, set the adultchildflag to true
-
         double prob = Parameters.getRegLeaveHomeP1a().getProbability(this, Person.DoublesVariables.class);
         boolean toLeaveHome = (innovations.getDoubleDraw(21) < prob);
-        if (Les_c4.Student.equals(les_c4)) {
 
-            adultchildflag = Indicator.True; //Students not allowed to leave home to match filtering conditon
-        } else {
+        // Students are assumed not to leave the parental home
+        if (Les_c4.Student.equals(les_c4)) {adultchildflag = Indicator.True;}
+
+        if (!Les_c4.Student.equals(les_c4)) {
 
             if (!toLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true (although they still set up a new benefitUnit in the simulation, it's treated differently in the labour supply)
-
                 adultchildflag = Indicator.True;
             } else {
-
                 adultchildflag = Indicator.False;
                 setupNewHousehold(); //If person leaves home, they set up a new household
+            }
+
+            if (adultchildflag.equals(Indicator.True)){
+
+                //Test
+                Person iDadTest = null;
+                Person iMomTest = null;
+                boolean dadExistTest = (getFather() != null);
+                boolean momExistTest = (getMother() != null);
+                if (dadExistTest) {iDadTest = getFather();}
+                if (momExistTest) {iMomTest = getMother();}
+
+                // --- Parent existence checks
+                Person iDad = null;
+                Person iMom = null;
+
+                boolean dadExist = (getFatherImmutable() != null);
+                boolean momExist = (getMotherImmutable() != null);
+
+                if (dadExist) {iDad = getFatherImmutable();}
+                if (momExist) {iMom = getMotherImmutable();}
+
+                // Compute state pension ages for parents if they exist
+                int iDadPSA = -9;
+                int iMomPSA = -9;
+
+                if (dadExist) {
+                    iDadPSA = Parameters.getStatePensionAge(model.getYear(), iDad.getDgn());
+                }
+                if (momExist) {
+                    iMomPSA = Parameters.getStatePensionAge(model.getYear(), iMom.getDgn());
+                }
+
+                // Identify whether each parent is at/above pension age or already retired
+                boolean dadNeedsCare = false;
+                boolean momNeedsCare = false;
+
+                if (dadExist) {dadNeedsCare = (iDad.getDag() >= iDadPSA || iDad.getRetired() == 1.0);}
+                if (momExist) {momNeedsCare = (iMom.getDag() >= iMomPSA || iMom.getRetired() == 1.0);}
+
+                // Check if there is effectively no non-retired / sub-PSA parent available
+                boolean noParentAvailable =
+                        (!dadExist && !momExist) ||                       // no parents
+                        (!dadExist && momNeedsCare) ||                    // only mother exists and she’s at/above PSA or retired
+                        (!momExist && dadNeedsCare) ||                    // only father exists and he’s at/above PSA or retired
+                        (dadExist && momExist && dadNeedsCare && momNeedsCare); // both exist and both at/above PSA or retired
+
+                if (noParentAvailable) {
+                    adultchildflag = Indicator.False; // If no eligible parent is available then the person is no longer considered an adult child and will not consider leaving parental home in future
+                }
+
+
             }
         }
     }
@@ -1678,6 +1757,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 idFather = null;
         }
 
+        if (idMotherImmutable == null) idMotherImmutable = idMother;
+        if (idFatherImmutable == null) idFatherImmutable = idFather;
+
         //Lagged variables
         updateLaggedVariables(initialUpdate);
 
@@ -2269,6 +2351,18 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         EL3,
         EL4,
         EL7,
+        Y2011,
+        Y2012,
+        Y2013,
+        Y2014,
+        Y2015,
+        Y2016,
+        Y2017,
+        Y2018,
+        Y2019,
+        Y2020,
+        Y2021,
+        Y2022_2023,
         Year,										//Year as in the simulation, e.g. 2009
         Year2010,
         Year2011,
@@ -2281,9 +2375,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Year2018,
         Year2019,
         Year2020,
-        Y2020,
         Year2021,
-        Y2021,
         Year2022,
         Year2023,
         Year2024,
@@ -3026,31 +3118,31 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Year2010 -> {
                 return (getYear() <= 2010) ? 1. : 0.;
             }
-            case Year2011 -> {
+            case Year2011, Y2011 -> {
                 return (getYear() == 2011) ? 1. : 0.;
             }
-            case Year2012 -> {
+            case Year2012, Y2012 -> {
                 return (getYear() == 2012) ? 1. : 0.;
             }
-            case Year2013 -> {
+            case Year2013, Y2013 -> {
                 return (getYear() == 2013) ? 1. : 0.;
             }
-            case Year2014 -> {
+            case Year2014, Y2014 -> {
                 return (getYear() == 2014) ? 1. : 0.;
             }
-            case Year2015 -> {
+            case Year2015, Y2015 -> {
                 return (getYear() == 2015) ? 1. : 0.;
             }
-            case Year2016 -> {
+            case Year2016, Y2016 -> {
                 return (getYear() == 2016) ? 1. : 0.;
             }
-            case Year2017 -> {
+            case Year2017, Y2017 -> {
                 return (getYear() == 2017) ? 1. : 0.;
             }
-            case Year2018 -> {
+            case Year2018, Y2018 -> {
                 return (getYear() == 2018) ? 1. : 0.;
             }
-            case Year2019 -> {
+            case Year2019, Y2019 -> {
                 return (getYear() == 2019) ? 1. : 0.;
             }
             case Year2020, Y2020 -> {
@@ -3058,6 +3150,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case Year2021, Y2021 -> {
                 return (getYear() == 2021) ? 1. : 0.;
+            }
+            case Y2022_2023 -> {
+                return (getYear() == 2022 || getYear() == 2023) ? 1. : 0.;
             }
             case Year2022 -> {
                 return (getYear() == 2022) ? 1. : 0.;
@@ -3992,6 +4087,67 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         return null;
     }
+
+    public Person getMotherImmutable() {
+        if (idMotherImmutable == null) {
+            return null;
+        }
+
+        for (Person member : model.getPersons()) {
+            // Use equals() and guard against nulls
+            if (idMotherImmutable.equals(member.getIdOriginalPerson())) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
+    public Person getFatherImmutable() {
+        if (idFatherImmutable == null) {
+            return null;
+        }
+
+        for (Person member : model.getPersons()) {
+            // Use equals() and guard against nulls
+            if (idFatherImmutable.equals(member.getIdOriginalPerson())) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
+    public Person getMother() {
+        if (idMother == null) {
+            return null;
+        }
+
+        for (Person member : model.getPersons()) {
+            // Use equals() and guard against nulls
+            if (idMother.equals(member.getId())) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
+    public Person getFather() {
+        if (idFather == null) {
+            return null;
+        }
+
+        for (Person member : model.getPersons()) {
+            // Use equals() and guard against nulls
+            if (idFather.equals(member.getId())) {
+                return member;
+            }
+        }
+
+        return null;
+    }
+
 
     public Long getPartnerID() {
         Person partner = this.getPartner();

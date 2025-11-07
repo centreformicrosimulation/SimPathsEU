@@ -1,6 +1,7 @@
 package simpaths.model;
 
 import simpaths.data.Parameters;
+import simpaths.model.enums.Gender;
 import simpaths.model.taxes.*;
 
 /**
@@ -27,7 +28,7 @@ public class TaxEvaluation {
      * CONSTRUCTORS
      */
     public TaxEvaluation(){}
-    public TaxEvaluation(int simYear, int age, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9,
+    public TaxEvaluation(int simYear, int age, Gender dgn, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9,
                          int numberChildren10To17, double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman,
                          int disabilityMan, int disabilityWoman, int careProvision, double originalIncomePerMonth, double secondIncomePerMonth,
                          double childcareCostPerMonth, double randomDraw) {
@@ -39,18 +40,18 @@ public class TaxEvaluation {
         int priceYear = Parameters.BASE_PRICE_YEAR;
 
         // evaluate transfer payments
-        evaluateImputedTaxes(simYear, priceYear, age, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17,
+        evaluateImputedTaxes(simYear, priceYear, age, dgn, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17,
                 hoursWorkedPerWeekMan, hoursWorkedPerWeekWoman, disabilityMan, disabilityWoman, careProvision, originalIncomePerMonth,
                 secondIncomePerMonth, childcareCostPerMonth);
 
     }
     // used for expectations and benefit unit evaluations
-    public TaxEvaluation(int year, int age, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9, int numberChildren10To17,
+    public TaxEvaluation(int year, int age, Gender dgn, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9, int numberChildren10To17,
                          double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman, int disabilityMan, int disabilityWoman, int careProvision,
                          double originalIncomePerMonth, double secondIncomePerMonth, double childcareCostPerMonth, double socialCareCostPerMonth,
                          Double liquidWealth, double randomDraw) {
 
-        this(year, age, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17, hoursWorkedPerWeekMan,
+        this(year, age, dgn, numberMembersOver17, numberChildrenUnder5, numberChildren5To9, numberChildren10To17, hoursWorkedPerWeekMan,
                 hoursWorkedPerWeekWoman, disabilityMan, disabilityWoman, careProvision, originalIncomePerMonth, secondIncomePerMonth, childcareCostPerMonth, randomDraw);
 
         if (Parameters.flagSocialCare) {
@@ -59,7 +60,7 @@ public class TaxEvaluation {
             if (liquidWealth==null)
                 throw new RuntimeException("problem identifying wealth in evaluation of social care costs after transfer payments");
             boolean flagCouple = (numberMembersOver17 > 1) ? true : false;
-            boolean flagSPA = (Parameters.getStatePensionAge(year, age) <= age) ? true : false;
+            boolean flagSPA = (Parameters.getStatePensionAge(year, dgn) <= age) ? true : false;
             socialCareSupportPerMonth = new SocialCareExpenditureSupport(year, flagCouple, flagSPA, socialCareCostPerMonth, imputedTransfers.getDisposableIncomePerMonth(), liquidWealth).getSupportPerMonth();
         }
     }
@@ -69,7 +70,7 @@ public class TaxEvaluation {
     /**
      * WORKER METHODS
      */
-    private void evaluateImputedTaxes(int simYear, int priceYear, int age, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9,
+    private void evaluateImputedTaxes(int simYear, int priceYear, int age, Gender dgn, int numberMembersOver17, int numberChildrenUnder5, int numberChildren5To9,
                                       int numberChildren10To17, double hoursWorkedPerWeekMan, double hoursWorkedPerWeekWoman,
                                       int disabilityMan, int disabilityWoman, int careProvision, double originalIncomePerMonth, double secondIncomePerMonth,
                                       double childcareCostPerMonth) {
@@ -77,7 +78,7 @@ public class TaxEvaluation {
         double originalIncomePerWeek = originalIncomePerMonth / Parameters.WEEKS_PER_MONTH;  // can be negative
         double secondIncomePerWeek = secondIncomePerMonth / Parameters.WEEKS_PER_MONTH;
         double childcareCostPerWeek = childcareCostPerMonth / Parameters.WEEKS_PER_MONTH;
-        keyFunction = new KeyFunction(simYear, priceYear, age, numberMembersOver17, numberChildrenUnder5,
+        keyFunction = new KeyFunction(simYear, priceYear, age, dgn, numberMembersOver17, numberChildrenUnder5,
                 numberChildren5To9, numberChildren10To17, hoursWorkedPerWeekMan, hoursWorkedPerWeekWoman, disabilityMan,
                 disabilityWoman, careProvision, originalIncomePerWeek, secondIncomePerWeek, childcareCostPerWeek);
         keys.evaluate(keyFunction);
