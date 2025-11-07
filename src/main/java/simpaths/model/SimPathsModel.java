@@ -1548,6 +1548,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         ActivityAlignmentV2 activityAlignment = new ActivityAlignmentV2(benefitUnits, coefficientMap, regressionCoefficientName, occupancy);
         RootSearch2 search = getRootSearch2(utilityAdjustment, activityAlignment, 0.5, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
+        // epsFunction tolerance is set to 0.5% seem to be sufficient
 
         System.out.println("=== Root Search Summary ===");
         System.out.println("Root found at: " + search.getTarget()[0]);
