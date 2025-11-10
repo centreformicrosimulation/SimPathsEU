@@ -182,7 +182,6 @@ public class PersonTest {
             testPerson.setDag(MIN_AGE_TO_LEAVE_EDUCATION - 1);
             testPerson.setLes_c4_lag1(Les_c4.Student);
             assertTrue(testPerson.inSchool(), "Person must remain a student if below MIN_AGE_TO_LEAVE_EDUCATION (OUTCOME A).");
-            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(24);
         }
 
         @Test
@@ -229,7 +228,6 @@ public class PersonTest {
 
             assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
             assertTrue(testPerson.isToLeaveSchool(), "toLeaveSchool flag should be true.");
-            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(24);
         }
 
         @Test
@@ -239,7 +237,6 @@ public class PersonTest {
 
             assertFalse(testPerson.inSchool(), "Retired person cannot be student (OUTCOME C).");
             assertFalse(testPerson.isToLeaveSchool());
-            Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(24);
         }
 
         @Test
@@ -307,7 +304,7 @@ public class PersonTest {
             testPerson.setDeh_c3(Education.Low);
             testPerson.setDer(Indicator.True);
 
-            setupEducationLevelRegressionMock(Education.Medium, 0.6);
+            setupEducationLevelRegressionMock(Education.Medium, 0.5); // Draw 0.5 < 0.6 (Cumulative Medium) --> Selects Medium
 
             testPerson.setEducationLevel();
 

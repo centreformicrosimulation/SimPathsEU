@@ -1328,27 +1328,31 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                         setDer(Indicator.True);
                         setDed(Indicator.True);
                         toLeaveSchool = false;
-                        return toLeaveSchool;
+                        return true; // Must return true as they remain in school
                     } else {
-                        return toLeaveSchool; // Leave education --> Process E2
+                        // Leave education --> Process E2
+                        toLeaveSchool = true; // Must set flag to true
+                        return false; // Must return false as they are leaving
                     }
                 }
 
-                // No
+                // No (dag >= MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION)
                 else{
-                    return toLeaveSchool; // Leave education --> Process E2
+                    // Leave education --> Process E2
+                    toLeaveSchool = true; // Must set flag to true
+                    return false; // Must return false as they are leaving
                 }
 
             }
 
-            // No
+            // No (dag < MIN_AGE_TO_LEAVE_EDUCATION)
             else{
                 return true; // The individual remains a student *OUTCOME A*
             }
 
         }
 
-        // No
+        // No (Not a Student in lag1)
         else {
 
             // In the previous period, was the individual a retired (laggedRetired)?
@@ -1370,7 +1374,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 setDer(Indicator.True);
                 setDed(Indicator.True);
                 toLeaveSchool = false;
-                return toLeaveSchool;
+                return true; // Must return true as they become a student
             } else {
                 return false; // Remain in current status: employed/not employed (no changes) *OUTCOME D*
                 }
@@ -1392,6 +1396,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             setDer(Indicator.False);
             setLeftEducation(true); //This is not reset and indicates if individual has ever left school - used with health process
             setLes_c4(Les_c4.NotEmployed); //Set activity status to NotEmployed when leaving school to remove Student status
+
+            this.toLeaveSchool = false; // Reset the flag once the leaving process is complete
+
         }
     }
 
