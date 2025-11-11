@@ -465,7 +465,7 @@ public class TaxDonorDataParser {
             for (String policyName: euromodPolicySchedule.values()) {
 
                 Path source;
-                source = FileSystems.getDefault().getPath(Parameters.getEuromodOutputDirectory(), policyName + ".txt");
+                source = FileSystems.getDefault().getPath(Parameters.getEuromodOutputDirectory(country), policyName + ".txt");
                 List<String> fileContentByLine = Files.readAllLines(source);
 
                 // Get indices of required vars. The first file should include Input & Output vars, the rest only Output vars.

@@ -27,7 +27,7 @@ public class DataParser {
 
 		//Construct tables for Simulated Persons & Households (initial population)
 		for (int year = startYear; year <= endYear; year++) {
-			DataParser.parse(Parameters.getInputDirectoryInitialPopulations() + initialInputFilename + "_" + year + ".csv", initialInputFilename, conn, country, year);
+			DataParser.parse(Parameters.getInputDirectoryInitialPopulations(country) + initialInputFilename + "_" + year + ".csv", initialInputFilename, conn, country, year);
 		}
 	}
 
@@ -159,6 +159,11 @@ public class DataParser {
 				+ "UPDATE " + personTable + " SET activity_status = 'Retired' WHERE les_c4 = 4;"
 				+ "ALTER TABLE " + personTable + " DROP COLUMN les_c4;"
 				+ "ALTER TABLE " + personTable + " ALTER COLUMN activity_status RENAME TO les_c4;"
+
+                /*
+                //Labour Market Categories
+                + "ALTER TABLE " + personTable + " ADD labour_categories_test VARCHAR_IGNORECASE;"
+                */
 
 				//Lag(1) of les_c4
 				+ "ALTER TABLE " + personTable + " ADD activity_status VARCHAR_IGNORECASE;"
