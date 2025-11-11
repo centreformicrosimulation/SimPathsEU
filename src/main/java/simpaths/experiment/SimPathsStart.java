@@ -234,7 +234,7 @@ public class SimPathsStart implements ExperimentBuilder {
 	private static void runGUIlessSetup(int option) throws FileNotFoundException {
 
 		// Detect if data available; set to testing data if not
-		Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations()), new String[]{"csv"}, false);
+		Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations(country)), new String[]{"csv"}, false);
 		if (testList.size()==0)
 			Parameters.setTrainingFlag(true);
 
@@ -281,7 +281,7 @@ public class SimPathsStart implements ExperimentBuilder {
 
 	public static void writePolicyScheduleExcelFile() {
 
-		Collection<File> euromodOutputTextFiles = FileUtils.listFiles(new File(Parameters.getEuromodOutputDirectory()), new String[]{"txt"}, false);
+		Collection<File> euromodOutputTextFiles = FileUtils.listFiles(new File(Parameters.getEuromodOutputDirectory(country)), new String[]{"txt"}, false);
 		Iterator<File> fIter = euromodOutputTextFiles.iterator();
 		while (fIter.hasNext()) {
 			File file = fIter.next();
@@ -367,7 +367,7 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		if (choices[0]) {
 			// choose the country and the simulation start year
-			Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations()), new String[]{"csv"}, false);
+			Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations(country)), new String[]{"csv"}, false);
 			if (testList.size() == 0)
 				Parameters.setTrainingFlag(true);
 			chooseCountryAndStartYear();
@@ -395,7 +395,7 @@ public class SimPathsStart implements ExperimentBuilder {
 					3
 			);
 
-			Collection<File> euromodOutputTextFiles = FileUtils.listFiles(new File(Parameters.getEuromodOutputDirectory()), new String[]{"txt"}, false);
+			Collection<File> euromodOutputTextFiles = FileUtils.listFiles(new File(Parameters.getEuromodOutputDirectory(country)), new String[]{"txt"}, false);
 			euromodOutputTextFiles.removeIf(file -> file.getName().endsWith("_EMHeader.txt"));
 
 			// create table to allow user specification of policy environment

@@ -1806,16 +1806,17 @@ public class Parameters {
         Parameters.taxDonorInputFileName = taxDonorInputFileName;
     }
 
+    public static String getInputDirectoryInitialPopulations(Country country) {
+        return (trainingFlag) ? INPUT_DIRECTORY + country + File.separator + "InitialPopulations" + File.separator + "training"  + File.separator  : INPUT_DIRECTORY + country + File.separator + "InitialPopulations" + File.separator;
+    }
     public static String getPopulationInitialisationInputFileName() {
         return populationInitialisationInputFileName;
-    }
-    public static String getPopulationInitialisationFilePath() {
-        return getInputDirectoryInitialPopulations() + populationInitialisationInputFileName;
     }
 
     public static void setPopulationInitialisationInputFileName(String name) {
         populationInitialisationInputFileName = name;
     }
+
 
     public static LinearRegression getRegLabourSupplyUtilityCouples() {
         return regLabourSupplyUtilityCouples;
@@ -1870,8 +1871,9 @@ public class Parameters {
         return (trainingFlag) ? MIN_START_YEAR_TRAINING : MIN_START_YEAR;
     }
 
-    public static String getEuromodOutputDirectory() {
-        return (trainingFlag) ? EUROMOD_TRAINING_DIRECTORY : EUROMOD_OUTPUT_DIRECTORY;
+    public static String getEuromodOutputDirectory(Country country) {
+        //return (trainingFlag) ? EUROMOD_TRAINING_DIRECTORY : EUROMOD_OUTPUT_DIRECTORY;
+        return (trainingFlag) ? INPUT_DIRECTORY + country + File.separator + "EUROMODoutput" + File.separator + "training"  + File.separator  : INPUT_DIRECTORY + country + File.separator + "EUROMODoutput" + File.separator;
     }
 
     public static String getEUROMODpolicyForThisYear(int year) {
@@ -2770,9 +2772,7 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
     public static void setTrainingFlag(boolean flag) {
         trainingFlag = flag;
     }
-    public static String getInputDirectoryInitialPopulations() {
-        return (trainingFlag) ? INPUT_DIRECTORY_INITIAL_POPULATIONS + "training"  + File.separator  : INPUT_DIRECTORY_INITIAL_POPULATIONS;
-    }
+
     private static void setMapBounds(MapBounds map, String countryString) {
 
         String rgn = switch (countryString) {

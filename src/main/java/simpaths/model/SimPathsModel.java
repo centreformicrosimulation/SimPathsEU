@@ -171,7 +171,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
 
-    private boolean alignEmployment = true; //true; //Set to true to align employment share
+    private boolean alignEmployment = false; //true; //Set to true to align employment share
 
     public boolean addRegressionStochasticComponent = true; //If set to true, and regression contains ResStanDev variable, will evaluate the regression score including stochastic part, and omits the stochastic component otherwise.
 
@@ -1548,6 +1548,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         ActivityAlignmentV2 activityAlignment = new ActivityAlignmentV2(benefitUnits, coefficientMap, regressionCoefficientName, occupancy);
         RootSearch2 search = getRootSearch2(utilityAdjustment, activityAlignment, 0.5, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
+        // epsFunction tolerance is set to 0.5% seem to be sufficient
 
         System.out.println("=== Root Search Summary ===");
         System.out.println("Root found at: " + search.getTarget()[0]);

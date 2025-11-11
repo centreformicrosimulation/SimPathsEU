@@ -144,6 +144,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Transient private Boolean receivesBenefitsFlag; // Does person receive benefits
 
     @Enumerated(EnumType.STRING) private Labour labourSupplyWeekly;			//Number of hours of labour supplied each week
+    //@Enumerated(EnumType.STRING) @Column(name="labour_categories_test") private Labour labourSupplyWeekly;
+
     @Transient private Labour labourSupplyWeekly_L1; // Lag(1) (previous year's value) of weekly labour supply
     private Integer hoursWorkedWeekly;
 
@@ -591,7 +593,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setAdditionalFieldsInInitialPopulation() {
 
-        if (labourSupplyWeekly==null)
+        if (labourSupplyWeekly==null) //check this condition is necessary
             labourSupplyWeekly = Labour.convertHoursToLabour(model.getInitialHoursWorkedWeekly().get(key.getId()).intValue(), getDgn());
         receivesBenefitsFlag_L1 = receivesBenefitsFlag;
         labourSupplyWeekly_L1 = getLabourSupplyWeekly();
