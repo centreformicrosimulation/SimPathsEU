@@ -100,12 +100,12 @@ public enum Labour implements IntegerValuedEnum {
             else if (hours <= 49) return CATEGORY_IT_3;
             else return CATEGORY_IT_4;
         }
-        if (Objects.equals(COUNTRY_STRING, "PL")) {
+        else if (Objects.equals(COUNTRY_STRING, "PL")) {
             if (hours <= 39) return CATEGORY_PL_1;
             else if (hours <= 40) return CATEGORY_PL_2;
             else return CATEGORY_PL_3;
         }
-        if (Objects.equals(COUNTRY_STRING, "HU")) {
+        else if (Objects.equals(COUNTRY_STRING, "HU")) {
             if (hours <= 39) return CATEGORY_HU_1;
             else if (hours <= 40) return CATEGORY_HU_2;
             else return CATEGORY_HU_3;
