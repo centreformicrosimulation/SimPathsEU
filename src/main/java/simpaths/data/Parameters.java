@@ -1193,7 +1193,10 @@ public class Parameters {
 
 
         //if (List.of("HU", "PL", "IT").contains(country.toString())) {}
-        int columnsFertilityF1a = ParamUtils.getInt(columnsNumberParameters, "columnsFertilityF1a");
+        int columnsFertilityF1a = 0;
+        if (FLAG_USE_F1A) {
+            columnsFertilityF1a = ParamUtils.getInt(columnsNumberParameters, "columnsFertilityF1a");
+        }
         int columnsFertilityF1b = ParamUtils.getInt(columnsNumberParameters, "columnsFertilityF1b");
         int columnsIncomeI3a_amount = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3a_amount");
         int columnsIncomeI3b_amount = ParamUtils.getInt(columnsNumberParameters, "columnsIncomeI3b_amount");
@@ -1248,7 +1251,9 @@ public class Parameters {
         meanCovarianceParametricMatching = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_parametricMatching.xlsx"), "Parameters", 1, 1);
 
         //Fertility
-        coeffCovarianceFertilityF1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_fertility.xlsx"), "F1a", 1, columnsFertilityF1a);
+        if (FLAG_USE_F1A) {
+            coeffCovarianceFertilityF1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_fertility.xlsx"), "F1a", 1, columnsFertilityF1a);
+        }
         coeffCovarianceFertilityF1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_fertility.xlsx"), "F1b", 1, columnsFertilityF1b);
 
         //Income
@@ -1326,7 +1331,9 @@ public class Parameters {
             coeffCovariancePartnershipU1a = RegressionUtils.bootstrap(coeffCovariancePartnershipU1a);
             coeffCovariancePartnershipU1b = RegressionUtils.bootstrap(coeffCovariancePartnershipU1b);
             coeffCovariancePartnershipU2b = RegressionUtils.bootstrap(coeffCovariancePartnershipU2b);
-            coeffCovarianceFertilityF1a = RegressionUtils.bootstrap(coeffCovarianceFertilityF1a);
+            if (FLAG_USE_F1A) {
+                coeffCovarianceFertilityF1a = RegressionUtils.bootstrap(coeffCovarianceFertilityF1a);
+            }
             coeffCovarianceFertilityF1b = RegressionUtils.bootstrap(coeffCovarianceFertilityF1b);
 
         }
@@ -1357,9 +1364,14 @@ public class Parameters {
         regPartnershipU2b = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2bAppended);
 
         //Fertility
-        MultiKeyCoefficientMap coeffFertilityF1aAppended = appendCoefficientMaps(coeffCovarianceFertilityF1a, fertilityTimeAdjustment, "Year");
+        MultiKeyCoefficientMap coeffFertilityF1aAppended = null;
+        if (FLAG_USE_F1A) {
+            coeffFertilityF1aAppended = appendCoefficientMaps(coeffCovarianceFertilityF1a, fertilityTimeAdjustment, "Year");
+        }
         MultiKeyCoefficientMap coeffFertilityF1bAppended = appendCoefficientMaps(coeffCovarianceFertilityF1b, fertilityTimeAdjustment, "Year");
-        regFertilityF1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffFertilityF1aAppended);
+        if (FLAG_USE_F1A) {
+            regFertilityF1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffFertilityF1aAppended);
+        }
         regFertilityF1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffFertilityF1bAppended);
 
         //Income

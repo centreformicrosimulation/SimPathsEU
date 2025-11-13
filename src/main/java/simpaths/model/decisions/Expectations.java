@@ -205,10 +205,7 @@ public class Expectations {
         if (ageYearsNextPeriod <= DecisionParams.MAX_AGE_COHABITATION) {
             personProxyNextPeriod.setDcpstLocal(currentStates.getDcpst());
         } else {
-            if (currentStates.getDcpst().equals(Dcpst.Partnered))
-                personProxyNextPeriod.setDcpstLocal(Dcpst.PreviouslyPartnered);
-            else
-                personProxyNextPeriod.setDcpstLocal(Dcpst.SingleNeverMarried);
+            personProxyNextPeriod.setDcpstLocal(Dcpst.Single);
         }
         personProxyNextPeriod.setDcpst_lag1(currentStates.getDcpst());
         personProxyNextPeriod.setLiwwh((ageYearsNextPeriod - Parameters.AGE_TO_BECOME_RESPONSIBLE) * DecisionParams.MONTHS_EMPLOYED_PER_YEAR);
