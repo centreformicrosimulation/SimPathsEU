@@ -1,0 +1,5 @@
+NUTS 1 Regions Hungary 
+
+1 = HUC = Central Hungary (Közép-Magyarország)
+2 = HUA = Transdanubia (Dunántúl)
+3 = HUB = Great Plain and North (Alföld és Észak)

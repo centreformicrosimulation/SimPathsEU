@@ -1,0 +1,24 @@
+NUTS 1 Region Italy
+
+There is a NUTS1 region border change during the SILC panel, however its impact is minimal therefore leave regions are reported.  Simply recode the regions so the coding is consistent across the panel. 
+
+	ITD -> ITH  
+	ITE -> ITI 
+
+	3 = Northwest 
+	6 = South 
+	7 = Islands
+	8 = Northeast 
+	9 = Central 
+
+
+
+“"Similarly, the old ITD5 region (Emilia-Romagna) has a correspondence with the 
+new ITH5 region with the same name. The only difference between ITD5 and ITH5 
+lies in that its ninth NUTS 3 region, ITD59 (Rimini), experienced a boundary 
+shift, being transformed into the bigger ITH59 (Rimini). This boundary shift is 
+in turn compensated by the complementary reduction in the old ITE31 (Pessaro e 
+Urbino), which was part of the old NUTS 2 ITE3 (Marche), which are converted 
+into the new ITI31 (Pessaro e Urbino) and ITI3 (Marche) respectively."
+From "Conversion of regional data between NUTS classifications" Lopez-Cobo 2016 
+”

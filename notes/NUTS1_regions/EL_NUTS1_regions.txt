@@ -1,0 +1,13 @@
+NUTS 1 Region Greece 
+
+In the  2013 Commission Regulation No 1319/2013 there were adjustments made to the Greek NUTS1 regions: 
+	
+	- The region of Epirus was reclassified from Kentriki Ellada (Central Greece) to Voreia Ellada (Northern Greece).
+	- The region Thessaly moved from Voreia Ellada to Kentriki Ellada.
+Given these areas are non-negligible in terms of population (Thessaly approx 700,000) and they differ in terms of socio-0economic indicators I have decided to merge the Northern and Central regions into one large aggregate region that is constant throughout the panel. 
+
+NUTS 1 regions: 
+	(SimPaths = NUTS1 )
+	EL7 =  Voreia Ellada (Northern Greece, 1 -> 5) + Kentriki Ellada (Central Greece, 2 -> 6)
+	EL3  =  Attiki (Attica)
+	EL4 = Nisia Aigaiou, Kriti (Aegean Islands and Crete)
