@@ -2173,8 +2173,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dcpagdf_L1, 					//Lag(1) of age difference between partners
         Dcpyy_L1, 						//Lag(1) number of years in partnership
         Dcpst_Partnered,				//Partnered
-        Dcpst_PreviouslyPartnered,		//Previously partnered
-        Dcpst_PreviouslyPartnered_L1,   //Lag(1) of partnership status is previously partnered
         Dcpst_Single,					//Single never married
         Dcpst_Single_L1, 				//Lag(1) of partnership status is Single
         Dcrisis,
@@ -2686,22 +2684,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (dcpagdf_lag1 != null) ? (double) dcpagdf_lag1 : 0.0;
             }
             case Dcpst_Single -> {
-                return (Dcpst.SingleNeverMarried.equals(getDcpst())) ? 1.0 : 0.0;
+                return (Dcpst.Single.equals(getDcpst())) ? 1.0 : 0.0;
             }
             case Dcpst_Partnered -> {
                 return (Dcpst.Partnered.equals(getDcpst())) ? 1.0 : 0.0;
             }
-            case Dcpst_PreviouslyPartnered -> {
-                return (Dcpst.PreviouslyPartnered.equals(getDcpst())) ? 1.0 : 0.0;
-            }
             case Dcpst_Single_L1 -> {
                 if (dcpst_lag1 != null) {
-                    return dcpst_lag1.equals(Dcpst.SingleNeverMarried) ? 1. : 0.;
-                } else return 0.;
-            }
-            case Dcpst_PreviouslyPartnered_L1 -> {
-                if (dcpst_lag1 != null) {
-                    return dcpst_lag1.equals(Dcpst.PreviouslyPartnered) ? 1. : 0.;
+                    return dcpst_lag1.equals(Dcpst.Single) ? 1. : 0.;
                 } else return 0.;
             }
             case D_Children_2under -> {
@@ -4369,9 +4359,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         if (getPartner()!=null)
             return Dcpst.Partnered;
-        if (Dcpst.Partnered.equals(dcpst_lag1))
-            return Dcpst.PreviouslyPartnered;
-        return Dcpst.SingleNeverMarried;
+        else {return Dcpst.Single;}
     }
 
     public void setDcpstLocal(Dcpst dcpst) {
