@@ -1,15 +1,15 @@
 ********************************************************************************
-* PROJECT:  		ESPON 
+* PROJECT:  		SimPaths EU 
 * SECTION:			Education
 * OBJECT: 			Final Probit Models 
-* AUTHORS:			Daria Popova, Justin van de Ven, Ashley Burdett 
-* LAST UPDATE:		May 2025
+* AUTHORS:			Daria Popova, Justin van de Ven, Ashley Burdett, 
+*					Aleksandra Kolndrekaj 
+* LAST UPDATE:		November 2025
 * COUNTRY: 			Poland 
-
-* NOTES: 			Process E2a - Slight discrepancy with previous gologit 
-* 						estimates. 
-* 					Try adding time trend to educational attainment. 
 ********************************************************************************
+* NOTES: 			
+********************************************************************************
+
 clear all
 set more off
 set mem 200m
@@ -22,23 +22,60 @@ local model_specification_test = 0
 cap log close 
 log using "$dir_log/reg_education.log", replace
 
-
+* Load data 
 use "$dir_input_data/${country}-SILC_pooled_all_obs_02.dta", clear
 
 //do "$dir_do/variable_update"
 
 * Sample selection 
-drop if dag < 16
+drop if dag < 15
+
+* Create student flag 
+cap gen Dst = .
+replace Dst = 0 if les_c3 !=2 
+replace Dst = 1 if les_c3 == 2 
+replace Dst = . if les_c3 == . 
 
 * Adjust variables 
 replace stm = stm - 2000
 fre stm 
 
+* Year dummies
+gen y2019 = (stm == 19)
 gen y2020 = (stm == 20)
 gen y2021 = (stm == 21)
+gen y2022 = (stm == 22)
+gen y2023 = (stm == 23)
 
-* Ensure missing is missing
-recode ded dgn dag dagsq drgn1 stm deh_c3 les_c3 (-9=.) 
+* Ensure missing is missing 
+recode ded dgn dag dagsq drgn1 stm deh_c3 les_c3  (-9=.) 
+
+* Age transformtions
+
+* Age linear spline 
+gen Dag_post25 = (dag > 25) * (dag - 25)
+
+* Age quadratic spline 
+gen Dag_post21 = (dag > 21) * (dag - 21)
+gen Dag_post18_sq = (dag > 18) * (dag - 18) * (dag - 18) 
+gen Dag_post21_sq = (dag > 21) * (dag - 21) * (dag - 21) 
+gen Dag_post25_sq = (dag > 25) * (dag - 25) * (dag - 25)
+gen Dag_post26_sq = (dag > 26) * (dag - 26) * (dag - 26) 
+
+* Age cubic spline 
+mkspline rcs = dag, cubic knots(18 21 23 26)
+
+
+* Time transofrmations
+
+* Year linear spline
+gen year_post2020 = (stm > 20) * (stm - 20)
+
+* 2022-2023 
+gen y2223 = (stm == 22 | stm == 23)
+
+* Lagged in initial education spell 
+gen Ded_L1 = l.ded
 
 * Labeling and formating variables
 label def jbf 1 "Employed" 2 "Student" 3 "Not Employed"			
@@ -68,7 +105,7 @@ gen Dgn = dgn
 
 gen Dag = dag  
 
-gen  Dag_sq = dagsq 
+gen Dag_sq = dagsq 
 
 tab drgn1, gen(${country}) 
 rename PL5 PL10 
@@ -83,10 +120,16 @@ tab deh_c3, gen(Deh_c3_)
 rename Deh_c3_1 Deh_c3_High
 rename Deh_c3_3 Deh_c3_Low
 
+tab dcpst, gen(Dcpst_)
+rename Dcpst_1 Dcpst_Partnered
+rename Dcpst_2 Dcpst_Single
+
 tab les_c3, gen(Les_c3_)
 rename Les_c3_1 Les_c3_Employed
 rename Les_c3_2 Les_c3_Student
 rename Les_c3_3 Les_c3_NotEmployed
+
+tab ydses_c5, gen(Ydses_c5_Q) 
 
 gen Dnc = dnc
 
@@ -94,8 +137,12 @@ gen Dnc02 = dnc02
 
 gen Year_transformed = stm  
 
+gen Y2019 = y2019  
 gen Y2020 = y2020  
 gen Y2021 = y2021 
+gen Y2022 = y2022 
+gen Y2023 = y2023
+gen Y2223 = (stm == 22 | stm == 23)
 
 * Set data 
 xtset idperson swv
@@ -109,13 +156,13 @@ putexcel B1 = "Model parameters governing projection of education status"
 putexcel A4 = "Process:", bold
 putexcel B4 = "Description:", bold
 putexcel A5 = "E1a"
-putexcel B5 = "Probit regression estimates of remaining in continuous education - individuals aged 16-29 in initial education spell."
+putexcel B5 = "Probit regression estimates of exiting education"
 putexcel A6 = "E1b"
-putexcel B6 = "Probit regression estimates of returning to education - individuals aged 16-35 not in initial education spell."
-putexcel A7 = "E2a"
-putexcel B7 = "Generalized ordered logit regression estimates of education attainment - individuals aged 16-29 exiting education that were in initial education spell in t-1 but not in t."
+putexcel B6 = "Probit regression estimates of returning to education"
+putexcel A7 = "E2"
+putexcel B7 = "Generalized ordered logit regression estimates of education attainment - individuals aged 16+ exiting education in t."
 putexcel A8 = "E2a_raw"
-putexcel B8 = "Raw generalized ordered logit regression estimates of education attainment - individuals aged 16-29 exiting education that were in initial education spell in t-1 but not in t. Useful for the 'Gologit predictor' file."
+putexcel B8 = "Raw generalized ordered logit regression estimates of education attainment - individuals aged 16+ exiting education. Useful for the 'Gologit predictor' file."
 
 putexcel A10 = "Notes:", bold
 putexcel B10 = "Regions: PL4 = Polnocno-Zachodni, PL5 = Poludniowo-Zachodni, PL6 = Polnocy, PL10 = Central + East. Poludniowy is the omitted category."
@@ -124,22 +171,26 @@ putexcel set "$dir_work/reg_education_${country}", sheet("Gof") modify
 putexcel A1 = "Goodness of fit", bold		
 
 
-*******************************************************
-* E1a: Probability of Leaving Initial Education Spell *
-*******************************************************
-* Process E1a: Leaving the initial education spell. 
-* Sample: Individuals aged 16-29 who have not left their initial education spell
-* DV: In continuous education dummy 
+*****************************************
+* E1a: Probability of Leaving Education *
+*****************************************
+* Process E1a: Leaving education. 
+* Sample: Individuals aged 16-29 who are observed in education in the previous 
+* 			observation 
+* DV: In education dummy
 * Note: Condition implies some persistence - education for the last 2 years. 
 
 xtset idperson swv
-fre ded if (dag >= 16 & dag <= 29 & l.ded == 1) 
+
+fre Dst if (dag >= 16 & dag <= 29) 
 // was in initial education spell in the previous wave 
 // 75% remain in education 
 
-probit ded i.Dgn Dag Dag_sq $regions Year_transformed ///
-	Y2020 Y2021 if ///
-	(dag >= 16 & dag <= 29 & l.ded == 1) [pweight = dimxwt], vce(robust)	
+* Estimation
+probit Dst i.Dgn Dag Dag_sq Dag_post18_sq Dag_post21_sq l.Ded  ///
+	l.Ydses_c5_Q2 l.Ydses_c5_Q3 l.Ydses_c5_Q4 l.Ydses_c5_Q5 $regions ///
+	Year_transformed Y2020 Y2021 Y2223 if ///
+	(dag >= 16 & dag <= 29 & l.les_c4 == 2) [pweight = dimxwt], vce(robust)	
 	
 * Save sample inclusion indicator and predicted probabilities	
 gen in_sample = e(sample)	
@@ -260,7 +311,7 @@ restore
 * Export model fit statistics
 putexcel set "$dir_work/reg_education_${country}", sheet("Gof") modify
 
-putexcel A3 = "E1a - Leaving initial education spell", bold		
+putexcel A3 = "E1a - Leaving education", bold		
 
 putexcel A5 = "Pseudo R-squared" 
 putexcel B5 = r2_p 
@@ -277,23 +328,25 @@ scalar drop _all
 matrix drop _all
 frame drop temp_frame 	
 	
+	
 **********************************************
 * E1b: Probability of Returning to Education *
 **********************************************
-
-* Process E1b: Retraining having previously entered the labour force. 
-* Sample: Individuals aged 16-35 who have left their initial education spell 
-*  			and not a student last year 
+* Process E1b: Returning to eeucation having previously entered the labour force
+* Sample: Individuals aged 16-until retirement who have left their initial 
+*  			education spell and not a student last year 
 * DV: Return to education 
 
 xtset idperson swv
 
-fre der if (dag >= 16 & dag <= 35 & ded == 0) 
+fre der if (dag >= 16 & l.les_c4 != 4 & l.les_c4 != 2) 
+replace der = . if der == -9
 
-probit der i.Dgn Dag Dag_sq li.Deh_c3_High li.Deh_c3_Low ///
-	li.Les_c3_Student li.Les_c3_NotEmployed l.Dnc l.Dnc02 ///
-	 $regions Year_transformed ///
-	Y2020 Y2021 if (dag >= 16 & dag <= 35 & ded == 0) ///
+* Estimation 
+probit der i.Dgn Dag Dag_sq i.Dcpst_Partnered li.Deh_c3_High ///
+	 li.Deh_c3_Low li.Les_c3_NotEmployed li.Les_c3_Employed l.Dnc l.Dnc02 ///
+	 $regions Year_transformed Y2020 Y2021  ///
+	 if (dag >= 16 & l.les_c4 != 4 & l.les_c4 != 2) ///
 	 [pweight=dimlwt], vce(robust)
 
 * Save sample inclusion indicator and predicted probabilities	 
@@ -433,29 +486,42 @@ frame drop temp_frame
 *************************************************
 * E2a Educational Level After Leaving Education *
 *************************************************
-
-* Process E2a: Educational level achieved when leaving the initial spell of 
-* 				education  
-* Sample: Those 16-29 who have just left their initial education spell in  
-* 				current year 
+* Process E2a: Educational level achieved when leaving the education
+* Sample: ALl those observed leaving education
 * DV: Education level (3 cat)  
 * Note: Previously tried a multinomial probit, now use an ordered probit
 * Impute the dependent variable for PL, therefore limit the estimation sample 
 * to those with complete observations. 
 
-fre deh_c3 if (Dag >= 16 & Dag <= 29) & l.ded == 1 & ded == 0
+fre deh_c3 if Dag >= 16 & l.les_c4 == 2 & les_c4!=2 & dhe_flag!=1
 
+* Recode educational achievement (ascending)
 recode deh_c3 (1 = 3) (3 = 1), gen(deh_c3_recoded)	
 lab def deh_c3_recoded 1 "Low" 2 "Medium" 3 "High"
 lab val deh_c3_recoded deh_c3_recoded
 
-
-* Generalized ordered logit 
+* Estimateion - Generalized ordered logit 
 sort idperson swv
 xtset idperson swv
 
-gologit2 deh_c3_recoded i.Dgn Dag Dag_sq $regions /*Year_transformed*/ Y2020 ///
-	Y2021 if dag >= 16 & dag <= 29 & l.ded == 1 & ded == 0 & dhe_flag != 1  ///
+* Create lagged vars
+gen Ydses_c5_Q2_L1 = l.Ydses_c5_Q2
+gen Ydses_c5_Q3_L1 = l.Ydses_c5_Q3
+gen Ydses_c5_Q4_L1 = l.Ydses_c5_Q4
+gen Ydses_c5_Q5_L1 = l.Ydses_c5_Q5
+
+* Back up if want to maintaon high being most likely thoughout thirties
+gen dag25 = dag 
+replace dag25 = 25 if dag > 25 
+gen dag25_sq = dag25 * dag25
+gen post25 = (dag>25) * (dag-25) 
+
+/*dag25 dag25_sq post25*/	
+/*Dag Dag_sq Dag_post25*/
+
+gologit2 deh_c3_recoded i.Dgn Dag Dag_sq Ded_L1 Dag_post25_sq $regions ///
+	Year_transformed Y2019 Y2020 Y2021 ///
+	if Dag >= 16 & l.les_c4 == 2 & les_c4 != 2 & deh_flag != 1  ///
 	[pweight = dimxwt], autofit 
 
 * Save sample inclusion indicator and predicted probabilities	
@@ -545,8 +611,7 @@ mata:
 
 end
 
-* Generate vector to multiply the coef vector with to eliminate the repetitions 
-* of coefficients for vars that satify the proportional odds assumptions
+* Generate vector to multiply the coef vector with to eliminate the repetitions of coefficients for vars that satify the proportional odds assumptions
 matrix structure_a = J(1,no_nonzero_b_per,1)
 matrix structure_b = unique_flag[1,no_nonzero_b_per+1..no_nonzero_b]
 matrix structure = structure_a, structure_b
@@ -652,6 +717,7 @@ putexcel A1 = "REGRESSOR"
 putexcel B1 = "COEFFICIENT"
 
 preserve 
+
 * Create temporary frame - Main file 
 frame create temp_frame
 frame temp_frame: {
@@ -736,10 +802,7 @@ putexcel B16 = N_sample
 drop in_sample	
 scalar drop r2_p N_sample	
 
-
 restore 
-
-
 	
 cap log close
 
