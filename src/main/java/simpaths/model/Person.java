@@ -80,6 +80,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Enumerated(EnumType.STRING) private Education dehm_c3;      //Mother's education level
     @Enumerated(EnumType.STRING) private Education dehf_c3;      //Father's education level
     @Enumerated(EnumType.STRING) private Indicator ded;          // in continuous education
+    @Enumerated(EnumType.STRING) private Indicator ded_lag1;          // in continuous education
     @Enumerated(EnumType.STRING) private Indicator der;          // return to education
     @Enumerated(EnumType.STRING) private Les_c4 les_c4;      //Activity (employment) status
     @Enumerated(EnumType.STRING) private Les_c7_covid les_c7_covid; //Activity (employment) status used in the Covid-19 models
@@ -348,10 +349,17 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         dehm_c3 = originalPerson.dehm_c3;
         dehsp_c3_lag1 = originalPerson.deh_c3_lag1;
 
+        // set ded
         if (originalPerson.dag < Parameters.MIN_AGE_TO_LEAVE_EDUCATION) { //If under age to leave education, set flag for being in education to true
             ded = Indicator.True;
         } else {
             ded = originalPerson.ded;
+        }
+
+        if (originalPerson.ded_lag1 != null) { //If original person misses lagged level of education, assign current level of education
+            ded_lag1 = originalPerson.ded_lag1;
+        } else {
+            ded_lag1 = ded;
         }
 
         der = originalPerson.der;
@@ -1805,6 +1813,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         socialCareProvision_lag1 = socialCareProvision;
         lowWageOffer_lag1 = getLowWageOffer();
         deh_c3_lag1 = deh_c3; //Update lag(1) of education level
+        ded_lag1 = ded; //Update lag(1) of education level
         ypnbihs_dv_lag1 = getYpnbihs_dv(); //Update lag(1) of gross personal non-benefit income
         labourSupplyWeekly_L1 = getLabourSupplyWeekly(); // Lag(1) of labour supply
         receivesBenefitsFlag_L1 = receivesBenefitsFlag; // Lag(1) of flag indicating if individual receives benefits
@@ -2170,6 +2179,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dag_sq,
         DagCeiling54,
         Dag_sqCeiling54,
+        Dag_post18_sq,
+        Dag_post21_sq,
         Dcpagdf_L1, 					//Lag(1) of age difference between partners
         Dcpyy_L1, 						//Lag(1) number of years in partnership
         Dcpst_Partnered,				//Partnered
@@ -2177,6 +2188,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dcpst_Single_L1, 				//Lag(1) of partnership status is Single
         Dcrisis,
         Ded,
+        Ded_L1,
         Deh_c3_High,
         Deh_c3_Low,
         Deh_c3_Low_Dag,
@@ -2362,6 +2374,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Y2019,
         Y2020,
         Y2021,
+        Y2022,
+        Y2023,
+        Y2223,
         Y2022_2023,
         Year,										//Year as in the simulation, e.g. 2009
         Year2010,
@@ -2477,6 +2492,15 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Dag_sqCeiling54 -> {
                 return (double) Math.min(dag, 54) * Math.min(dag, 54);
             }
+
+            case Dag_post18_sq -> {
+                return dag > 18 ? (double) (dag - 18) * (dag - 18) : 0.0;
+            }
+
+            case Dag_post21_sq -> {
+                return dag > 21 ? (double) (dag - 21) * (dag - 21) : 0.0;
+            }
+
             case AgeSquared -> {
                 //			log.debug("age sq");
                 return (double) dag * dag;
@@ -2694,24 +2718,66 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     return dcpst_lag1.equals(Dcpst.Single) ? 1. : 0.;
                 } else return 0.;
             }
-            case D_Children_2under -> {
-                return (double) benefitUnit.getIndicatorChildren(0, 2).ordinal();
+
+
+            case Ded -> {
+                return (Indicator.True.equals(ded)) ? 1.0 : 0.0;
             }
-            case D_Children_3_6 -> {
-                return (double) benefitUnit.getIndicatorChildren(3, 6).ordinal();
+            case Ded_L1 -> {
+                return (double) ded_lag1.getValue() ;
             }
-            case D_Children_7_12 -> {
-                return (double) benefitUnit.getIndicatorChildren(7, 12).ordinal();
+            case Deh_c3_High -> {
+                return (Education.High.equals(deh_c3)) ? 1.0 : 0.0;
             }
-            case D_Children_13_17 -> {
-                return (double) benefitUnit.getIndicatorChildren(13, 17).ordinal();
+            case Deh_c3_Medium -> {
+                return (Education.Medium.equals(deh_c3)) ? 1.0 : 0.0;
             }
-            case D_Children_18over -> {
-                return (double) benefitUnit.getIndicatorChildren(18, 99).ordinal();
+            case Deh_c3_Medium_L1 -> {
+                return (Education.Medium.equals(deh_c3_lag1)) ? 1.0 : 0.0;
             }
-            case D_Children -> {
-                return (getNumberChildrenAll() > 0) ? 1. : 0.;
+            case Deh_c3_Low -> {
+                return (Education.Low.equals(deh_c3)) ? 1.0 : 0.0;
             }
+            case Deh_c3_Low_L1 -> {
+                return (Education.Low.equals(deh_c3_lag1)) ? 1.0 : 0.0;
+            }
+            case Deh_c3_High_L1 -> {
+                return (Education.High.equals(deh_c3_lag1)) ? 1.0 : 0.0;
+            }
+            case Dehm_c3_High -> {
+                return (Education.High.equals(dehm_c3)) ? 1.0 : 0.0;
+            }
+            case Dehm_c3_Medium -> {
+                return (Education.Medium.equals(dehm_c3)) ? 1.0 : 0.0;
+            }
+            case Dehm_c3_Low -> {
+                return (Education.Low.equals(dehm_c3)) ? 1.0 : 0.0;
+            }
+            case Dehf_c3_High -> {
+                return (Education.High.equals(dehf_c3)) ? 1.0 : 0.0;
+            }
+            case Dehf_c3_Medium -> {
+                return (Education.Medium.equals(dehf_c3)) ? 1.0 : 0.0;
+            }
+            case Dehf_c3_Low -> {
+                return (Education.Low.equals(dehf_c3)) ? 1.0 : 0.0;
+            }
+            case Dehmf_c3_High -> {
+                return (checkHighestParentalEducationEquals(Education.High)) ? 1.0 : 0.0;
+            }
+            case Dehmf_c3_Medium -> {
+                return (checkHighestParentalEducationEquals(Education.Medium)) ? 1.0 : 0.0;
+            }
+            case Dehmf_c3_Low -> {
+                return (checkHighestParentalEducationEquals(Education.Low)) ? 1.0 : 0.0;
+            }
+            case Dehsp_c3_Medium_L1 -> {
+                return (Education.Medium.equals(dehsp_c3_lag1)) ? 1. : 0.;
+            }
+            case Dehsp_c3_Low_L1 -> {
+                return (Education.Low.equals(dehsp_c3_lag1)) ? 1. : 0.;
+            }
+
             case Dnc_L1 -> {
                 return (double) getNumberChildrenAll_lag1();
             }
@@ -2724,6 +2790,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Dgn -> {
                 return (Gender.Male.equals(dgn)) ? 1.0 : 0.0;
             }
+
+
             case Dhe -> {
                 return (double) dhe.getValue();
             }
@@ -2816,60 +2884,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Dhesp_L1 -> {
                 return (dhesp_lag1 != null) ? (double) dhesp_lag1.getValue() : 0.0;
             }
-            case Ded -> {
-                return (Indicator.True.equals(ded)) ? 1.0 : 0.0;
-            }
-            case Deh_c3_High -> {
-                return (Education.High.equals(deh_c3)) ? 1.0 : 0.0;
-            }
-            case Deh_c3_Medium -> {
-                return (Education.Medium.equals(deh_c3)) ? 1.0 : 0.0;
-            }
-            case Deh_c3_Medium_L1 -> {
-                return (Education.Medium.equals(deh_c3_lag1)) ? 1.0 : 0.0;
-            }
-            case Deh_c3_Low -> {
-                return (Education.Low.equals(deh_c3)) ? 1.0 : 0.0;
-            }
-            case Deh_c3_Low_L1 -> {
-                return (Education.Low.equals(deh_c3_lag1)) ? 1.0 : 0.0;
-            }
-            case Deh_c3_High_L1 -> {
-                return (Education.High.equals(deh_c3_lag1)) ? 1.0 : 0.0;
-            }
-            case Dehm_c3_High -> {
-                return (Education.High.equals(dehm_c3)) ? 1.0 : 0.0;
-            }
-            case Dehm_c3_Medium -> {
-                return (Education.Medium.equals(dehm_c3)) ? 1.0 : 0.0;
-            }
-            case Dehm_c3_Low -> {
-                return (Education.Low.equals(dehm_c3)) ? 1.0 : 0.0;
-            }
-            case Dehf_c3_High -> {
-                return (Education.High.equals(dehf_c3)) ? 1.0 : 0.0;
-            }
-            case Dehf_c3_Medium -> {
-                return (Education.Medium.equals(dehf_c3)) ? 1.0 : 0.0;
-            }
-            case Dehf_c3_Low -> {
-                return (Education.Low.equals(dehf_c3)) ? 1.0 : 0.0;
-            }
-            case Dehmf_c3_High -> {
-                return (checkHighestParentalEducationEquals(Education.High)) ? 1.0 : 0.0;
-            }
-            case Dehmf_c3_Medium -> {
-                return (checkHighestParentalEducationEquals(Education.Medium)) ? 1.0 : 0.0;
-            }
-            case Dehmf_c3_Low -> {
-                return (checkHighestParentalEducationEquals(Education.Low)) ? 1.0 : 0.0;
-            }
-            case Dehsp_c3_Medium_L1 -> {
-                return (Education.Medium.equals(dehsp_c3_lag1)) ? 1. : 0.;
-            }
-            case Dehsp_c3_Low_L1 -> {
-                return (Education.Low.equals(dehsp_c3_lag1)) ? 1. : 0.;
-            }
             case Dhhtp_c4_CoupleChildren_L1 -> {
                 return (Dhhtp_c4.CoupleChildren.equals(getDhhtp_c4_lag1())) ? 1.0 : 0.0;
             }
@@ -2942,6 +2956,25 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     return Indicator.True.equals(partner.dlltsd_lag1) ? 1. : 0.;
                 }
                 else return 0.;
+            }
+
+            case D_Children_2under -> {
+                return (double) benefitUnit.getIndicatorChildren(0, 2).ordinal();
+            }
+            case D_Children_3_6 -> {
+                return (double) benefitUnit.getIndicatorChildren(3, 6).ordinal();
+            }
+            case D_Children_7_12 -> {
+                return (double) benefitUnit.getIndicatorChildren(7, 12).ordinal();
+            }
+            case D_Children_13_17 -> {
+                return (double) benefitUnit.getIndicatorChildren(13, 17).ordinal();
+            }
+            case D_Children_18over -> {
+                return (double) benefitUnit.getIndicatorChildren(18, 99).ordinal();
+            }
+            case D_Children -> {
+                return (getNumberChildrenAll() > 0) ? 1. : 0.;
             }
             case FertilityRate -> {
                 if (ioFlag)
@@ -3143,13 +3176,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Year2021, Y2021 -> {
                 return (getYear() == 2021) ? 1. : 0.;
             }
-            case Y2022_2023 -> {
+            case Y2223, Y2022_2023 -> {
                 return (getYear() == 2022 || getYear() == 2023) ? 1. : 0.;
             }
-            case Year2022 -> {
+            case Year2022, Y2022 -> {
                 return (getYear() == 2022) ? 1. : 0.;
             }
-            case Year2023 -> {
+            case Year2023, Y2023 -> {
                 return (getYear() == 2023) ? 1. : 0.;
             }
             case Year2024 -> {
@@ -3896,9 +3929,18 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         return ded;
     }
 
+    public Indicator getDed_lag1() {
+        return ded_lag1;
+    }
+
     public void setDed(Indicator ded) {
         this.ded = ded;
     }
+
+    public void setDed_lag1(Indicator ded_lag1) {
+        this.ded_lag1 = ded_lag1;
+    }
+
 
     public int getLeaveSchool() {
         if(toLeaveSchool != null && toLeaveSchool == true) {
