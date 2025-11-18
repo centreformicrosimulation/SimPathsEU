@@ -178,7 +178,6 @@
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
             <version>1.17.8</version> <!-- Latest available -->
-            <scope>test</scope>
         </dependency>
     </dependencies>
 	<repositories>
