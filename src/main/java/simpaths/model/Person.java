@@ -2181,6 +2181,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dag_sqCeiling54,
         Dag_post18_sq,
         Dag_post21_sq,
+        Dag_post25_sq,
         Dcpagdf_L1, 					//Lag(1) of age difference between partners
         Dcpyy_L1, 						//Lag(1) number of years in partnership
         Dcpst_Partnered,				//Partnered
@@ -2499,6 +2500,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             case Dag_post21_sq -> {
                 return dag > 21 ? (double) (dag - 21) * (dag - 21) : 0.0;
+            }
+
+            case Dag_post25_sq -> {
+                return dag > 25 ? (double) (dag - 25) * (dag - 25) : 0.0;
             }
 
             case AgeSquared -> {
