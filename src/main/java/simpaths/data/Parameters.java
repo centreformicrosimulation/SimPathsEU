@@ -1218,10 +1218,10 @@ public class Parameters {
         coeffCovarianceWagesFemalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_FemalesNE", 1, columnsWagesFemalesNE);
 
         //Labour Supply utility function coefficients
-        coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_Males", 1, columnsLabourSupplyUtilityMales);
-        coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_Females", 1, columnsLabourSupplyUtilityFemales);
-        coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Males_With_Dep", 1, columnsLabourSupplyUtilityMalesWithDependent);
-        coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Females_With_Dep", 1, columnsLabourSupplyUtilityFemalesWithDependent);
+        coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_male", 1, columnsLabourSupplyUtilityMales);
+        coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_female", 1, columnsLabourSupplyUtilityFemales);
+        coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleDep_Males", 1, columnsLabourSupplyUtilityMalesWithDependent);
+        coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleDep_Females", 1, columnsLabourSupplyUtilityFemalesWithDependent);
         coeffLabourSupplyUtilityACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleAC_Males", 1, columnsLabourSupplyUtilityACMales);
         coeffLabourSupplyUtilityACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleAC_Females", 1, columnsLabourSupplyUtilityACFemales);
         coeffLabourSupplyUtilityCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Couples", 1, columnsLabourSupplyUtilityCouples);
