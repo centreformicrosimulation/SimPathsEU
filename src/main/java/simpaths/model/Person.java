@@ -2225,7 +2225,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         D_Home_owner,
         Dhh_owned_L1,
         Dag,
+        Dag_c20,
         Dag_sq,
+        Dag_c20_sq,
         DagCeiling54,
         Dag_sqCeiling54,
         Dag_post18_sq,
@@ -2533,9 +2535,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case Dag -> {
                 return (double) dag;
             }
+            case Dag_c20 -> {
+                return (double) dag - 20;
+            }
             case Dag_sq -> {
                 return (double) dag * dag;
             }
+            case Dag_c20_sq -> {
+                return (double) (dag - 20) * (dag - 20);
+            }
+
             case DagCeiling54 -> {
                 return (double) Math.min(dag, 54);
             }
