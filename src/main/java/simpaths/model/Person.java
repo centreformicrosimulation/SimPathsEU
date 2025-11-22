@@ -1349,7 +1349,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     toBePartnered = (cohabitInnov < prob);
                     if (toBePartnered)
                         model.getPersonsToMatch().get(dgn).get(getRegion()).add(this);
-                } else if (dgn == Gender.Female && (dag > 29 || !Les_c4.Student.equals(les_c4) || leftEducation)) {
+                } else if (dgn == Gender.Female) {
                     // partnership dissolution
 
                     double score = Parameters.getRegPartnershipU2b().getScore(this, Person.DoublesVariables.class);
