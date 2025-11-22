@@ -92,7 +92,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private Integer endYear = 2013;
 
     @GUIparameter(description = "Maximum simulated age")
-    private Integer maxAge = 81;
+    private Integer maxAge = 100;
 
     //@GUIparameter(description = "Fix year used in the regressions to one specified below")
     private boolean fixTimeTrend = true;
