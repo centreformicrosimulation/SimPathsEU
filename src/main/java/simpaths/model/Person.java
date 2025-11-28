@@ -1461,7 +1461,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             if (labourInnov < prob) {
                 setLes_c4(Les_c4.Student); // Become a student *OUTCOME E*
                 setDer(Indicator.True);
-                setDed(Indicator.True);
+                setDed(Indicator.False);
                 toLeaveSchool = false;
                 return true; // Must return true as they become a student
             } else {

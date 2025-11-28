@@ -254,7 +254,7 @@ public class PersonTest {
 
                assertTrue(testPerson.inSchool(), "Person becomes a student (OUTCOME E).");
                assertEquals(Les_c4.Student, testPerson.getLes_c4());
-               assertEquals(Indicator.True, testPerson.getDed());
+               assertEquals(Indicator.False, testPerson.getDed());
                assertEquals(Indicator.True, testPerson.getDer());
         }
 
