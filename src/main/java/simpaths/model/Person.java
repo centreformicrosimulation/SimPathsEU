@@ -1731,9 +1731,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         // Note that by not filtering out students, we must assign a low education level by default to persons at birth to prevent a null pointer exception when new born persons become old enough to marry if they have not yet left school because
         // their education level has not yet been assigned.
 
-        // Save the old education level before potential update
-        Education currentEducationLevel = this.deh_c3;
-
         // --- Step 2: Update counters based on regression result ---
         if (newEducationLevel.equals(Education.Low)) {
             model.lowEd++;
@@ -1746,27 +1743,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
 
         // --- Step 3: process E2 in the diagaram ---
-        // Is this the first spell (firstEduSpell)?
-
-        // Yes
-        if (der == null || der.equals(Indicator.False)) { // der == Indicator.False (or null, implicitly) it's likely the first spell.
-            this.deh_c3 = newEducationLevel; // New level determined by the regression (newEducationLevel) *OUTCOME F*
-        }
-
-        // No
-        else {
-
-            // Is the new education level obtained via the E2 regression higher than the former one (eduLevel > laggedEduLevel)?
-
-            // Yes
-            if (newEducationLevel.ordinal() > currentEducationLevel.ordinal()) {
-                this.deh_c3 = newEducationLevel; // Use new/higher level *OUTCOME F*
-
-            // No
-            } else {
-                // Retain old level: deh_c3 remains currentEducationLevel (no change needed here)
+        if(deh_c3 != null) {
+            if(newEducationLevel.ordinal() > deh_c3.ordinal()) {		//Assume Education level cannot decrease after re-entering school.
+                deh_c3 = newEducationLevel;
             }
-        }
+        } /*else {
+            // retain old level -> deh_c3 remains the same
+        }*/
 
     }
 
