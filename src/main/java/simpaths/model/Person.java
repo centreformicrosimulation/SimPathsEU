@@ -282,6 +282,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         benefitUnit = mother.benefitUnit;
         idBenefitUnit = benefitUnit.getId();
         dag = 0;
+        ded = Indicator.True;
+        der = Indicator.False;
         weight = mother.getWeight();			//Newborn has same weight as mother (the number of newborns will then be aligned in fertility alignment)
         dhe = Dhe.VeryGood;
         dhm = 9.;			//Set to median for under 18's as a placeholder
@@ -382,7 +384,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         else if (dag > Parameters.MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION)
             leftEducation = true;
         else
-            leftEducation = (!Les_c4.Student.equals(les_c4));
+            leftEducation = (!Les_c4.Student.equals(les_c4) || (Les_c4.Student.equals(les_c4) && ded.equals(Indicator.False)));
 
         if (originalPerson.les_c4_lag1 != null) { //If original persons misses lagged activity status, assign current activity status
             les_c4_lag1 = originalPerson.les_c4_lag1;
@@ -1387,7 +1389,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     protected boolean inSchool(double probitAdjustment) {
         // Documentation: diagram "SimPathsEU education module - MR2"
-        // IMPORTANT ensure each "if" returns true/false or toLeaveSchool value
+
+        toLeaveSchool = false;
 
         // Innovation for education decisions
         double labourInnov = innovations.getDoubleDraw(24);
@@ -1405,7 +1408,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 // Is the age of the individual below the max age to leave education (age < maxQuittingAge)?
 
                 // Yes
-                if(dag < MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION) {
+                if(dag <= MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION) {
 
                     // Yes
                     // --> process E1a
@@ -1413,10 +1416,11 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     double prob = Parameters.getRegEducationE1a().getProbability(score + probitAdjustment);
 
                     if (labourInnov < prob) {
-                        setLes_c4(Les_c4.Student); // Remain a student *OUTCOME B*
-                        setDer(Indicator.True);
-                        setDed(Indicator.True);
-                        toLeaveSchool = false;
+                        // Remain a student *OUTCOME B*
+                        setLes_c4(Les_c4.Student);  //not needed, more of a precaution
+                        //setDed(Indicator.True);           //(!) a bug; E1a is applied to everyone with Ded true and false
+                        //setDer(Indicator.False);          //(!) a bug; Der is set to true only when individual re-enters education (i.e. process E1b)
+
                         return true; // Must return true as they remain in school
                     } else {
                         // Leave education --> Process E2
@@ -1425,21 +1429,20 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                     }
                 }
 
-                // No (dag >= MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION)
+                // No (dag > MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION)
                 else{
                     // Leave education --> Process E2
                     toLeaveSchool = true; // Must set flag to true
                     return false; // Must return false as they are leaving
                 }
-
             }
 
             // No (dag < MIN_AGE_TO_LEAVE_EDUCATION)
             else{
                 return true; // The individual remains a student *OUTCOME A*
             }
-
         }
+
 
         // No (Not a Student in lag1)
         else {
@@ -1448,7 +1451,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
             // Yes
             if (Les_c4.Retired.equals(les_c4_lag1)) {
-                return false; // The individual can't be a student *OUTCOME C*
+                return false;   // The individual can't be a student *OUTCOME C*
+                                // Remain in current status which is retired
             }
 
             // No
@@ -1459,10 +1463,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
 
             if (labourInnov < prob) {
-                setLes_c4(Les_c4.Student); // Become a student *OUTCOME E*
+                // Become a student *OUTCOME E*
+                setLes_c4(Les_c4.Student);
                 setDer(Indicator.True);
-                setDed(Indicator.False);
-                toLeaveSchool = false;
+                setDed(Indicator.False); //not needed, more of a precaution as ded should already be false
                 return true; // Must return true as they become a student
             } else {
                 return false; // Remain in current status: employed/not employed (no changes) *OUTCOME D*
@@ -1480,7 +1484,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (toLeaveSchool) {
 
             setEducationLevel(); //If individual leaves school follow process E2a to assign level of education
-            setSedex(Indicator.True); //Set variable left education (sedex) if leaving school
             setDed(Indicator.False); //Set variable in education (ded) to false if leaving school
             setDer(Indicator.False);
             setLeftEducation(true); //This is not reset and indicates if individual has ever left school - used with health process
@@ -1800,7 +1803,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         toGiveBirth = false;
         toBePartnered = false;
         leavePartner = false;
-        ded = (Les_c4.Student.equals(les_c4)) ? Indicator.True : Indicator.False;
+        //ded = (Les_c4.Student.equals(les_c4)) ? Indicator.True : Indicator.False; it's a bug!
+        // now it's fixed - it's set up from init pop and is updated in inSchool method
+
         if (initialUpdate && careHoursFromParentWeekly==null)
             careHoursFromParentWeekly = 0.0;
         if (dag<Parameters.AGE_TO_BECOME_RESPONSIBLE) {
