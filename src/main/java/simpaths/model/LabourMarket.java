@@ -122,7 +122,7 @@ public class LabourMarket {
             }
 
             // Update activity status of persons residing within the benefit unit
-            benefitUnits.stream()
+            benefitUnits.parallelStream()
                     .forEach(BenefitUnit::updateActivityOfPersonsWithinBenefitUnit);
 
     }

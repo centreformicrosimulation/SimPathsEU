@@ -166,7 +166,7 @@ public class ActivityAlignmentV2 implements IEvaluation {
      */
 
     private double computeSimulatedShareUsingFraction() {
-        double[] totals = benefitUnits.stream()
+        double[] totals = benefitUnits.parallelStream()
                 .filter(this::matchesSubgroup)
                 .collect(
                         () -> new double[2], // [0] = count of units, [1] = sum of fracEmployed
