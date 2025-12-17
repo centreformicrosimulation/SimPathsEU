@@ -76,6 +76,14 @@ public class LabourMarket {
                 model.activityAlignmentCouples();
                 model.activityAlignmentMaleWithDependents();
                 model.activityAlignmentFemaleWithDependents();
+
+                /*
+                // Update all benefit units in parallel for efficiency
+                benefitUnits.parallelStream().forEach(bu -> {
+                    bu.updateLabourSupplyAndIncome();
+                    bu.updateActivityOfPersonsWithinBenefitUnit();
+                });
+                */
             }
 
             if (model.isMacroShocksOn()) {
