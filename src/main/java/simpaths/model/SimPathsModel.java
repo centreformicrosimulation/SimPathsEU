@@ -164,14 +164,14 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean alignFertility = true;
     private boolean alignRetirement = false;
 
-    private boolean alignDisability = true;
+    private boolean alignDisability = false;
     private boolean alignEducation = false; //Set to true to align level of education
 
     private boolean alignInSchool = false; //Set to true to align share of students among 16-29 age group
 
     private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
 
-    private boolean alignEmployment = false; //true; //Set to true to align employment share
+    private boolean alignEmployment = true; //true; //Set to true to align employment share
 
     public boolean addRegressionStochasticComponent = true; //If set to true, and regression contains ResStanDev variable, will evaluate the regression score including stochastic part, and omits the stochastic component otherwise.
 
@@ -1544,9 +1544,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         Instant beforeRS2 = Instant.now();
 
 
-
-
-
         ActivityAlignmentV2 activityAlignment = new ActivityAlignmentV2(benefitUnits, coefficientMap, regressionCoefficientName, occupancy);
         RootSearch2 search = getRootSearch2(utilityAdjustment, activityAlignment, 0.5, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
         // epsFunction tolerance is set to 0.5% seem to be sufficient
@@ -1575,6 +1572,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], adjustmentMap);
             System.out.println("Utility adjustment for " + occupancyLabel + " was " + search.getTarget()[0]);
         }
+
     }
 
     public void activityAlignmentSingleMales() {
