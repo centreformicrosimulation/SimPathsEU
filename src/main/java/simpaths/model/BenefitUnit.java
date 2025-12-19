@@ -726,7 +726,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         } else return workHoursConverted;
     }
 
-
+    /**
+     * Builds a stable cache key for discrete labour-choice precomputation.
+     * Captures only the state that affects tax/benefit evaluation and labour-choice feasibility,
+     * so we can reuse cached tax-wrapper results across repeated calls within the same year.
+     */
     private Object buildLabourChoiceCacheKey(Occupancy occupancy, Person male, Person female) {
 
         int dlltsdM = (male != null) ? male.getDisability() : -1;
@@ -748,6 +752,16 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         );
     }
 
+
+    /**
+     * Precomputes and caches tax/benefit evaluations for all feasible discrete labour options.
+     * Resets labour states, updates non-labour income for consistency, and then (if cache is stale)
+     * rebuilds:
+     *  - the feasible labour combinations, and
+     *  - the mapping from labour-pairs to evaluated disposable/gross income, benefits and tax DB match.
+     * The cache is intended for the non-intertemporal discrete-choice branch only; when IO is enabled
+     * this method exits early.
+     */
     public void updateLabourChoices() {
 
         resetLabourStates();
@@ -828,6 +842,16 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         }
     }
 
+    /**
+     * Fast discrete labour-supply update using the cached evaluations from updateLabourChoices().
+     * Avoids repeated taxWrapper calls by:
+     *  - iterating over cached labour combinations,
+     *  - computing regression utility scores using updated utility costs (with cached income fields injected for regressors),
+     *  - sampling a labour choice, and assigning final incomes directly from the cached evaluation.
+     *
+     * Falls back to updateLabourSupplyAndIncome() when intertemporal optimisations (IO) are active,
+     * and rebuilds the cache on-demand if it is missing.
+     */
     public void updateLabourFast() {
 
         resetLabourStates();
@@ -995,6 +1019,19 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
 
+    /**
+     * Main labour-supply + income update for a benefit unit.
+     *
+     * If intertemporal optimisations (IO) are enabled, derives (continuous) hours from the IO grids,
+     * converts to discrete labour states, computes labour + non-labour income, and evaluates taxes/
+     * benefits once via taxWrapper.
+     *
+     * If IO is disabled, enumerates all feasible discrete labour options (single or couple), evaluates
+     * taxes/benefits for each, computes regression utilities, samples a labour choice, applies optional
+     * childcare/social care costs, and stores the chosen disposable/gross income, benefits and tax DB match.
+     *
+     * Always finishes by recalculating BU/occupant income aggregates via calculateBUIncome().
+     */
     protected void updateLabourSupplyAndIncome() {
 
         resetLabourStates();
