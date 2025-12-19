@@ -134,8 +134,8 @@ public class ActivityAlignmentV2 implements IEvaluation {
         }
         // Update all benefit units in parallel for efficiency
         benefitUnits.parallelStream().forEach(bu -> {
-            bu.updateLabourSupplyAndIncome();
-            //bu.updateLabourStatusOnly();
+            bu.updateLabourFast();
+            //bu.updateLabourSupplyAndIncome();
             bu.updateActivityOfPersonsWithinBenefitUnit();
         });
     }

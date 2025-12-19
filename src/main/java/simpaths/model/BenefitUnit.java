@@ -99,6 +99,32 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @Transient private Integer labourHoursWeekly1Local;
     @Transient private Integer labourHoursWeekly2Local;
 
+    // ================= Labour-choice cache for fast alignment =================
+    @Transient private Integer labourChoiceCacheYear = null;
+    @Transient private Object labourChoiceCacheKey = null;
+
+    // cached discrete choice set
+    @Transient private LinkedHashSet<MultiKey<Labour>> cachedPossibleLabourCombinations = null;
+
+    // cached tax/income outputs by labour pair
+    @Transient private MultiKeyMap<Labour, LabourEval> cachedEvalByLabourPairs =
+            MultiKeyMap.multiKeyMap(new LinkedMap<>());
+
+    // helper – NOT persisted, no annotation needed
+   private static class LabourEval {
+        final double disposableIncomeMonthly;
+        final double benefitsReceivedPerMonth;
+        final double grossIncomeMonthly;
+        final Match taxDbMatch;
+
+        LabourEval(TaxEvaluation ev) {
+            this.disposableIncomeMonthly = ev.getDisposableIncomePerMonth();
+            this.benefitsReceivedPerMonth = ev.getBenefitsReceivedPerMonth();
+            this.grossIncomeMonthly = ev.getGrossIncomePerMonth();
+            this.taxDbMatch = ev.getMatch();
+        }
+    }
+
 
     /*********************************************************************
      * CONSTRUCTOR FOR OBJECT USED ONLY TO INTERACT WITH REGRESSION MODELS
@@ -700,120 +726,180 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         } else return workHoursConverted;
     }
 
-    /**
-     * Fast path for employment alignment iterations.
-     * Updates ONLY labour supply / labour status on occupants.
-     * Skips non-labour income update, tax/benefit evaluation, childcare/social care costs,
-     * and does not recalculate BU/HH income aggregates.
-     */
-    protected void updateLabourStatusOnly() {
+
+    private Object buildLabourChoiceCacheKey(Occupancy occupancy, Person male, Person female) {
+
+        int dlltsdM = (male != null) ? male.getDisability() : -1;
+        int dlltsdF = (female != null) ? female.getDisability() : -1;
+
+        double yptM = (male != null) ? male.getYptciihs_dv() : 0.0;
+        double yptF = (female != null) ? female.getYptciihs_dv() : 0.0;
+
+        // Expand this list if taxWrapper depends on additional state (children, rent, etc.)
+        return java.util.Arrays.asList(
+                model.getYear(),
+                occupancy,
+                investmentIncomeAnnual,
+                pensionIncomeAnnual,
+                dlltsdM,
+                dlltsdF,
+                yptM,
+                yptF
+        );
+    }
+
+    public void updateLabourChoices() {
 
         resetLabourStates();
 
         Occupancy occupancy = getOccupancy();
         Person male = getMale();
         Person female = getFemale();
-        if (male == null && female == null) return;
 
-        // -------------------------
-        // IO branch: use employment grids, apply labour supply only
-        // -------------------------
+        // This cache is only used for the non-intertemporal discrete-choice branch.
         if (Parameters.enableIntertemporalOptimisations
                 && (DecisionParams.FLAG_IO_EMPLOYMENT1 || DecisionParams.FLAG_IO_EMPLOYMENT2)) {
-
-            double emp1 = 0.0, emp2 = 0.0;
-
-            if (DecisionParams.FLAG_IO_EMPLOYMENT1
-                    && states.getAgeYears() <= Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
-                emp1 = Parameters.grids.employment1.interpolateAll(states, false);
-            }
-
-            double hoursWorkedPerWeekM = 0.0;
-            double hoursWorkedPerWeekF = 0.0;
-
-            if (male != null && female != null) {
-                // couple
-                if (DecisionParams.FLAG_IO_EMPLOYMENT2
-                        && states.getAgeYears() <= Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
-                    emp2 = Parameters.grids.employment2.interpolateAll(this.states, false);
-                }
-
-                if (getRefPersonForDecisions().getGender() == 0) {
-                    // reference person is male
-                    hoursWorkedPerWeekM = DecisionParams.FULLTIME_HOURS_WEEKLY * emp1;
-                    hoursWorkedPerWeekF = DecisionParams.FULLTIME_HOURS_WEEKLY * emp2;
-                } else {
-                    // reference person is female
-                    hoursWorkedPerWeekM = DecisionParams.FULLTIME_HOURS_WEEKLY * emp2;
-                    hoursWorkedPerWeekF = DecisionParams.FULLTIME_HOURS_WEEKLY * emp1;
-                }
-            } else {
-                // single adult
-                if (male != null) {
-                    hoursWorkedPerWeekM = DecisionParams.FULLTIME_HOURS_WEEKLY * emp1;
-                } else {
-                    hoursWorkedPerWeekF = DecisionParams.FULLTIME_HOURS_WEEKLY * emp1;
-                }
-            }
-
-            // Apply labour supply (this should update labour status)
-            if (male != null) {
-                male.setLabourSupplyWeekly(Labour.convertHoursToLabour(hoursWorkedPerWeekM, Gender.Male));
-                //hoursWorkedPerWeekM = male.getLabourSupplyHoursWeekly(); // NOT USED
-            }
-            if (female != null) {
-                female.setLabourSupplyWeekly(Labour.convertHoursToLabour(hoursWorkedPerWeekF, Gender.Female));
-                //hoursWorkedPerWeekF = female.getLabourSupplyHoursWeekly(); // NOT USED
-            }
-
-            return; // IMPORTANT: do not touch income/tax
+            return;
         }
 
-        // -------------------------
-        // Non-IO branch: sample discrete labour states using regressions only
-        // -------------------------
-        LinkedHashSet<MultiKey<Labour>> possibleLabourCombinations = findPossibleLabourCombinations();
-        if (possibleLabourCombinations == null || possibleLabourCombinations.isEmpty()) return;
+        // Must be current since investment/pension enter originalIncomePerMonth in IO branch,
+        // and may matter for regressors; keep consistent with existing method.
+        updateNonLabourIncome();
 
+        Object newKey = buildLabourChoiceCacheKey(occupancy, male, female);
+
+        boolean cacheValid =
+                labourChoiceCacheYear != null
+                        && labourChoiceCacheYear == model.getYear()
+                        && java.util.Objects.equals(labourChoiceCacheKey, newKey)
+                        && cachedPossibleLabourCombinations != null
+                        && !cachedPossibleLabourCombinations.isEmpty()
+                        && cachedEvalByLabourPairs != null
+                        && !cachedEvalByLabourPairs.isEmpty();
+
+        if (cacheValid) return;
+
+        // rebuild cache
+        labourChoiceCacheYear = model.getYear();
+        labourChoiceCacheKey = newKey;
+
+        cachedPossibleLabourCombinations = findPossibleLabourCombinations();
+        cachedEvalByLabourPairs = MultiKeyMap.multiKeyMap(new LinkedMap<>());
+
+        // precompute tax/income for each discrete option
+        if (Occupancy.Couple.equals(occupancy)) {
+
+            for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
+
+                male.setLabourSupplyWeekly(labourKey.getKey(0));
+                female.setLabourSupplyWeekly(labourKey.getKey(1));
+
+                double maleIncome = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYptciihs_dv());
+                double femaleIncome = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYptciihs_dv());
+                double originalIncomePerMonth = maleIncome + femaleIncome;
+                double secondIncomePerMonth = Math.min(maleIncome, femaleIncome);
+
+                TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), labourKey.getKey(1).getHours(female), male.getDisability(), female.getDisability(), originalIncomePerMonth, secondIncomePerMonth);
+
+                cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
+            }
+
+        } else if (Occupancy.Single_Male.equals(occupancy)) {
+
+            for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
+
+                male.setLabourSupplyWeekly(labourKey.getKey(0));
+                double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * male.getEarningsWeekly() + Math.sinh(male.getYptciihs_dv());
+                TaxEvaluation ev = taxWrapper(labourKey.getKey(0).getHours(male), 0.0, male.getDisability(), -1, originalIncomePerMonth, 0.0);
+
+                cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
+            }
+
+        } else if (Occupancy.Single_Female.equals(occupancy)) {
+
+            for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
+
+                female.setLabourSupplyWeekly(labourKey.getKey(1));
+                double originalIncomePerMonth = Parameters.WEEKS_PER_MONTH * female.getEarningsWeekly() + Math.sinh(female.getYptciihs_dv());
+                TaxEvaluation ev = taxWrapper(0.0, labourKey.getKey(1).getHours(female), -1, female.getDisability(), originalIncomePerMonth, 0.0);
+
+                cachedEvalByLabourPairs.put(labourKey, new LabourEval(ev));
+            }
+        }
+    }
+
+    public void updateLabourFast() {
+
+        resetLabourStates();
+
+        Occupancy occupancy = getOccupancy();
+        Person male = getMale();
+        Person female = getFemale();
+
+        // If IO is on, fast mode isn't applicable; keep original behavior.
+        if (Parameters.enableIntertemporalOptimisations
+                && (DecisionParams.FLAG_IO_EMPLOYMENT1 || DecisionParams.FLAG_IO_EMPLOYMENT2)) {
+            updateLabourSupplyAndIncome();
+            return;
+        }
+
+        // Ensure cache exists (alignment should call updateLabourChoices() once beforehand)
+        if (cachedPossibleLabourCombinations == null || cachedPossibleLabourCombinations.isEmpty()
+                || cachedEvalByLabourPairs == null || cachedEvalByLabourPairs.isEmpty()) {
+            updateLabourChoices();
+        }
+
+        MultiKey<? extends Labour> labourSupplyChoice = null;
         MultiKeyMap<Labour, Double> labourSupplyUtilityRegressionScoresByLabourPairs =
                 MultiKeyMap.multiKeyMap(new LinkedMap<>());
 
         if (Occupancy.Couple.equals(occupancy)) {
-            // Safety: expect both persons for couple
-            if (male == null || female == null) return;
 
-            for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) {
+            for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
-                // Set labour states for scoring
+                // set candidate labour (for regressors depending on hours etc.)
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
+
+                // inject cached incomes into BU fields for regressors (important!)
+                LabourEval le = cachedEvalByLabourPairs.get(labourKey);
+                disposableIncomeMonthly = le.disposableIncomeMonthly;
+                benefitsReceivedPerMonth = le.benefitsReceivedPerMonth;
+                grossIncomeMonthly = le.grossIncomeMonthly;
 
                 double regressionScore = 0.0;
                 if (male.atRiskOfWork()) {
                     if (female.atRiskOfWork()) {
                         regressionScore = Parameters.getRegLabourSupplyUtilityCouples()
                                 .getScore(this, BenefitUnit.Regressors.class);
-                    } else {
+                    } else if (!female.atRiskOfWork()) {
                         regressionScore = Parameters.getRegLabourSupplyUtilityMalesWithDependent()
                                 .getScore(this, BenefitUnit.Regressors.class);
                     }
                 } else if (female.atRiskOfWork() && !male.atRiskOfWork()) {
                     regressionScore = Parameters.getRegLabourSupplyUtilityFemalesWithDependent()
                             .getScore(this, BenefitUnit.Regressors.class);
+                } else if (!model.isAlignEmployment()) {
+                    throw new IllegalArgumentException("None of the partners are at risk of work! HHID " + getKey().getId());
                 }
 
-                if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) regressionScore = 0.0;
-                labourSupplyUtilityRegressionScoresByLabourPairs.put((MultiKey<Labour>) labourKey, regressionScore);
+                if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) {
+                    regressionScore = 0.0; // match your current behavior
+                }
+
+                labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore);
             }
 
         } else if (Occupancy.Single_Male.equals(occupancy)) {
 
-            if (male == null) return;
-
-            for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) {
+            for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 male.setLabourSupplyWeekly(labourKey.getKey(0));
 
+                LabourEval le = cachedEvalByLabourPairs.get(labourKey);
+                disposableIncomeMonthly = le.disposableIncomeMonthly;
+                benefitsReceivedPerMonth = le.benefitsReceivedPerMonth;
+                grossIncomeMonthly = le.grossIncomeMonthly;
 
                 double regressionScore;
                 if (male.getAdultChildFlag() == 1) {
@@ -822,19 +908,23 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     regressionScore = Parameters.getRegLabourSupplyUtilityMales().getScore(this, Regressors.class);
                 }
 
-                if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) regressionScore = 0.0;
+                if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) {
+                    regressionScore = 0.0;
+                }
 
-                labourSupplyUtilityRegressionScoresByLabourPairs.put((MultiKey<Labour>) labourKey, regressionScore);
+                labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore);
             }
 
         } else if (Occupancy.Single_Female.equals(occupancy)) {
 
-            if (female == null) return;
-
-            for (MultiKey<? extends Labour> labourKey : possibleLabourCombinations) {
+            for (MultiKey<? extends Labour> labourKey : cachedPossibleLabourCombinations) {
 
                 female.setLabourSupplyWeekly(labourKey.getKey(1));
 
+                LabourEval le = cachedEvalByLabourPairs.get(labourKey);
+                disposableIncomeMonthly = le.disposableIncomeMonthly;
+                benefitsReceivedPerMonth = le.benefitsReceivedPerMonth;
+                grossIncomeMonthly = le.grossIncomeMonthly;
 
                 double regressionScore;
                 if (female.getAdultChildFlag() == 1) {
@@ -845,54 +935,63 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                             .getScore(this, BenefitUnit.Regressors.class);
                 }
 
-                if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) regressionScore = 0.0;
+                if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) {
+                    regressionScore = 0.0;
+                }
 
-                labourSupplyUtilityRegressionScoresByLabourPairs.put((MultiKey<Labour>) labourKey, regressionScore);
+                labourSupplyUtilityRegressionScoresByLabourPairs.put(labourKey, regressionScore);
             }
-        } else {
-            // Not a labour-choice BU
-            return;
         }
 
         if (labourSupplyUtilityRegressionScoresByLabourPairs.isEmpty()) {
-            System.out.print("\nlabourSupplyUtilityRegressionScoresByLabourPairs for household " + key.getId() + " is empty!");
-            return;
+            System.out.print("\nlabourSupplyUtilityExponentialRegressionScoresByLabourPairs for household " + key.getId() + " with occupants ");
+            if (male != null) System.out.print("male : " + male.getKey().getId() + ", ");
+            if (female != null) System.out.print("female : " + female.getKey().getId() + ", ");
+            System.out.print("is empty!");
         }
 
-        // Sample labour supply from possible labour values
+        // sample labour supply (exactly as your code)
         double labourInnov = innovations.getDoubleDraw(5);
-        MultiKey<? extends Labour> labourSupplyChoice = null;
-
 
         try {
             MultiKeyMap<Labour, Double> probs =
                     convertRegressionScoresToProbabilities(labourSupplyUtilityRegressionScoresByLabourPairs);
             labourSupplyChoice = ManagerRegressions.multiEvent(probs, labourInnov);
-            // labourRandomUniform not updated
         } catch (RuntimeException e) {
             System.out.print("Could not determine labour supply choice for BU with ID: " + getKey().getId());
         }
 
-        // Apply chosen labour supply ONLY
-        if (labourSupplyChoice != null) {
-            if (Occupancy.Couple.equals(occupancy)) {
-                male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
-                female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
-            } else if (Occupancy.Single_Male.equals(occupancy)) {
-                male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
-            } else if (Occupancy.Single_Female.equals(occupancy)) {
-                female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
-            }
+        if (model.debugCommentsOn && labourSupplyChoice != null) {
+            log.trace("labour supply choice " + labourSupplyChoice);
         }
 
-        // IMPORTANT: intentionally skip:
-        // -updateNonLabourIncome();
-        // -calculateBUIncome();
-        // -taxWrapper(...);
-        // -updateChildcareCostPerWeek(...);
-        // -updateSocialCareCostPerWeek();
-        // -calculateBUIncome();
-        // {all the income updates are executed once when alignment is completed for all subgroups}
+        // realise labour choice
+        if (Occupancy.Couple.equals(occupancy)) {
+            male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
+            female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
+        } else if (Occupancy.Single_Male.equals(occupancy)) {
+            male.setLabourSupplyWeekly(labourSupplyChoice.getKey(0));
+        } else {
+            female.setLabourSupplyWeekly(labourSupplyChoice.getKey(1));
+        }
+
+        // childcare / social care (kept consistent)
+        if (Parameters.flagFormalChildcare && !Parameters.flagSuppressChildcareCosts) {
+            updateChildcareCostPerWeek(model.getYear(), getRefPersonForDecisions().getDag(), getRefPersonForDecisions().getDgn());
+        }
+        if (Parameters.flagSocialCare && !Parameters.flagSuppressSocialCareCosts) {
+            updateSocialCareCostPerWeek();
+        }
+
+        // populate final incomes from cache (NO taxWrapper)
+        LabourEval chosenEval = cachedEvalByLabourPairs.get(labourSupplyChoice);
+        disposableIncomeMonthly = chosenEval.disposableIncomeMonthly;
+        benefitsReceivedPerMonth = chosenEval.benefitsReceivedPerMonth;
+        grossIncomeMonthly = chosenEval.grossIncomeMonthly;
+        taxDbMatch = chosenEval.taxDbMatch;
+        taxDbDonorId = taxDbMatch.getCandidateID();
+
+        calculateBUIncome();
     }
 
 
