@@ -80,9 +80,9 @@ public class ActivityAlignmentV2 implements IEvaluation {
                 // Infer the format from an existing coefficient
                 Object sample = map.getValue("IncomeDiv100");
                 if (sample instanceof Object[]) {
-                    map.replaceValue(reg, new Object[]{0.0});
+                    map.putValue(reg, new Object[]{0.0});
                 } else {
-                    map.replaceValue(reg, 0.0);
+                    map.putValue(reg, 0.0);
                 }
             }
         }
@@ -133,10 +133,14 @@ public class ActivityAlignmentV2 implements IEvaluation {
             coefficientMap.replaceValue(reg, newVal);
         }
         // Update all benefit units in parallel for efficiency
-        benefitUnits.parallelStream().forEach(bu -> {
-            bu.updateLabourFast();
-            //bu.updateLabourSupplyAndIncome();
-            bu.updateActivityOfPersonsWithinBenefitUnit();
+        // Update only benefit units in this subgroup
+        benefitUnits.parallelStream()
+                .filter(this::matchesSubgroup)
+                .forEach(bu -> {
+                    bu.updateLabourBypassUtilityComputation();
+                    //bu.updateLabourFast();
+                    //bu.updateLabourSupplyAndIncome();
+                    bu.updateActivityOfPersonsWithinBenefitUnit();
         });
     }
 

@@ -930,6 +930,22 @@ public class Parameters {
 
     }
 
+    private static void addFixedCostRegressors(MultiKeyCoefficientMap map, List<String> regressors) {
+        for (String reg : regressors) {
+            if ((reg.equals("AlignmentFixedCostMen") || reg.equals("AlignmentFixedCostWomen"))
+                    && map.getValue(reg) == null) {
+                // Infer the format from an existing coefficient
+                Object sample = map.getValue("IncomeDiv100");
+                if (sample instanceof Object[]) {
+                    map.putValue(reg, new Object[]{0.0});
+                } else {
+                    map.putValue(reg, 0.0);
+                }
+            }
+        }
+    }
+
+
     public static void defineCountryString(Country country) {COUNTRY_STRING  =country.toString(); }
 
     /**
@@ -1218,13 +1234,27 @@ public class Parameters {
         coeffCovarianceWagesFemalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_FemalesNE", 1, columnsWagesFemalesNE);
 
         //Labour Supply utility function coefficients
-        coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_male", 1, columnsLabourSupplyUtilityMales);
-        coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Single_female", 1, columnsLabourSupplyUtilityFemales);
-        coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleDep_Males", 1, columnsLabourSupplyUtilityMalesWithDependent);
-        coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleDep_Females", 1, columnsLabourSupplyUtilityFemalesWithDependent);
-        coeffLabourSupplyUtilityACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleAC_Males", 1, columnsLabourSupplyUtilityACMales);
-        coeffLabourSupplyUtilityACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "SingleAC_Females", 1, columnsLabourSupplyUtilityACFemales);
-        coeffLabourSupplyUtilityCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"), "Couples", 1, columnsLabourSupplyUtilityCouples);
+        coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Single_male", 1, columnsLabourSupplyUtilityMales);
+        addFixedCostRegressors(coeffLabourSupplyUtilityMales,List.of("AlignmentFixedCostMen"));
+
+        coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Single_female", 1, columnsLabourSupplyUtilityFemales);
+        addFixedCostRegressors(coeffLabourSupplyUtilityFemales,List.of("AlignmentFixedCostWomen"));
+
+        coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleDep_Males", 1, columnsLabourSupplyUtilityMalesWithDependent);
+        addFixedCostRegressors(coeffLabourSupplyUtilityMalesWithDependent,List.of("AlignmentFixedCostMen"));
+
+        coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleDep_Females", 1, columnsLabourSupplyUtilityFemalesWithDependent);
+        addFixedCostRegressors(coeffLabourSupplyUtilityFemalesWithDependent,List.of("AlignmentFixedCostWomen"));
+
+        coeffLabourSupplyUtilityACMales =ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleAC_Males", 1, columnsLabourSupplyUtilityACMales);
+        addFixedCostRegressors(coeffLabourSupplyUtilityACMales,List.of("AlignmentFixedCostMen"));
+
+        coeffLabourSupplyUtilityACFemales =ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleAC_Females", 1, columnsLabourSupplyUtilityACFemales);
+        addFixedCostRegressors(coeffLabourSupplyUtilityACFemales,List.of("AlignmentFixedCostWomen"));
+
+        coeffLabourSupplyUtilityCouples =ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Couples", 1, columnsLabourSupplyUtilityCouples);
+        addFixedCostRegressors(coeffLabourSupplyUtilityCouples,List.of("AlignmentFixedCostMen", "AlignmentFixedCostWomen"));
+
 
         //Heckman model employment selection
         coeffCovarianceEmploymentSelectionMalesE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_employmentSelection.xlsx"), "EmploymentSelection_MaleE", 1, columnsEmploymentSelectionMalesE);
