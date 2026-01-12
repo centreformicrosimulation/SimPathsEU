@@ -90,14 +90,21 @@ public class RootSearch2 {
             if (bounds.getBracketed()) {
                 target = zbrent(xn, xp, fn, fp);
             } else {
-                if (Math.abs(fn) < Math.abs(fp)) {
-                    target = xn;
-                } else {
-                    target = xp;
-                }
-                // log as a single “decision” step
-                double chosenX = target[0];
-                double fChosen = function.evaluate(target);
+                final boolean chooseNeg = Math.abs(fn) < Math.abs(fp);
+                target = chooseNeg ? xn : xp;
+//                if (Math.abs(fn) < Math.abs(fp)) {
+//                    target = xn;
+//                } else {
+//                    target = xp;
+//                }
+//                // log as a single “decision” step
+//                double chosenX = target[0];
+//                double fChosen = function.evaluate(target);
+
+                // We already know f(target): it's fn if we chose xn, else fp.
+                final double chosenX = target[0];
+                final double fChosen = chooseNeg ? fn : fp;
+
                 iterationHistory.add(new IterationInfo(
                         iterationHistory.size(), chosenX, fChosen, Double.NaN,
                         Math.abs(fChosen) <= epsFunction, true));
