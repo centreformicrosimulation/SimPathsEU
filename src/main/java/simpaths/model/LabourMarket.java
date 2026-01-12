@@ -68,8 +68,10 @@ public class LabourMarket {
                 }
             }
 
-            if (model.isAlignEmployment() && model.getYear() <= EMPLOYMENT_ALIGNMENT_END_YEAR & !model.isMacroShocksOn()) {
+            if (model.isAlignEmployment() && model.getYear() <= EMPLOYMENT_ALIGNMENT_END_YEAR && !model.isMacroShocksOn()) {
                 benefitUnits.parallelStream().forEach(BenefitUnit::updateLabourChoices);
+                benefitUnits.parallelStream().forEach(BenefitUnit::updateUtilityRegressionScores);
+
                 model.activityAlignmentSingleMales();
                 model.activityAlignmentSingleACMales();
                 model.activityAlignmentSingleFemales();
@@ -77,8 +79,6 @@ public class LabourMarket {
                 model.activityAlignmentCouples();
                 model.activityAlignmentMaleWithDependents();
                 model.activityAlignmentFemaleWithDependents();
-
-
             }
 
             if (model.isMacroShocksOn()) {
