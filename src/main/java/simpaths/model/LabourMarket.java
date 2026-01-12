@@ -71,6 +71,7 @@ public class LabourMarket {
             if (model.isAlignEmployment() && model.getYear() <= EMPLOYMENT_ALIGNMENT_END_YEAR && !model.isMacroShocksOn()) {
                 benefitUnits.parallelStream().forEach(BenefitUnit::updateLabourChoices);
                 benefitUnits.parallelStream().forEach(BenefitUnit::updateUtilityRegressionScores);
+                benefitUnits.parallelStream().forEach(BenefitUnit::computeAtRiskOfWorkFlagsForAlignment);
 
                 model.activityAlignmentSingleMales();
                 model.activityAlignmentSingleACMales();

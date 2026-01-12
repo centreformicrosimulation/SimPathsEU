@@ -137,7 +137,8 @@ public class ActivityAlignmentV2 implements IEvaluation {
         benefitUnits.parallelStream()
                 .filter(this::matchesSubgroup)
                 .forEach(bu -> {
-                    bu.updateLabourBypassUtilityComputation();
+                    bu.updateLabourMoreOptimized();
+                    //bu.updateLabourBypassUtilityComputation();
                     //bu.updateLabourFast();
                     //bu.updateLabourSupplyAndIncome();
                     bu.updateActivityOfPersonsWithinBenefitUnit();
