@@ -132,15 +132,18 @@ public class ActivityAlignmentV2 implements IEvaluation {
                     : orig.baseValue + adjustment;
             coefficientMap.replaceValue(reg, newVal);
         }
+
         // Update all benefit units in parallel for efficiency
-        // Update only benefit units in this subgroup
+        // Update only benefit units in the selected(!) subgroup
         benefitUnits.parallelStream()
                 .filter(this::matchesSubgroup)
                 .forEach(bu -> {
-                    bu.updateLabourMoreOptimized();
-                    //bu.updateLabourBypassUtilityComputation();
-                    //bu.updateLabourFast();
-                    //bu.updateLabourSupplyAndIncome();
+
+                    // Avoid full labour update — too costly for alignment loop
+                    // bu.updateLabourSupplyAndIncome();
+
+                    // now use a faster alternative:
+                    bu.updateFixedCostsAndLabour();
                     bu.updateActivityOfPersonsWithinBenefitUnit();
         });
     }

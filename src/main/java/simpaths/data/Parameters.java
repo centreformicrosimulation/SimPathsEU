@@ -930,6 +930,7 @@ public class Parameters {
 
     }
 
+    // the method adds missing fixed-cost regressors with zero values to enable employment alignment
     private static void addFixedCostRegressors(MultiKeyCoefficientMap map, List<String> regressors) {
         for (String reg : regressors) {
             if ((reg.equals("AlignmentFixedCostMen") || reg.equals("AlignmentFixedCostWomen"))
@@ -1234,6 +1235,7 @@ public class Parameters {
         coeffCovarianceWagesFemalesNE = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_wages.xlsx"), "Wages_FemalesNE", 1, columnsWagesFemalesNE);
 
         //Labour Supply utility function coefficients
+        //Employment alignment adjusts *fixed-cost* -> add the relevant alignment fixed-cost regressors to each subgroup
         coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Single_male", 1, columnsLabourSupplyUtilityMales);
         addFixedCostRegressors(coeffLabourSupplyUtilityMales,List.of("AlignmentFixedCostMen"));
 
