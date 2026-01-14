@@ -68,11 +68,16 @@ public class LabourMarket {
                 }
             }
 
+            // Employment alignment phase (pre-alignment setup + subgroup-specific calibration)
             if (model.isAlignEmployment() && model.getYear() <= EMPLOYMENT_ALIGNMENT_END_YEAR && !model.isMacroShocksOn()) {
-                benefitUnits.parallelStream().forEach(BenefitUnit::updateLabourChoices);
-                benefitUnits.parallelStream().forEach(BenefitUnit::updateUtilityRegressionScores);
-                benefitUnits.parallelStream().forEach(BenefitUnit::computeAtRiskOfWorkFlagsForAlignment);
 
+                // Precompute labour choices, utility scores (without fixed costs), and atRisk flags
+                benefitUnits.parallelStream().forEach(BenefitUnit::computeAtRiskOfWorkFlags);
+                benefitUnits.parallelStream().forEach(BenefitUnit::updateLabourChoices);
+                benefitUnits.parallelStream().forEach(BenefitUnit::updateUtilityRegressionScoresWithoutFC);
+
+
+                // Run alignment separately by b.u. subgroup
                 model.activityAlignmentSingleMales();
                 model.activityAlignmentSingleACMales();
                 model.activityAlignmentSingleFemales();
