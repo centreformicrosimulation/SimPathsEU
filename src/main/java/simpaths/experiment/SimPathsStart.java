@@ -89,7 +89,7 @@ public class SimPathsStart implements ExperimentBuilder {
 		MultiKeyCoefficientMap lastDatabaseCountryAndYear = null;
 		File dbFile = new File(dbCountryYearPath);
 		if (dbFile.exists()) {
-			lastDatabaseCountryAndYear = ExcelAssistant.loadCoefficientMap(dbCountryYearPath, "Data", 1, 1);
+			lastDatabaseCountryAndYear = ExcelAssistant.loadCoefficientMap(dbCountryYearPath, "Data", 1);
 		}
 
 		// If Excel file exists, read country and startYear; otherwise, use GUI to select
@@ -391,8 +391,7 @@ public class SimPathsStart implements ExperimentBuilder {
 			MultiKeyCoefficientMap previousEUROMODfileInfo = ExcelAssistant.loadCoefficientMap(
 					countryInputPath + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx",
 					country.toString(),
-					1,
-					3
+					1
 			);
 
 			Collection<File> euromodOutputTextFiles = FileUtils.listFiles(new File(Parameters.getEuromodOutputDirectory(country)), new String[]{"txt"}, false);
