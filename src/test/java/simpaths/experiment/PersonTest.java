@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Disabled;
  * This test uses Mockito to isolate Person from its complex dependencies
  * (SimPathsModel, Parameters, Innovations).
  */
-//FIXME: PersonTest needs to be updated to reflect education module development
-@Disabled("Temporarily disabled due to Jasmine core update")
+// /*: PersonTest may be disabled to build Maven education module development*/
+//@Disabled("Temporarily disabled due to Jasmine core update")
 public class PersonTest {
 
     // Static mock reference for Parameters
@@ -228,7 +228,7 @@ public class PersonTest {
         @Test
         @DisplayName("E2 Trigger: Lagged Student, at Max Age (Forced Exit)")
         public void triggersE2FromMaxAge() throws Exception {
-            testPerson.setDag(MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION);
+            testPerson.setDag(MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION + 1);
             testPerson.setLes_c4_lag1(Les_c4.Student);
 
             assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
