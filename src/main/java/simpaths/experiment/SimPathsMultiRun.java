@@ -2,6 +2,8 @@
 package simpaths.experiment;
 
 // import Java packages
+import microsim.data.db.DatabaseUtils;
+import microsim.data.db.Experiment;
 import org.apache.log4j.Level;
 import org.apache.commons.cli.*;
 import org.yaml.snakeyaml.Yaml;
@@ -24,6 +26,7 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import java.io.*;
+import microsim.data.ExperimentManager;
 
 
 public class SimPathsMultiRun extends MultiRun {
@@ -98,6 +101,12 @@ public class SimPathsMultiRun extends MultiRun {
 			return;
 		}
 		country = Country.getCountryFromNameString(countryString);
+
+        /*comment these lines if input folder needs to be saved in output*/
+        // Disable copying input folders into output
+        ExperimentManager.getInstance().copyInputFolderStructure = false;
+        // Ensure database files are loaded from the correct input directory
+        DatabaseUtils.databaseInputUrl = Experiment.inputFolder + File.separator + "input";
 
 		if (flagDatabaseSetup) {
 

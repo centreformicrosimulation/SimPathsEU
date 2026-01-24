@@ -6,7 +6,7 @@ executeWithGui: false
 randomSeed: 1821
 startYear: 2011
 endYear: 2013
-popSize: 20000
+popSize: 30000
 
 # Arguments passed to the SimPathsModel
 model_args:
