@@ -1484,6 +1484,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (toLeaveSchool) {
 
             setEducationLevel(); //If individual leaves school follow process E2a to assign level of education
+            setSedex(Indicator.True); //Set variable left education (sedex) if leaving school
             setDed(Indicator.False); //Set variable in education (ded) to false if leaving school
             setDer(Indicator.False);
             setLeftEducation(true); //This is not reset and indicates if individual has ever left school - used with health process
@@ -1786,6 +1787,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         toGiveBirth = false;
         toBePartnered = false;
         leavePartner = false;
+        setSedex(Indicator.False); //This variable is False by default
+        // is set to true only when person leaves school in this specific year
+
         //ded = (Les_c4.Student.equals(les_c4)) ? Indicator.True : Indicator.False; it's a bug!
         // now it's fixed - it's set up from init pop and is updated in inSchool method
 
