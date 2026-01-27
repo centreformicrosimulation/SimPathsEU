@@ -1,0 +1,2052 @@
+/*******************************************************************************
+* PROJECT:  		SimPaths 
+* SECTION:			Validation
+* OBJECT: 			Activity status plots
+* AUTHORS:			Patryk Bronka, Ashley Burdett 
+* LAST UPDATE:		11/2025 (AB)
+* COUNTRY: 			Poland 
+
+* NOTES: 			This do file plots validation graphs for economics activity 
+* 					status (4 cat). 
+*******************************************************************************/
+
+********************************************************************************
+* 1 : Mean values over time
+********************************************************************************
+********************************************************************************
+* 1.1 : Mean values over time - Economic Activity Status  
+********************************************************************************
+********************************************************************************
+* 1.1.1 : Young people (18-30)
+********************************************************************************
+********************************************************************************
+* 1.1.1.1 : Young people (18-30), All
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dag ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+drop if dag > 30 	
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dag using ///
+	"$dir_data/simulated_data.dta", clear
+
+drop if dag > 30 
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year)
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Economic Activity Status") ///
+	subtitle("Ages ${min_age}-30") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_30_both.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+	
+********************************************************************************
+* 1.1.1.2 : Young people (18-30), By gender
+********************************************************************************
+
+** Male 
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dag dgn  ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", ///
+	clear
+		
+drop if dag > 30 
+drop if dgn == 0	
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dag dgn using ///
+	"$dir_data/simulated_data.dta", clear
+
+drop if dag > 30 
+drop if dgn == "Female"
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year)
+
+* Compute 95% confidence interval		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+
+}
+
+merge 1:1 year using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Economic Activity Status") ///
+	subtitle("Ages ${min_age}-30, males ") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_30_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+	
+** Female 
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dag dgn  ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+drop if dag > 30 
+drop if dgn == 1	
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired  ///
+	dgn [aw = dwt], by(year)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dag dgn using ///
+	"$dir_data/simulated_data.dta", clear
+
+drop if dag > 30 
+drop if dgn == "Male"	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year)
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year)
+		
+* Compute 95% confidence interval 		
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+
+}
+
+merge 1:1 year using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Economic Activity Status") ///
+	subtitle("Ages ${min_age}-30, females ") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_30_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+	
+********************************************************************************
+* 1.1.2 : Working age (18-65)
+********************************************************************************
+********************************************************************************
+* 1.1.2.1 : Working age (18-65), All
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn dag ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn using ///
+	"$dir_data/simulated_data.dta", clear
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+** All 
+
+preserve
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_both.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore, preserve
+	
+********************************************************************************
+* 1.1.2.2 : Working age (18-65), By gender
+********************************************************************************
+
+* Male
+keep if dgn == 1 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, males") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+	
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore, preserve
+
+	
+* Female
+keep if dgn == 0 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, females") /// 
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+	
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+restore 	
+	
+********************************************************************************
+* 1.1.2.3 : Working age (18-65), By partnership status
+********************************************************************************	
+	
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive valid_retired dcpst ///
+	dgn using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dcpst dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dcpst dgn ///
+	using "$dir_data/simulated_data.dta", clear
+
+gen dcpst_coded = .
+replace dcpst_coded = 1 if dcpst == "Partnered"
+replace dcpst_coded = 2 if dcpst == "SingleNeverMarried"
+
+drop dcpst
+rename dcpst_coded dcpst
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn
+
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dcpst dgn)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dcpst dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dcpst dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+** All 
+
+preserve
+
+collapse (mean) sim* valid*, by(year dcpst)
+
+* Plot figure: dcpst == 1, partnered
+keep if dcpst == 1
+
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, partnered") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_both_partnered.jpg", ///
+	replace width(2400) height(1350) quality(100) 
+
+restore, preserve
+
+collapse (mean) sim* valid*, by(year dcpst)
+
+* Plot figure: dcpst == 2, single
+keep if dcpst == 2
+
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, single") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_both_single.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore
+
+********************************************************************************
+* 1.1.2.4 : Working age (18-65), By gender and partnership status
+********************************************************************************
+
+** Males
+
+* Plot figure: dcpst == 1, partnered
+preserve
+
+keep if dcpst == 1 & dgn == 1
+
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, partnered males") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_male_partnered.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore, preserve
+
+* Plot figure: dcpst == 2, single
+keep if dcpst == 2 & dgn == 1
+
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, single males") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_male_single.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore
+
+
+** Females
+
+* Plot figure: dcpst == 1, partnered
+preserve
+
+keep if dcpst == 1 & dgn == 0
+
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, partnered females") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_female_partnered.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore, preserve
+
+* Plot figure: dcpst == 2, single
+keep if dcpst == 2 & dgn == 0
+
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-${max_age}, single females") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_${max_age}_female_single.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore	
+	
+	
+********************************************************************************
+* 1.1.3 : Before female state pension age (18-60)
+********************************************************************************	
+********************************************************************************
+* 1.1.3.1 : Before female state pension age (18-60), Females
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn dag ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+drop if dag > 60	
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn dag using ///
+	"$dir_data/simulated_data.dta", clear
+	
+drop if dag > 60
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+* Females 
+keep if dgn == 0
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("Ages ${min_age}-60, females") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_${min_age}_60_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+	
+********************************************************************************
+* 1.1.4 : All ages
+********************************************************************************
+********************************************************************************
+* 1.1.4 : All ages, All
+********************************************************************************	
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dag dgn ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_full_sample_long.dta", clear
+		
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn using ///
+	"$dir_data/simulated_data_full.dta", clear
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+ 
+** All  
+ 
+preserve
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("All ages") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_all_both.jpg", ///
+	replace width(2400) height(1350) quality(100) 	
+	
+restore, preserve
+
+********************************************************************************
+* 1.1.4.2 : Adults (18+), By gender
+********************************************************************************
+
+keep if dgn == 1 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("All ages, males") /// 
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_all_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore, preserve
+
+** Females 
+
+keep if dgn == 0 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Employed, simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "Employed, SILC"))) ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(3 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(4 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(5 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(6 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(7 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(8 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("All ages, females") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_ts_all_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+restore 
+
+graph drop _all 	
+
+
+********************************************************************************
+* 1.2 : Mean values over time - Employed
+********************************************************************************
+********************************************************************************
+* 1.2.1 : Employed, Working age(18-65)
+********************************************************************************
+********************************************************************************
+* 1.2.1.1 : Employed, Working age(18-65), All
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn using ///
+	"$dir_data/simulated_data.dta", clear
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+** All 
+
+preserve
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "SILC"))), ///
+	title("Employed") ///
+	subtitle("Ages ${min_age}-${max_age}") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_${min_age}_${max_age}_both.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore, preserve
+
+********************************************************************************
+* 1.2.1.2 : Employed, Working age(18-65), By gender
+********************************************************************************
+
+keep if dgn == 1 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 " SILC"))), ///
+	title("Employed") ///
+	subtitle("Ages ${min_age}-${max_age}, males") ///
+	xtitle("Year") ///
+	ytitle("Share") ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+	
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_employed_ts_${min_age}_${max_age}_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore, preserve
+
+	
+** Females 
+
+keep if dgn == 0 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "SILC"))), ///
+	title("Employed") ///
+	subtitle("Ages ${min_age}-${max_age}, females") /// 
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+	
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_${min_age}_${max_age}_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+restore 	
+	
+********************************************************************************
+* 1.2.2 : Employed, Before female state pension age (18-60)
+********************************************************************************
+********************************************************************************
+* 1.2.2.1 : Employed Working age(18-65), Before female state pension age 
+* 			(18-60), Female
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn dag ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+drop if dag > 60	
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn dag using ///
+	"$dir_data/simulated_data.dta", clear
+	
+drop if dag > 60
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+* Females 
+keep if dgn == 0
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "SILC"))), ///
+	title("Employed") ///
+	subtitle("Ages ${min_age}-60") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_${min_age}_60_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+	
+********************************************************************************
+* 1.2.3 : Employed, All ages 
+********************************************************************************
+********************************************************************************
+* 1.2.3.1 : Employed, All ages , All 
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_full_sample_long.dta", ///
+	clear
+		
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn using ///
+	"$dir_data/simulated_data_full.dta", clear
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+ 
+** All  
+ 
+preserve
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "SILC"))), ///
+	title("Employed") ///
+	subtitle("All ages") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_all_both.jpg", ///
+	replace width(2400) height(1350) quality(100) 	
+	
+restore, preserve
+
+	
+********************************************************************************
+* 1.2.3.2 : Employed, All ages, By gender 
+********************************************************************************
+
+keep if dgn == 1 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "SILC"))), ///
+	title("Employed") ///
+	subtitle("All ages, males") /// 
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_all_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore, preserve
+
+	
+** Females 
+
+keep if dgn == 0 
+
+* Plot figure 
+twoway ///
+(rarea sim_employed_high sim_employed_low year, sort color(green%20) ///
+	legend(label(1 "Simulated"))) ///
+(line valid_employed year, sort color(green) ///
+	legend(label(2 "SILC"))), ///
+	title("Employed") ///
+	subtitle("All ages, females") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note(Notes:, size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_all_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+restore 
+
+graph drop _all 	
+
+
+********************************************************************************
+* 1.2.3.3 : Employed, Adults (18+),  By age group 
+********************************************************************************
+
+* Prepare validation data
+use year dwt dgn ageGroup valid_employed dag using ///
+	"$dir_data/${country}-eusilc_validation_full_sample_long.dta", clear
+
+gen employed_f = (valid_employed) if dgn == 0
+gen employed_m = (valid_employed) if dgn == 1
+
+drop if ageGroup == 0 | ageGroup == 8  
+
+collapse (mean)  employed_f employed_m [aweight=dwt], ///
+	by(ageGroup year)
+drop if missing(ageGroup)
+reshape wide employed_f employed_m, i(year) j(ageGroup)
+
+forvalues i = 1(1)7 {
+	rename employed_f`i' employed_f_`i'_valid
+	rename employed_m`i' employed_m_`i'_valid
+}
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+
+* Prepare simulated data
+use run year sim_sex ageGroup sim_employed using ///
+	"$dir_data/simulated_data_full.dta", clear
+
+gen employed_f = (sim_employed) if sim_sex == 2
+gen employed_m = (sim_employed) if sim_sex == 1
+
+collapse (mean)  employed_f employed_m, by(ageGroup run year)
+drop if missing(ageGroup)
+reshape wide employed_f employed_m, i(year run) j(ageGroup)
+
+forvalues i = 1(1)7{
+	rename employed_f`i' employed_f_`i'_sim
+	rename employed_m`i' employed_m_`i'_sim
+}
+
+collapse (mean) employed* ///
+	(sd) sd_employed_f_1_sim = employed_f_1_sim ///
+		 sd_employed_f_2_sim = employed_f_2_sim ///
+		 sd_employed_f_3_sim = employed_f_3_sim ///
+		 sd_employed_f_4_sim = employed_f_4_sim ///
+		 sd_employed_f_5_sim = employed_f_5_sim ///
+		 sd_employed_f_6_sim = employed_f_6_sim ///
+		 sd_employed_f_7_sim = employed_f_7_sim ///
+		 sd_employed_m_1_sim = employed_m_1_sim ///
+		 sd_employed_m_2_sim = employed_m_2_sim ///
+		 sd_employed_m_3_sim = employed_m_3_sim ///
+		 sd_employed_m_4_sim = employed_m_4_sim ///
+		 sd_employed_m_5_sim = employed_m_5_sim ///
+		 sd_employed_m_6_sim = employed_m_6_sim ///
+		 sd_employed_m_7_sim = employed_m_7_sim ///
+		 , by(year)
+		 
+		 /* sd_employed_f_8_sim=employed_f_8_sim ///
+		 sd_employed_m_8_sim=employed_m_8_sim /// */
+
+forvalues i = 1(1)7 {
+	gen employed_f_`i'_sim_high = ///
+		employed_f_`i'_sim + 1.96*sd_employed_f_`i'_sim
+	gen employed_f_`i'_sim_low = ///
+		employed_f_`i'_sim - 1.96*sd_employed_f_`i'_sim
+	gen employed_m_`i'_sim_high = ///
+		employed_m_`i'_sim + 1.96*sd_employed_m_`i'_sim
+	gen employed_m_`i'_sim_low = ///
+		employed_m_`i'_sim - 1.96*sd_employed_m_`i'_sim	
+}
+
+merge 1:1 year using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+* Plot figures
+foreach vble in "employed_f" "employed_m" {
+	
+	twoway (rarea `vble'_1_sim_high `vble'_1_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_1_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 15-19") name(`vble'_1, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_2_sim_high `vble'_2_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_2_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 20-24") name(`vble'_2, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_3_sim_high `vble'_3_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_3_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 25-29") name(`vble'_3, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("") 
+	
+	twoway (rarea `vble'_4_sim_high `vble'_4_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_4_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 30-34") name(`vble'_4, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_5_sim_high `vble'_5_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_5_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 35-39") name(`vble'_5, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_6_sim_high `vble'_6_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) ///
+		rows(1)))(line `vble'_6_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 40-59") name(`vble'_6, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_7_sim_high `vble'_7_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_7_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 60-79") name(`vble'_7, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+}
+
+
+* Save figures	
+* Share employed women
+grc1leg employed_f_1 employed_f_2 employed_f_3 employed_f_4 employed_f_5 ///
+	employed_f_6 employed_f_7 , title("Employment rate by age") ///
+	subtitle("Females") ///
+	legendfrom(employed_f_1) ///
+	graphregion(color(white)) ///
+	note("Notes: ", size(vsmall))
+
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_all_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+	
+* Share employed men 	
+grc1leg employed_m_1 employed_m_2 employed_m_3 employed_m_4 employed_m_5 ///
+	employed_m_6 employed_m_7 , title("Employment rate by age") ///
+	subtitle("Males") ///
+	legendfrom(employed_m_1) ///
+	graphregion(color(white)) ///
+	note("Notes: ", size(vsmall))
+
+	
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_employed_ts_all_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+graph drop _all 	
+
+
+********************************************************************************
+* 1.3 : Mean values over time - Not employed 
+********************************************************************************
+********************************************************************************
+* 1.3.1 : Not employed, Working age (18-65)
+********************************************************************************
+********************************************************************************
+* 1.3.1.1 : Not employed, Working age (18-65), All
+********************************************************************************
+ 
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", clear
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn using ///
+	"$dir_data/simulated_data.dta", clear
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+
+** All 
+
+preserve
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status of those not employed") ///
+	subtitle("Ages ${min_age}-${max_age}") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.) minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_${min_age}_${max_age}_both.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+restore, preserve
+
+********************************************************************************
+* 1.3.1.2 : Not employed, Working age (18-65), By gender
+********************************************************************************
+
+keep if dgn == 1 
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status of those not employed") ///
+	subtitle("Ages ${min_age}-${max_age}, males") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+	
+* Save figure
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_${min_age}_${max_age}_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore, preserve
+
+	
+** Females 
+
+keep if dgn == 0 
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status of those not employed") ///
+	subtitle("Ages ${min_age}-${max_age}, females") /// 
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+	
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_${min_age}_${max_age}_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+restore 	
+	
+	
+********************************************************************************
+* 1.3.2 : Not employed, Before female state pension age (18-60)
+********************************************************************************
+********************************************************************************
+* 1.3.2.1 : Not employed Working age(18-65), Before female state pension age 
+* 			(18-60), Female
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn dag ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_sample_long.dta", ///
+	clear
+	
+drop if dag > 60	
+	
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn dag using ///
+	"$dir_data/simulated_data.dta", clear
+	
+drop if dag > 60
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+* Females 
+keep if dgn == 0
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status of those not employed") ///
+	subtitle("Ages ${min_age}-60") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_${min_age}_60_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+	
+********************************************************************************
+* 1.3.3 : Not employed, All ages
+********************************************************************************
+********************************************************************************
+* 1.3.3.1 : Not employed, All ages, All
+********************************************************************************
+
+* Prepare validation data
+use year dwt valid_employed valid_student valid_inactive dgn ///
+	valid_retired using ///
+	"$dir_data/${country}-eusilc_validation_full_sample_long.dta", ///
+	clear
+		
+collapse (mean) valid_employed valid_student valid_inactive valid_retired ///
+	[aw = dwt], by(year dgn)
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+* Prepare simulated data
+use run year sim_employed sim_student sim_inactive sim_retired dgn using ///
+	"$dir_data/simulated_data_full.dta", clear
+
+gen dgn_coded = .
+replace dgn_coded = 1 if dgn == "Male"
+replace dgn_coded = 0 if dgn == "Female"
+
+drop dgn
+rename dgn_coded dgn	
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired, ///
+	by(run year dgn)
+	
+collapse (mean) sim_employed sim_student sim_inactive sim_retired ///
+		 (sd) sim_employed_sd = sim_employed ///
+		 sim_student_sd = sim_student ///
+		 sim_inactive_sd = sim_inactive ///
+		 sim_retired_sd = sim_retired ///
+		 , by(year dgn)
+		 
+foreach varname in sim_employed sim_student sim_inactive sim_retired {
+	gen `varname'_high = `varname' + 1.96*`varname'_sd
+	gen `varname'_low = `varname' - 1.96*`varname'_sd
+}
+
+merge 1:1 year dgn using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+ 
+** All  
+ 
+preserve
+
+collapse (mean) sim* valid*, by(year)
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("All ages") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_all_both.jpg", ///
+	replace width(2400) height(1350) quality(100) 	
+	
+restore, preserve
+
+********************************************************************************
+* 1.3.3.2 : Not employed, All ages, By gender
+********************************************************************************
+
+keep if dgn == 1 
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("All ages, males") /// 
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_all_male.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+
+restore, preserve
+
+	
+** Females 
+
+keep if dgn == 0 
+
+* Plot figure 
+twoway ///
+(rarea sim_student_high sim_student_low year, sort color(blue%20) ///
+	legend(label(1 "Students, simulated"))) ///
+(line valid_student year, sort color(blue) ///
+	legend(label(2 "Students, SILC"))) ///
+(rarea sim_inactive_high sim_inactive_low year, sort color(red%20) ///
+	legend(label(3 "Non-employed, simulated"))) ///
+(line valid_inactive year, sort color(red) ///
+	legend(label(4 "Non-employed, SILC"))) ///
+(rarea sim_retired_high sim_retired_low year, sort color(grey%20) ///
+	legend(label(5 "Retired, simulated"))) ///
+(line valid_retired year, sort color(grey) ///
+	legend(label(6 "Retired, SILC"))), ///
+	title("Activity status") ///
+	subtitle("All ages, females") ///
+	xtitle("Year", size(small)) ///
+	ytitle("Share", size(small)) ///
+	xlabel(, labsize(small)) ///
+	ylabel(, labsize(small)) ///
+	graphregion(color(white)) ///	
+	legend(size(small)) ///
+	note("Notes: Non-employed includes the unemployed and inactive (homemakers, incapacity, carers, discouraged workers etc.)" "minus students and retired. ", ///
+	size(vsmall))
+
+* Save figure
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_activity_status_not_employed_ts_all_female.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+restore 
+
+
+********************************************************************************
+* 1.3.4 : Students, Adults (15+)
+********************************************************************************
+********************************************************************************
+* 1.3.4.1 : Students, Adults (15+), By age group 
+********************************************************************************
+
+* Prepare validation data
+use year dwt dgn ageGroup valid_student valid_employed using ///
+	"$dir_data/${country}-eusilc_validation_full_sample_long.dta", clear
+
+gen student = valid_student
+
+drop if ageGroup == 0 | ageGroup == 8  
+
+collapse (mean) student [aweight=dwt], by(ageGroup year)
+drop if missing(ageGroup)
+reshape wide student, i(year) j(ageGroup)
+
+forvalues i = 1(1)7 {
+	rename student`i' student_`i'_valid
+}
+
+save "$dir_data/temp_valid_stats.dta", replace
+
+
+* Prepare simulated data
+use run year sim_sex ageGroup sim_student using ///
+	"$dir_data/simulated_data_full.dta", clear
+
+gen student = sim_student
+
+collapse (mean) student, by(ageGroup run year)
+drop if missing(ageGroup)
+reshape wide student , i(year run) j(ageGroup)
+
+forvalues i = 1(1)7{
+	rename student`i' student_`i'_sim
+}
+
+collapse (mean) student*  ///
+	(sd) sd_student_1_sim = student_1_sim ///
+		 sd_student_2_sim = student_2_sim ///
+		 sd_student_3_sim = student_3_sim ///
+	     sd_student_4_sim = student_4_sim ///
+		 sd_student_5_sim = student_5_sim ///
+		 sd_student_6_sim = student_6_sim ///
+		 sd_student_7_sim = student_7_sim ///
+		 , by(year)
+		 
+		 /* sd_student_8_sim=student_8_sim ///
+		 sd_employed_f_8_sim=employed_f_8_sim ///
+		 sd_employed_m_8_sim=employed_m_8_sim /// */
+
+forvalues i = 1(1)7 {
+	gen student_`i'_sim_high = student_`i'_sim + 1.96*sd_student_`i'_sim
+	gen student_`i'_sim_low = student_`i'_sim - 1.96*sd_student_`i'_sim
+}
+
+merge 1:1 year using "$dir_data/temp_valid_stats.dta", keep(3) nogen
+
+* Plot figures
+foreach vble in "student" {
+	
+	twoway (rarea `vble'_1_sim_high `vble'_1_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_1_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 15-19") name(`vble'_1, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_2_sim_high `vble'_2_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_2_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 20-24") name(`vble'_2, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_3_sim_high `vble'_3_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_3_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 25-29") name(`vble'_3, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("") 
+	
+	twoway (rarea `vble'_4_sim_high `vble'_4_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_4_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 30-34") name(`vble'_4, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_5_sim_high `vble'_5_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_5_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 35-39") name(`vble'_5, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_6_sim_high `vble'_6_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) ///
+		rows(1)))(line `vble'_6_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 40-59") name(`vble'_6, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+	twoway (rarea `vble'_7_sim_high `vble'_7_sim_low year, ///
+		sort color(green%20) ///
+		legend(label(1 "Simulated") position(6) rows(1))) ///
+		(line `vble'_7_valid year, sort color(green) ///
+		legend(label(2 "SILC"))), ///
+		title("Age 60-79") name(`vble'_7, replace) ylabel(0 [0.5] 1) ///
+	graphregion(color(white)) xtitle("")
+	
+}
+
+* Save figures
+
+* Share students
+grc1leg student_1 student_2 student_3 student_4 student_5 student_6 ///
+	student_7 , title("Share of students by age") legendfrom(student_1) ///
+	graphregion(color(white)) ///
+	note("Notes: ", size(vsmall))
+	
+graph export ///
+"$dir_output_files/economic_activity/validation_${country}_students_ts_all_both.jpg", ///
+	replace width(2400) height(1350) quality(100)
+	
+grc1leg student_1 student_2 student_3 , ///
+	title("Share of students by age") legendfrom(student_1) ///
+	graphregion(color(white)) ///
+	note("Notes: ", size(vsmall))
+	
+graph export ///
+	"$dir_output_files/economic_activity/validation_${country}_students_ts_15_29_both.jpg", ///
+	replace width(2400) height(1350) quality(100)
+
+graph drop _all 
