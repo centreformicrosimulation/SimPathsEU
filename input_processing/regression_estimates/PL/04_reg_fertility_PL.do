@@ -1,13 +1,18 @@
 /*******************************************************************************
 * PROJECT:  		SimPaths EU 
-* SECTION:			Home ownership 
-* OBJECT: 			Probabilty of being a homeowner  
-* AUTHORS:			Daria Popova, Justin van de Ven, Ashley Burdett, 
-* 					Aleksandra Kolndrekaj
-* LAST UPDATE:		January 2026 AB
-* COUNTRY: 			Poland
+* SECTION:			Fertility
+* OBJECT: 			Having a child
+* AUTHORS:			Daria Popova, Justin van de Ven, Ashley Burdett
+*					Aleksandra Kolndrekaj 
+* LAST UPDATE:		January 2026
+* COUNTRY: 			Poland 
 ********************************************************************************
-* NOTES: 			
+* NOTES:			Simplified the fertility process for those in this initial 
+* 						education spell. Exclude l.dnc, l.dnc02, li.ydses_c5 
+* 						and model health as a continuous variable. 	
+* 
+* 					Make sure the raw fertility rate file is in the data folder. 
+* 					Ensure the same numbers as used in SimPaths 		
 *******************************************************************************/
 
 clear all
@@ -18,15 +23,15 @@ set maxvar 30000
 
 * Set off log 
 cap log close 
-//log using "$dir_log/reg_home_ownership.log", replace
+log using "$dir_log/reg_fertility.log", replace
 
 
 /********************************* SET EXCEL FILE *****************************/
 
 * Info sheet
-putexcel set "$dir_work/reg_home_ownership_${country}", sheet("Info") replace
+putexcel set "$dir_work/reg_fertility_${country}", sheet("Info") replace
 putexcel A1 = "Description:", bold
-putexcel B1 = "Model parameters governing projection of home ownership"
+putexcel B1 = "Model parameters governing projection of fertility"
 
 putexcel A2 = "Authors:", bold
 putexcel B2 = "Ashley Burdett, Aleksandra Kolndrekaj" 	
@@ -35,40 +40,51 @@ putexcel B3 = "12 Jan 2016 AB"
 
 putexcel A5 = "Process:", bold
 putexcel B5 = "Description:", bold
-putexcel A6 = "HO1"
-putexcel B6 = "Probit regression estimates of the probability of being a home owner, aged 18+, head of benefit unit"
-
-putexcel A10 = "Notes:", bold
-putexcel B10 = "Have combined dhhtp_c4 and lessp_c3 into a single variable with 8 cateogries, dhhtp_c8"
-putexcel B11 = "Regions: PL4 = Polnocno-Zachodni, PL5 = Poludniowo-Zachodni, PL6 = Polnocy, PL10 = Central + East. Poludniowy is the omitted category."
-putexcel B12 = "Estimated on the sample of benefit unit heads." 
+putexcel A6 = "F1"
+putexcel B6 = "Probit regression estimates of the probability of having a child for women"
 
 
-putexcel set "$dir_work/reg_home_ownership_${country}", sheet("Gof") modify
-putexcel A1 = "Goodness of fit", bold	
+putexcel A8 = "Notes:", bold
+putexcel B8 = "Regions: PL4 = Polnocno-Zachodni, PL5 = Poludniowo-Zachodni, PL6 = Polnocy, PL10 = Central + East. Poludniowy is the omitted category."
+
+putexcel set "$dir_work/reg_fertility_${country}", sheet("Gof") modify
+putexcel A1 = "Goodness of fit", bold		
 
 
 /********************************* PREPARE DATA *******************************/
 
-* Load data 
-use "$dir_input_data/${country}_pooled_ipop.dta", clear
+* Convert the fertility rate into a .dta file 
+import excel "$dir_data/projections_fertility.xlsx", sheet("FertilityByYear") ///
+	firstrow clear
+	
+drop Fertility 
+
+xpose, clear varname 
+
+gen swv = 2011 if _varname == "B"
+replace swv = swv[_n-1] + 1 if swv[_n-1] != . 
+
+rename v1 dplfr
+drop _varname 
+
+save "$dir_data/fertility_rate", replace 
+
+
+* Load main data 
+use "$dir_input_data/${country}_pooled_ipop", clear
 
 * Ensure missing is missing 
-recode dhh_owned dgn dag dagsq les_c3 deh_c3 deh_c4 dhe yptciihs_dv  ///
-	ydses_c5 drgn1 dhhtp_c4 lessp_c3 stm les_c4 dhhtp_c8 (-9=.)
+recode dhe dnc dnc02 deh_c3 les_c3 ydses_c5 dcpst drgn1 sprfm scedsmpl ///
+	 dchpd (-9=. )
 
-* Set data 
-xtset idperson swv
-sort idperson swv 	
-	
-* Remove children
+
+* Sample selection 
 drop if dag < 16
 
-* Adjust variables
-* Time variables 
-* Year centered around 2000 (- helps to avoid invertability issue)
+* Adjust variables 
+
+* Time transformations 
 replace stm = stm - 2000
-fre stm 
 
 * Year dummies
 gen y2011 = (stm == 11)
@@ -85,72 +101,49 @@ gen y2021 = (stm == 21)
 gen y2022 = (stm == 22)
 gen y2023 = (stm == 23)
 
-* Only keep head of benefit unit 
-egen tag_bu_wave = tag(idbenefitunit swv)
-count if tag_bu_wave
-local n_bu_before = r(N)
-display "Number of benefit unit–wave combinations BEFORE selecting head: `n_bu_before'"
+* Have any number of children dummy
+tab dchpd
+replace dchpd = 1 if dchpd == 2 | dchpd == 3 | dchpd == 4 | dchpd == 5 
 
-* Sort benefit unit members within each wave:
-* 1. Highest non-benefit income (ypnbihs_dv)
-* 2. Highest age (dag)
-* 3. Lowest idperson (idperson)
-gsort idbenefitunit swv -ypnbihs_dv -dag idperson 
 
-* Tag the first person (the "head") per benefit unit and wave
-bysort idbenefitunit swv: gen benunit_head = (_n == 1)
-
-* Keep only benefit unit heads
-keep if benunit_head == 1
-
-* Count unique benefit-unit–wave combinations AFTER head selection
-drop tag_bu_wave
-egen tag_bu_wave = tag(idbenefitunit swv)
-count if tag_bu_wave
-local n_bu_after = r(N)
-display "Number of benefit unit–wave combinations AFTER selecting head: `n_bu_after'"
-
-* Ensure benefit unit–wave counts match before and after head selection
-assert `n_bu_before' == `n_bu_after'
-
-* Verify only one head per benefit unit per wave
-by idbenefitunit swv, sort: gen n = _N
-assert n == 1
-
-sort idperson swv
 
 * Labeling and formating variables
 label def jbf 1 "Employed" 2 "Student" 3 "Not Employed"
 label def edd 1 "Degree"	2 "High school" ///
-					3 "Other/No Qualification"
-label def gdr 1 "Male" 0 "Female"
-label def yn	1 "Yes" 0 "No"
+				3 "Other/No Qualification"
 label def hht 1 "Couples with No Children" 2 "Couples with Children" ///
-				3 "Single with No Children" 4 "Single with Children"
+				3 "Single with No Children" 4 "Single with Children" 
+label def gdr 1  "Male" 0 "Female"
+label def yn	1 "Yes" 0 "No"
 
 label val dgn gdr
 label val drgn1 rgna
-label val les_c3 lessp_c3 jbf 
-label val deh_c3 dehsp_c3 edd 
-label val dcpen dcpex dlrtrd yn
-label val dhhtp_c4 hht				
-				
+label val dhhtp_c4 hht 
+label val les_c3 jbf 
+label val deh_c3 edd 
+label val ded yn
+
 label var dgn "Gender"
 label var dag "Age"
 label var dagsq "Age Squared"
 label var drgn1 "Region"
+label var dhhtp_c4 "Household Type: 4 Category"
 label var stm "Year"
-label var les_c3 "Employment Status: 5 Category" 
+label var les_c3 "Employment Status: 3 Category" 
 label var dhe "Self-rated Health"
 label var deh_c3 "Educational Attainment: 3 Category"
-label var dhhtp_c4 "Household Type: 4 Category"
+label var dnc "Number of Children in Household"
+label var dnc02 "Number of Children aged 0-2 in Household"
+label var ydses_c5 "Annual Household Income Quintile" 
+
 
 * Alter names and create dummies for automatic labelling 
 gen Dgn = dgn 
 
 gen Dag = dag  
 
-gen  Dag_sq = dagsq 
+gen Dag_sq = dagsq 
+xtset idperson swv
 
 tab drgn1, gen(${country}) 
 rename PL5 PL10 
@@ -214,13 +207,12 @@ tab dcpst, gen(Dcpst_)
 rename Dcpst_1 Dcpst_Partnered
 rename Dcpst_2 Dcpst_Single
 
-tab dhhtp_c8, gen(Dhhtp_c8_)
-
 gen Dnc = dnc
 
 gen Dnc02 = dnc02
 
 gen Year_transformed = stm  
+gen Year_transformed_sq = stm * stm
 
 gen Y2011 = y2011
 gen Y2012 = y2012  
@@ -239,6 +231,9 @@ gen Y2223 = (stm == 22 | stm == 23)
 
 gen Dhe = dhe 
 
+gen Ded = ded
+gen Deh_c4=deh_c4
+
 gen Ydses_c5 = ydses_c5 
 
 gen New_rel = new_rel
@@ -251,60 +246,88 @@ gen Ypnbihs_dv = ypnbihs_dv
 
 gen Ynbcpdf_dv = ynbcpdf_dv
 
-gen Yptciihs_dv = yptciihs_dv
-
-gen Dhh_owned = dhh_owned
+gen Ded_2 = 1 - ded
 
 * Generate interactions
-gen Les_c4_Student_L1_Dgn = Dgn * Les_c4_Student
-gen Les_c4_NotEmployed_L1_Dgn = Dgn * Les_c4_NotEmployed
-gen Les_c4_Retired_L1_Dgn = Dgn * Les_c4_Retired	
+gen Les_c4_Student_Dgn = Dgn * Les_c4_Student
+gen Les_c4_NotEmployed_Dgn = Dgn * Les_c4_NotEmployed
+gen Les_c4_Retired_Dgn = Dgn * Les_c4_Retired
+
+gen Ded_Dag =  Ded * c.Dag 
+gen Ded_Dag_sq = Ded * Dag_sq 
+gen Ded_Dgn = Ded * Dgn
+
+gen Ded_Dhe_Poor=Ded * Dhe_Poor
+gen Ded_Dhe_Fair=Ded * Dhe_Fair
+gen Ded_Dhe_Good=Ded * Dhe_Good
+gen Ded_Dhe_VeryGood=Ded * Dhe_VeryGood
+gen Ded_Dhe_Excellent=Ded * Dhe_Excellent
+
+gen Ded_Dcpst_Single = Dcpst_Single * Ded
+
+* Lagged interactions 
+xtset idperson swv
+gen Ded_Dcpst_Single_L1 = l.Dcpst_Single * Ded
+
+* Set data
+xtset idperson swv
+
+* Merge in fertility rate
+merge m:1 swv using "$dir_data/fertility_rate"
+
+drop if _m == 2 
+drop _m
+
+gen FertilityRate = dplfr
+
+sort idperson swv 
 
 
 /********************************** ESTIMATION ********************************/
 
-/********************** HO1: PROBABILITY OF OWNING HOME ***********************/
+/*********************** F1: PROBABILITY OF HAVING A CHILD ********************/
 
 xtset idperson swv
+tab dchpd if (sprfm == 1  & dgn == 0) 
 
 * Estimation 
-probit dhh_owned_ind i.Dgn Dag Dag_sq il.Dhhtp_c8_2 il.Dhhtp_c8_3 ///
-	il.Dhhtp_c8_4 il.Dhhtp_c8_5 il.Dhhtp_c8_6 il.Dhhtp_c8_7 il.Dhhtp_c8_8 ///
-	il.Les_c3_Student il.Les_c3_NotEmployed i.Deh_c4_Na ///
-	i.Deh_c4_Medium i.Deh_c4_Low il.Dhe_Fair il.Dhe_Good il.Dhe_VeryGood ///
-	il.Dhe_Excellent li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 ///
-	li.Ydses_c5_Q5 l.Yptciihs_dv l.Dhh_owned $regions Year_transformed ///
-	Y2020 Y2021 if ${ho1_if_condition} [pw=dwt], vce(cluster idperson)
+probit dchpd i.Ded Dag Dag_sq i.Dhe_Fair i.Dhe_Good i.Dhe_VeryGood ///
+	i.Dhe_Excellent i.Dcpst_Single li.Dcpst_Single Ded_Dag /*Ded_Dag_sq*/ ///
+	Ded_Dcpst_Single Ded_Dcpst_Single_L1 Ded_Dhe_Poor Ded_Dhe_Fair  ///
+	Ded_Dhe_Good Ded_Dhe_VeryGood Ded_Dhe_Excellent li.Ydses_c5_Q2 ///
+	li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 l.Dnc l.Dnc02 i.Deh_c4_Low ///
+	i.Deh_c4_High FertilityRate li.Les_c3_Student li.Les_c3_NotEmployed ///
+	Year_transformed Year_transformed_sq $regions if ${f1_if_condition} ///
+	[pw=dwt], vce(robust)
 
 * Save raw results 
 matrix results = r(table)
 matrix results = results[1..6,1...]'
 
-putexcel set "$dir_raw_results/home_ownership/home_ownership", ///
-	sheet("Process HO1") replace
+putexcel set "$dir_raw_results/fertility/fertility", ///
+	sheet("Process F1") replace
 putexcel A3 = matrix(results), names nformat(number_d2) 
 putexcel J4 = matrix(e(V))
 
 outreg2 stats(coef se pval) using ///
-	"$dir_raw_results/home_ownership/HO1.doc", replace ///
-title("Process H01: Probability Own Home") ///
-	ctitle(Own home) label side dec(2) noparen ///
+	"$dir_raw_results/fertility/F1.doc", replace ///
+title("Process F1: Probability of Having a Child") ///
+	ctitle(Birth) label side dec(2) noparen ///
 	addstat(R2, e(r2_p), Chi2, e(chi2), Log-likelihood, e(ll)) ///
-	addnote(`"Note: Regression if condition = (${ho1_if_condition}). Only estimated on benefit unit heads."')		
+	addnote(`"Note: Regression if condition = (${f1_if_condition})"')		
 	
-* Save sample inclusion indicator and predicted probabilities				
+* Save sample inclusion indicator and predicted probabilities			
 gen in_sample = e(sample)	
 predict p
 
-* Save sample for stimate validation
-save "$dir_data/HO1a_sample", replace
+* Save sample for estimate validation 
+save "$dir_data/F1_sample", replace
 
 * Store model summary statistics
 scalar r2_p = e(r2_p) 
-scalar N_sample = e(N)	
+scalar N_sample = e(N)	 
 scalar chi2 = e(chi2)
-scalar ll = e(ll)	
-
+scalar ll = e(ll)
 
 * Store results in Excel 
 
@@ -364,12 +387,12 @@ if min_ratio < 1.0e-12 {
 display "Stability Check Passed. Min/Max ratio: " min_ratio
 
 * Export into Excel 
-putexcel set "$dir_work/reg_home_ownership_${country}", sheet("HO1") modify 
+putexcel set "$dir_work/reg_fertility_${country}", sheet("F1") modify
 putexcel B2 = matrix(b_trimmed)
 putexcel C2 = matrix(V_trimmed)
 
 * Labels 
-putexcel set "$dir_work/reg_home_ownership_${country}", sheet("HO1") modify 
+putexcel set "$dir_work/reg_fertility_${country}", sheet("F1") modify
 
 putexcel A1 = "REGRESSOR"
 putexcel B1 = "COEFFICIENT"
@@ -410,13 +433,12 @@ frame temp_frame: {
     end
 
     * Import cleaned labels into Stata
-    import delimited "$dir_work/temp_labels.txt", clear varnames(1) ///
-		encoding(utf8)
+    import delimited "$dir_work/temp_labels.txt", clear varnames(1) encoding(utf8)
 	
 	gen n = _n
     
     * Export labels to Excel
-	putexcel set "$dir_work/reg_home_ownership_${country}", sheet("HO1") modify 
+	putexcel set "$dir_work/reg_fertility_${country}", sheet("F1") modify
 	
 	* Vertical labels
     summarize n, meanonly
@@ -448,20 +470,27 @@ frame temp_frame: {
 }
 
 * Export model fit statistics
-putexcel set "$dir_work/reg_home_ownership_${country}", sheet("Gof") modify
+putexcel set "$dir_work/reg_fertility_${country}", sheet("Gof") modify
 
-putexcel A3 = "HO1 - Home ownership", bold		
+putexcel A9 = "F1 - Fertility ", bold		
 
-putexcel A5 = "Pseudo R-squared" 
-putexcel B5 = r2_p 
-putexcel A6 = "N"
-putexcel B6 = N_sample 
-putexcel E5 = "Chi^2"		
-putexcel F5 = chi2
-putexcel E6 = "Log likelihood"		
-putexcel F6 = ll		
+putexcel A11 = "Pseudo R-squared" 
+putexcel B11 = r2_p 
+putexcel A12 = "N"
+putexcel B12 = N_sample
+putexcel E11 = "Chi^2"		
+putexcel F11 = chi2
+putexcel E12 = "Log likelihood"		
+putexcel F12 = ll		
 
+		
+* Clean up 		
 drop in_sample p
-scalar drop r2_p N_sample chi2 ll	
+scalar drop _all
+matrix drop _all
+frame drop temp_frame 	
 
+	
 capture log close 
+
+
