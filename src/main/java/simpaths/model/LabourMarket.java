@@ -3,7 +3,6 @@ package simpaths.model;
 import microsim.engine.SimulationEngine;
 import simpaths.data.Parameters;
 import simpaths.model.enums.Education;
-import simpaths.model.enums.MacroScenarioPopulation;
 import simpaths.model.enums.Region;
 
 import java.util.*;
@@ -109,7 +108,7 @@ public class LabourMarket {
                     Person person = benefitUnit.getMale();
                     if (person.atRiskOfWork()) {
 
-                        Education ed = person.getDeh_c3();
+                        Education ed = person.getDeh_c4();
                         double newVal = person.getFullTimeHourlyEarningsPotential();
                         potentialHourlyEarningsByEdu.put(ed, potentialHourlyEarningsByEdu.get(ed) + newVal);
                         int oldCount = countByEdu.get(ed);
@@ -121,7 +120,7 @@ public class LabourMarket {
                     Person person = benefitUnit.getFemale();
                     if (person.atRiskOfWork()) {
 
-                        Education ed = person.getDeh_c3();
+                        Education ed = person.getDeh_c4();
                         double newVal = person.getFullTimeHourlyEarningsPotential();
                         potentialHourlyEarningsByEdu.put(ed, potentialHourlyEarningsByEdu.get(ed) + newVal);
                         int oldCount = countByEdu.get(ed);

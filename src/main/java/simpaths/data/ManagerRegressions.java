@@ -68,17 +68,17 @@ public class ManagerRegressions {
             case WagesFemales -> {
                 return Parameters.getRegWagesFemales();
             }
-            case WagesMalesE -> {
-                return Parameters.getRegWagesMalesE();
+            case W1mb -> {
+                return Parameters.getRegW1mb();
             }
-            case WagesFemalesE -> {
-                return Parameters.getRegWagesFemalesE();
+            case W1ma -> {
+                return Parameters.getRegW1ma();
             }
-            case WagesMalesNE -> {
-                return Parameters.getRegWagesMalesNE();
+            case W1fb -> {
+                return Parameters.getRegW1fb();
             }
-            case WagesFemalesNE -> {
-                return Parameters.getRegWagesFemalesNE();
+            case W1fa -> {
+                return Parameters.getRegW1fa();
             }
             default -> {
                 throw new RuntimeException("unrecognised regression (3)");
@@ -98,23 +98,18 @@ public class ManagerRegressions {
             case EducationE1b -> {
                 return Parameters.getRegEducationE1b();
             }
-            case FertilityF1a -> {
-                return Parameters.getRegFertilityF1a();
+
+            case FertilityF1 -> {
+                return Parameters.getRegFertilityF1();
             }
-            case FertilityF1b -> {
-                return Parameters.getRegFertilityF1b();
+            case PartnershipU1 -> {
+                return Parameters.getRegPartnershipU1();
             }
-            case PartnershipU1a -> {
-                return Parameters.getRegPartnershipU1a();
+            case PartnershipU2 -> {
+                return Parameters.getRegPartnershipU2();
             }
-            case PartnershipU1b -> {
-                return Parameters.getRegPartnershipU1b();
-            }
-            case PartnershipU2b -> {
-                return Parameters.getRegPartnershipU2b();
-            }
-            case HealthH2b -> {
-                return Parameters.getRegHealthH2b();
+            case HealthH2 -> {
+                return Parameters.getRegHealthH2();
             }
             case HealthHM1Case -> {
                 return Parameters.getRegHealthHM1Case();
@@ -183,11 +178,8 @@ public class ManagerRegressions {
             throw new RuntimeException("requested generalised ordered regression is not recognised: " + regression.name());
 
         switch (regression) {
-            case HealthH1a -> {
-                return Parameters.getRegHealthH1a();
-            }
-            case HealthH1b -> {
-                return Parameters.getRegHealthH1b();
+            case HealthH1 -> {
+                return Parameters.getRegHealthH1();
             }
             case EducationE2a -> {
                 return Parameters.getRegEducationE2a();
@@ -255,30 +247,28 @@ public class ManagerRegressions {
 
         String code;
         switch (regression) {
-            case HealthH1a -> {
-                code = "H1a";
-            }
-            case HealthH1b -> {
-                code = "H1b";
+            case HealthH1 -> {
+                code = "H1";
             }
             case WagesMales -> {
                 code = "Wages_Males";
             }
-            case WagesMalesE -> {
-                code = "Wages_MalesE";
+            case W1mb -> {
+                code = "W1mb";
             }
-            case WagesMalesNE -> {
-                code = "Wages_MalesNE";
+            case W1ma -> {
+                code = "W1ma";
             }
             case WagesFemales -> {
                 code = "Wages_Females";
             }
-            case WagesFemalesE -> {
-                code = "Wages_FemalesE";
+            case W1fb -> {
+                code = "W1fb";
             }
-            case WagesFemalesNE -> {
-                code = "Wages_FemalesNE";
+            case W1fa -> {
+                code = "W1fa";
             }
+
             case ChildcareC1b -> {
                 code = "C1b";
             }
@@ -305,21 +295,21 @@ public class ManagerRegressions {
 
     private static Object getRegressionCoeffObject(Enum<?> regression, String coeff, boolean multi) {
         switch ((RegressionName) regression) {
-            case WagesMalesE -> {
-                return (multi) ? Parameters.getCoeffCovarianceWagesMalesE().getValue(coeff, "COEFFICIENT") :
-                        Parameters.getCoeffCovarianceWagesMalesE().getValue(coeff);
+            case W1mb -> {
+                return (multi) ? Parameters.getCoeffCovarianceW1mb().getValue(coeff, "COEFFICIENT") :
+                        Parameters.getCoeffCovarianceW1mb().getValue(coeff);
             }
-            case WagesMalesNE -> {
-                return (multi) ? Parameters.getCoeffCovarianceWagesMalesNE().getValue(coeff, "COEFFICIENT") :
-                        Parameters.getCoeffCovarianceWagesMalesNE().getValue(coeff);
+            case W1ma -> {
+                return (multi) ? Parameters.getCoeffCovarianceW1ma().getValue(coeff, "COEFFICIENT") :
+                        Parameters.getCoeffCovarianceW1ma().getValue(coeff);
             }
-            case WagesFemalesE -> {
-                return (multi) ? Parameters.getCoeffCovarianceWagesFemalesE().getValue(coeff, "COEFFICIENT") :
-                        Parameters.getCoeffCovarianceWagesFemalesE().getValue(coeff);
+            case W1fb -> {
+                return (multi) ? Parameters.getCoeffCovarianceW1fb().getValue(coeff, "COEFFICIENT") :
+                        Parameters.getCoeffCovarianceW1fb().getValue(coeff);
             }
-            case WagesFemalesNE -> {
-                return (multi) ? Parameters.getCoeffCovarianceWagesFemalesNE().getValue(coeff, "COEFFICIENT") :
-                        Parameters.getCoeffCovarianceWagesFemalesNE().getValue(coeff);
+            case W1fa -> {
+                return (multi) ? Parameters.getCoeffCovarianceW1fa().getValue(coeff, "COEFFICIENT") :
+                        Parameters.getCoeffCovarianceW1fa().getValue(coeff);
             }
             case RMSE -> {
                 return (multi) ? Parameters.getCoefficientMapRMSE().getValue(coeff, "COEFFICIENT") :

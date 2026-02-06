@@ -13,7 +13,6 @@ import simpaths.model.Innovations;
 
 import microsim.statistics.regression.BinomialRegression;
 import microsim.statistics.regression.GeneralisedOrderedRegression;
-import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
@@ -293,53 +292,53 @@ public class PersonTest {
         @Test
         @DisplayName("OUTCOME F (First Spell): Adopts New Level (e.g., Low -> High)")
         public void firstSpellAdoptsNewLevel() throws Exception {
-            testPerson.setDeh_c3(Education.Low);
+            testPerson.setDeh_c4(Education.Low);
             testPerson.setDer(Indicator.False);
 
             setupEducationLevelRegressionMock(Education.High, 0.9);
 
             testPerson.setEducationLevel();
 
-            assertEquals(Education.High, testPerson.getDeh_c3(), "First spell should always adopt the new regression result (OUTCOME F).");
+            assertEquals(Education.High, testPerson.getDeh_c4(), "First spell should always adopt the new regression result (OUTCOME F).");
         }
 
         @Test
         @DisplayName("OUTCOME F (Return Spell Improvement): Adopts New, Higher Level")
         public void returnSpellAdoptsHigherLevel() throws Exception {
-            testPerson.setDeh_c3(Education.Low);
+            testPerson.setDeh_c4(Education.Low);
             testPerson.setDer(Indicator.True);
 
             setupEducationLevelRegressionMock(Education.Medium, 0.5); // Draw 0.5 < 0.6 (Cumulative Medium) --> Selects Medium
 
             testPerson.setEducationLevel();
 
-            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Return spell must adopt the new level because it is higher than current (OUTCOME F).");
+            assertEquals(Education.Medium, testPerson.getDeh_c4(), "Return spell must adopt the new level because it is higher than current (OUTCOME F).");
         }
 
         @Test
         @DisplayName("OUTCOME G (Return Spell Downgrade): Retains Current Level (e.g., Medium -> Low)")
         public void returnSpellRetainsCurrentLevelOnDowngrade() throws Exception {
-            testPerson.setDeh_c3(Education.Medium);
+            testPerson.setDeh_c4(Education.Medium);
             testPerson.setDer(Indicator.True);
 
             setupEducationLevelRegressionMock(Education.Low, 0.2);
 
             testPerson.setEducationLevel();
 
-            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Return spell must retain the current level because the new level is not higher (OUTCOME G).");
+            assertEquals(Education.Medium, testPerson.getDeh_c4(), "Return spell must retain the current level because the new level is not higher (OUTCOME G).");
         }
 
         @Test
         @DisplayName("OUTCOME G (Return Spell Same Level): Retains Current Level")
         public void returnSpellRetainsCurrentLevelOnSameLevel() throws Exception {
-            testPerson.setDeh_c3(Education.Medium);
+            testPerson.setDeh_c4(Education.Medium);
             testPerson.setDer(Indicator.True);
 
             setupEducationLevelRegressionMock(Education.Medium, 0.5);
 
             testPerson.setEducationLevel();
 
-            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Return spell must retain the current level because the new level is not strictly higher (OUTCOME G).");
+            assertEquals(Education.Medium, testPerson.getDeh_c4(), "Return spell must retain the current level because the new level is not strictly higher (OUTCOME G).");
         }
     }
 
@@ -356,7 +355,7 @@ public class PersonTest {
         public void successfulExitExecution() throws Exception {
             testPerson.setToLeaveSchool(true);
             testPerson.setDag(20);
-            testPerson.setDeh_c3(Education.Low);
+            testPerson.setDeh_c4(Education.Low);
             testPerson.setDed(Indicator.True);
             testPerson.setDer(Indicator.False);
             testPerson.setLes_c4(Les_c4.Student);
@@ -371,7 +370,7 @@ public class PersonTest {
             assertEquals(Indicator.False, testPerson.getDer(), "Der should be set to False.");
             assertTrue(testPerson.isLeftEducation(), "leftEducation flag should be true.");
             assertEquals(Les_c4.NotEmployed, testPerson.getLes_c4(), "Activity status should be set to NotEmployed.");
-            assertEquals(Education.Medium, testPerson.getDeh_c3(), "Education level should be assigned to Medium.");
+            assertEquals(Education.Medium, testPerson.getDeh_c4(), "Education level should be assigned to Medium.");
             assertEquals(Indicator.True, testPerson.getSedex(), "Sedex should be set to true.");
         }
 
@@ -380,12 +379,12 @@ public class PersonTest {
         public void noExecution() throws Exception {
             testPerson.setToLeaveSchool(false);
             testPerson.setLes_c4(Les_c4.EmployedOrSelfEmployed);
-            testPerson.setDeh_c3(Education.High);
+            testPerson.setDeh_c4(Education.High);
 
             testPerson.leavingSchool();
 
             assertEquals(Les_c4.EmployedOrSelfEmployed, testPerson.getLes_c4(), "Activity status should remain unchanged.");
-            assertEquals(Education.High, testPerson.getDeh_c3(), "Education level must remain unchanged.");
+            assertEquals(Education.High, testPerson.getDeh_c4(), "Education level must remain unchanged.");
             assertFalse(testPerson.isLeftEducation(), "leftEducation flag should remain false (default state).");
             Mockito.verify(mockInnovations, Mockito.never()).getDoubleDraw(30);
         }

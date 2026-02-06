@@ -102,29 +102,32 @@ public class DataParser {
 
 				//Education
 				+ "ALTER TABLE " + personTable + " ADD education VARCHAR_IGNORECASE;"
-				+ "UPDATE " + personTable + " SET education = 'Low' WHERE deh_c3 = 3;"
-				+ "UPDATE " + personTable + " SET education = 'Medium' WHERE deh_c3 = 2;"
-				+ "UPDATE " + personTable + " SET education = 'High' WHERE deh_c3 = 1;"
-				//Note: Have to consider missing values as children don't have a level of education before they leave school
-				+ "UPDATE " + personTable + " SET education = 'Low' WHERE deh_c3 = -9;"
-				+ "ALTER TABLE " + personTable + " DROP COLUMN deh_c3;"
-				+ "ALTER TABLE " + personTable + " ALTER COLUMN education RENAME TO deh_c3;"
+				+ "UPDATE " + personTable + " SET education = 'Low' WHERE deh_c4 = 3;"
+				+ "UPDATE " + personTable + " SET education = 'Medium' WHERE deh_c4 = 2;"
+				+ "UPDATE " + personTable + " SET education = 'High' WHERE deh_c4 = 1;"
+				+ "UPDATE " + personTable + " SET education = 'NotAssigned' WHERE deh_c4 = 0;"
+				+ "ALTER TABLE " + personTable + " DROP COLUMN deh_c4;"
+				+ "ALTER TABLE " + personTable + " ALTER COLUMN education RENAME TO deh_c4;"
 
 				//Education mother
 				+ "ALTER TABLE " + personTable + " ADD education_mother VARCHAR_IGNORECASE;"
-				+ "UPDATE " + personTable + " SET education_mother = 'Low' WHERE dehm_c3 = 3;"
-				+ "UPDATE " + personTable + " SET education_mother = 'Medium' WHERE dehm_c3 = 2;"
-				+ "UPDATE " + personTable + " SET education_mother = 'High' WHERE dehm_c3 = 1;"
-				+ "ALTER TABLE " + personTable + " DROP COLUMN dehm_c3;"
-				+ "ALTER TABLE " + personTable + " ALTER COLUMN education_mother RENAME TO dehm_c3;"
+				+ "UPDATE " + personTable + " SET education_mother = 'Low' WHERE dehm_c4 = 3;"
+				+ "UPDATE " + personTable + " SET education_mother = 'Medium' WHERE dehm_c4 = 2;"
+				+ "UPDATE " + personTable + " SET education_mother = 'High' WHERE dehm_c4 = 1;"
+				+ "UPDATE " + personTable + " SET education_mother = 'NotAssigned' WHERE dehm_c4 = 0;"
+
+				+ "ALTER TABLE " + personTable + " DROP COLUMN dehm_c4;"
+				+ "ALTER TABLE " + personTable + " ALTER COLUMN education_mother RENAME TO dehm_c4;"
 
 				//Education father
 				+ "ALTER TABLE " + personTable + " ADD education_father VARCHAR_IGNORECASE;"
-				+ "UPDATE " + personTable + " SET education_father = 'Low' WHERE dehf_c3 = 3;"
-				+ "UPDATE " + personTable + " SET education_father = 'Medium' WHERE dehf_c3 = 2;"
-				+ "UPDATE " + personTable + " SET education_father = 'High' WHERE dehf_c3 = 1;"
-				+ "ALTER TABLE " + personTable + " DROP COLUMN dehf_c3;"
-				+ "ALTER TABLE " + personTable + " ALTER COLUMN education_father RENAME TO dehf_c3;"
+				+ "UPDATE " + personTable + " SET education_father = 'Low' WHERE dehf_c4 = 3;"
+				+ "UPDATE " + personTable + " SET education_father = 'Medium' WHERE dehf_c4 = 2;"
+				+ "UPDATE " + personTable + " SET education_father = 'High' WHERE dehf_c4 = 1;"
+				+ "UPDATE " + personTable + " SET education_father = 'NotAssigned' WHERE dehf_c4 = 0;"
+
+				+ "ALTER TABLE " + personTable + " DROP COLUMN dehf_c4;"
+				+ "ALTER TABLE " + personTable + " ALTER COLUMN education_father RENAME TO dehf_c4;"
 
 				//In education dummy (to be used with Indicator enum when defined in Person class)
 				+ "ALTER TABLE " + personTable + " ADD education_in VARCHAR_IGNORECASE;"
@@ -159,11 +162,6 @@ public class DataParser {
 				+ "UPDATE " + personTable + " SET activity_status = 'Retired' WHERE les_c4 = 4;"
 				+ "ALTER TABLE " + personTable + " DROP COLUMN les_c4;"
 				+ "ALTER TABLE " + personTable + " ALTER COLUMN activity_status RENAME TO les_c4;"
-
-                /*
-                //Labour Market Categories
-                + "ALTER TABLE " + personTable + " ADD labour_categories_test VARCHAR_IGNORECASE;"
-                */
 
 				//Lag(1) of les_c4
 				+ "ALTER TABLE " + personTable + " ADD activity_status VARCHAR_IGNORECASE;"
