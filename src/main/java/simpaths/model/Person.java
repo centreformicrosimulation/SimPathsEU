@@ -381,7 +381,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         if (dag < Parameters.MIN_AGE_TO_LEAVE_EDUCATION)
             leftEducation = false;
-        else if (dag > Parameters.MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION)
+        else if (dag > Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION)
             leftEducation = true;
         else
             leftEducation = (!Les_c4.Student.equals(les_c4) || (Les_c4.Student.equals(les_c4) && ded.equals(Indicator.False)));
@@ -1381,7 +1381,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 // Is the age of the individual below the max age to leave education (age < maxQuittingAge)?
 
                 // Yes
-                if(dag <= MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION) {
+                if(dag <= MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION) {
 
                     // Yes
                     // --> process E1a

@@ -162,8 +162,8 @@ public class Parameters {
     public static int AGE_TO_BECOME_SEMI_RESPONSIBLE = 16;      //Age used in health processes H1, H2
     public static int AGE_LEAVE_PARENTAL_HOME = 18;
     public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;        // Minimum age for a person to leave (full-time) education
-    public static int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
-    public static int MAX_AGE_TO_ENTER_EDUCATION = 35;
+    public static int MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION = 29;
+
 
     public static int MIN_AGE_TO_RETIRE = 50; //Minimum age to consider retirement
     public static int DEFAULT_AGE_TO_RETIRE = 67; //if pension included, but retirement decision not
