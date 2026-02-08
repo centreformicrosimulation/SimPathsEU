@@ -756,7 +756,17 @@ public class Parameters {
     private static Set<Region> countryRegions;
     private static Map<Region, Double> unemploymentRatesByRegion;
     public static boolean isFixTimeTrend;
+    public static boolean isFixTimeTrendR1a;
+    public static boolean isFixTimeTrendR1b;
+    public static boolean isFixTimeTrendE1a;
+    public static boolean isFixTimeTrendE1b;
+    public static boolean isFixTimeTrendE2a;
     public static Integer timeTrendStopsIn;
+    public static Integer timeTrendStopsInR1a;
+    public static Integer timeTrendStopsInR1b;
+    public static Integer timeTrendStopsInE1a;
+    public static Integer timeTrendStopsInE1b;
+    public static Integer timeTrendStopsInE2a;
     public static boolean flagFormalChildcare;
     public static boolean flagSocialCare;
     public static boolean flagSuppressChildcareCosts;
@@ -905,8 +915,10 @@ public class Parameters {
 
     public static void loadParameters(Country country, int maxAgeModel, boolean enableIntertemporalOptimisations,
                                       boolean projectFormalChildcare, boolean projectSocialCare, boolean donorPoolAveraging1,
-                                      boolean fixTimeTrend, boolean defaultToTimeSeriesAverages, boolean taxDBMatches,
-                                      Integer timeTrendStops, int startYearModel, int endYearModel, double interestRateInnov1,
+                                      boolean fixTimeTrend, boolean fixTimeTrendR1a, boolean fixTimeTrendR1b, boolean fixTimeTrendE1a, boolean fixTimeTrendE1b, boolean fixTimeTrendE2a,
+                                      boolean defaultToTimeSeriesAverages, boolean taxDBMatches,
+                                      Integer timeTrendStops, Integer timeTrendStopsR1a, Integer timeTrendStopsR1b,  Integer timeTrendStopsE1a, Integer timeTrendStopsE1b, Integer timeTrendStopsE2a,
+                                      int startYearModel, int endYearModel, double interestRateInnov1,
                                       double disposableIncomeFromLabourInnov1, boolean flagSuppressChildcareCosts1,
                                       boolean flagSuppressSocialCareCosts1, MacroScenarioPopulation macroShockPopulation,
                                       MacroScenarioProductivity macroShockProductivity, MacroScenarioGreenPolicy macroShockGreenPolicy, boolean macroShocksOn) {
@@ -945,7 +957,17 @@ public class Parameters {
 
         flagDefaultToTimeSeriesAverages = defaultToTimeSeriesAverages;
         isFixTimeTrend = fixTimeTrend;
+        isFixTimeTrendR1a = fixTimeTrendR1a;
+        isFixTimeTrendR1b = fixTimeTrendR1b;
+        isFixTimeTrendE1a = fixTimeTrendE1a;
+        isFixTimeTrendE1b = fixTimeTrendE1b;
+        isFixTimeTrendE2a = fixTimeTrendE2a;
         timeTrendStopsIn = timeTrendStops;
+        timeTrendStopsInR1a = timeTrendStopsR1a;
+        timeTrendStopsInR1b = timeTrendStopsR1b;
+        timeTrendStopsInE1a = timeTrendStopsE1a;
+        timeTrendStopsInE1b = timeTrendStopsE1b;
+        timeTrendStopsInE2a = timeTrendStopsE2a;
         flagFormalChildcare = projectFormalChildcare;
         flagSocialCare = projectSocialCare;
         flagSuppressChildcareCosts = flagSuppressChildcareCosts1;

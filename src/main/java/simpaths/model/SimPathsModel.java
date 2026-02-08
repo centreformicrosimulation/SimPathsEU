@@ -96,9 +96,21 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     //@GUIparameter(description = "Fix year used in the regressions to one specified below")
     private boolean fixTimeTrend = true;
+    private boolean fixTimeTrendR1a = true;
+    private boolean fixTimeTrendR1b = true;
+
+    private boolean fixTimeTrendE1a = true;
+    private boolean fixTimeTrendE1b = true;
+    private boolean fixTimeTrendE2a = true;
 
     @GUIparameter(description = "Fix year used in the regressions to")
-    private Integer timeTrendStopsIn = 2022;
+    private Integer timeTrendStopsIn = 2023;
+    private Integer timeTrendStopsInR1a = 2023;
+    private Integer timeTrendStopsInR1b = 2023;
+
+    private Integer timeTrendStopsInE1a = 2023;
+    private Integer timeTrendStopsInE1b = 2023;
+    private Integer timeTrendStopsInE2a = 2023;
 
     private Integer timeTrendStopsInMonetaryProcesses = 2022; // For monetary processes, time trend always continues to 2017 (last observed year in the estimation sample) and then values are grown at the growth rate read from Excel
 
@@ -360,8 +372,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // load model parameters
         Parameters.loadParameters(country, maxAge, enableIntertemporalOptimisations, projectFormalChildcare,
-                projectSocialCare, donorPoolAveraging, fixTimeTrend, flagDefaultToTimeSeriesAverages, saveImperfectTaxDBMatches,
-                timeTrendStopsIn, startYear, endYear, interestRateInnov, disposableIncomeFromLabourInnov, flagSuppressChildcareCosts,
+                projectSocialCare, donorPoolAveraging,
+                fixTimeTrend, fixTimeTrendR1a, fixTimeTrendR1b,  fixTimeTrendE1a, fixTimeTrendE1b, fixTimeTrendE2a,
+                flagDefaultToTimeSeriesAverages, saveImperfectTaxDBMatches,
+                timeTrendStopsIn, timeTrendStopsInR1a, timeTrendStopsInR1b, timeTrendStopsInE1a, timeTrendStopsInE1b, timeTrendStopsInE2a,
+                startYear, endYear, interestRateInnov, disposableIncomeFromLabourInnov, flagSuppressChildcareCosts,
                 flagSuppressSocialCareCosts, macroShockPopulation, macroShockProductivity, macroShockGreenPolicy, macroShocksOn);
         if (enableIntertemporalOptimisations) {
 

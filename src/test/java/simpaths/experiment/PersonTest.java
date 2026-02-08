@@ -44,9 +44,6 @@ public class PersonTest {
     private MockedStatic<Parameters> parametersMock;
     private MockedStatic<ManagerRegressions> managerRegressionsMock;
 
-    // Assuming these static constants exist in Parameters.java for the tests to function
-    private static final int MIN_AGE_TO_LEAVE_EDUCATION = 16;
-    private static final int MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION = 29;
 
     private Person testPerson;
 
@@ -183,7 +180,7 @@ public class PersonTest {
         @Test
         @DisplayName("OUTCOME A: Lagged Student < Min Age (Always Stays)")
         public void remainsBelowMinAge() throws Exception {
-            testPerson.setDag(MIN_AGE_TO_LEAVE_EDUCATION - 1);
+            testPerson.setDag(Parameters.MIN_AGE_TO_LEAVE_EDUCATION - 1);
             testPerson.setLes_c4_lag1(Les_c4.Student);
             assertTrue(testPerson.inSchool(), "Person must remain a student if below MIN_AGE_TO_LEAVE_EDUCATION (OUTCOME A).");
         }
@@ -227,7 +224,7 @@ public class PersonTest {
         @Test
         @DisplayName("E2 Trigger: Lagged Student, at Max Age (Forced Exit)")
         public void triggersE2FromMaxAge() throws Exception {
-            testPerson.setDag(MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION + 1);
+            testPerson.setDag(Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION + 1);
             testPerson.setLes_c4_lag1(Les_c4.Student);
 
             assertFalse(testPerson.inSchool(), "Should return false (triggers E2 process).");
