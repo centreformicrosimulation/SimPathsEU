@@ -191,3 +191,9 @@ do "$dir_do/09_reg_income_${country}.do"
 
 do "$dir_do/10_parametric_matching_process_${country}.do"
 
+*** RENAME TIME TREND TO BE PROCESS-SPECIFIC ***
+
+do "$dir_do/99_rename_reg_education_year_transformed_${country}.do"
+
+do "$dir_do/99_rename_reg_retirement_year_transformed_${country}.do"
+
