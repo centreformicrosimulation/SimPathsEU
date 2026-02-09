@@ -845,10 +845,39 @@ matrix list nonzero_var_structure
 * Export to Excel 
 putexcel set "$dir_work/reg_education_${country}", sheet("E2a") modify 
 putexcel C2 = matrix(nonzero_var_structure)
-		
+
+*=======================================================================
+* Eigenvalue stability check for trimmed variance-covariance matrix
+
+matrix symeigen X lambda = nonzero_var_structure
+
+* Largest eigenvalue
+scalar max_eig = lambda[1,1]
+
+* Ratio of smallest to largest eigenvalue
+scalar min_ratio = lambda[1, colsof(lambda)] / max_eig
+
+* Check 1: near-singularity
+if max_eig < 1.0e-12 {
+    display as error "CRITICAL ERROR: Variance-covariance matrix is near singular."
+    display as error "Max eigenvalue = " max_eig
+    exit 999
+}
+
+* Check 2: ill-conditioning
+if min_ratio < 1.0e-12 {
+    display as error "Matrix is ill-conditioned."
+    display as error "Min/Max eigenvalue ratio = " min_ratio
+    exit 506
+}
+
+display "VCV stability check passed."
+display "Max eigenvalue: " max_eig
+display "Min/Max ratio: " min_ratio
+*=======================================================================	
+
 			
 * Labels
-
 putexcel set "$dir_work/reg_education_${country}", sheet("E2a") modify 	
 
 putexcel A1 = "REGRESSOR"

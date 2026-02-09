@@ -268,7 +268,7 @@ gen Les_c4_Retired_L1_Dgn = Dgn * Les_c4_Retired
 xtset idperson swv
 
 * Estimation 
-probit dhh_owned i.Dgn Dag Dag_sq il.Dhhtp_c8_2 il.Dhhtp_c8_3 ///
+probit dhh_owned_ind i.Dgn Dag Dag_sq il.Dhhtp_c8_2 il.Dhhtp_c8_3 ///
 	il.Dhhtp_c8_4 il.Dhhtp_c8_5 il.Dhhtp_c8_6 il.Dhhtp_c8_7 il.Dhhtp_c8_8 ///
 	il.Les_c3_Student il.Les_c3_NotEmployed i.Deh_c4_Na ///
 	i.Deh_c4_Medium i.Deh_c4_Low il.Dhe_Fair il.Dhe_Good il.Dhe_VeryGood ///

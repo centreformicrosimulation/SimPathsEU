@@ -33,9 +33,10 @@ set matsize 1000
 *******************************************************************************/
 
 //"C:/Users/ak25793/Box"
+//"C:/Users/Aleksandra/Box"
 //"/Users/ashleyburdett/Library/CloudStorage/Box-Box"
 
-global dir_individual "C:/Users/ak25793/Box"
+global dir_individual "/Users/ashleyburdett/Library/CloudStorage/Box-Box"
 
 * Working directory which contains sub-folders and will contain formatted output 
 global dir_work "$dir_individual/CeMPA shared area/_SimPaths/_SimpathsEU/regression_estimates/PL/with_time_trend"
@@ -141,7 +142,7 @@ global f1_if_condition "dag >= ${age_have_child_min} & dag <= ${age_have_child_m
 * Health 
 global h1_if_condition "dag >= ${age_becomes_semi_responsible} & flag_dhe_imp == 0 & flag_deceased != 1"
 
-global h2_if_condition "dag >= ${age_becomes_semi_responsible} & ded == 0 & flag_deceased != 1"
+global h2_if_condition "dag >= ${age_becomes_semi_responsible} & ded == 0 & les_c4 != 4 & flag_deceased != 1"
 
 * Home ownership
 global ho1_if_condition "dag >= ${age_own_home} & flag_deceased != 1"

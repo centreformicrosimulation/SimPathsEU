@@ -41,7 +41,7 @@ putexcel B6 = "Generalized ordered logit regression estimates of self reported h
 putexcel B7 = "Covariates that satisfy the parallel lines assumption have one estimate for all categories of the dependent variable and are present once in the table"
 putexcel B8 = "Covariates that do not satisfy the parallel lines assumption have an estimate for each estimated category of the dependent variable. These covariates have the dependent variable category appended to their name."
 putexcel A11 = "H2"
-putexcel B11 = "Probit regression estimates of the probability of being long-term sick or disabled - people aged 16+ and not in initial education spell (cannot be a student and disabled/long-term sick in the data)"
+putexcel B11 = "Probit regression estimates of the probability of being long-term sick or disabled - people aged 16+,  not in initial education spell (cannot be a student and disabled/long-term sick in the data) and not retired."
 putexcel A12 = "H1_raw"
 putexcel B12 = "Raw generalized ordered logit regression estimates of self reported health status. Useful for the 'Gologit predictor' file."
 
@@ -280,10 +280,10 @@ gen Ded_Dgn = Ded * Dgn
 
 * Generalized ordered logit			
 sort idperson swv
-*removed for not convergence Ded_Dag Deh_c4_Na
-* Estimation
 
- gologit2 dhe i.Dgn c.Dag c.Dag_sq  Ded_Dag_sq Ded_Dgn Dhe_Fair_L1 ///
+* Estimation
+// NOTE:  Removed for not convergence Ded_Dag Deh_c4_Na
+gologit2 dhe i.Dgn c.Dag c.Dag_sq  Ded_Dag_sq Ded_Dgn Dhe_Fair_L1 ///
 	Dhe_Good_L1 Dhe_VeryGood_L1 Dhe_Excellent_L1 Deh_c4_High ///
 	Deh_c4_Low i.Les_c3_Student_L1 i.Les_c3_NotEmployed_L1 i.Ydses_c5_Q2_L1 ///
 	i.Dhhtp_c4_CoupleChildren_L1 i.Dhhtp_c4_SingleNoChildren_L1 ///
@@ -495,7 +495,37 @@ matrix list nonzero_var_structure
 putexcel set "$dir_work/reg_health_${country}", sheet("H1") modify
 putexcel C2 = matrix(nonzero_var_structure)
 		
-			
+*=======================================================================
+* Eigenvalue stability check for trimmed variance-covariance matrix
+
+matrix symeigen X lambda = nonzero_var_structure
+
+* Largest eigenvalue
+scalar max_eig = lambda[1,1]
+
+* Ratio of smallest to largest eigenvalue
+scalar min_ratio = lambda[1, colsof(lambda)] / max_eig
+
+* Check 1: near-singularity
+if max_eig < 1.0e-12 {
+    display as error "CRITICAL ERROR: Variance-covariance matrix is near singular."
+    display as error "Max eigenvalue = " max_eig
+    exit 999
+}
+
+* Check 2: ill-conditioning
+if min_ratio < 1.0e-12 {
+    display as error "Matrix is ill-conditioned."
+    display as error "Min/Max eigenvalue ratio = " min_ratio
+    exit 506
+}
+
+display "VCV stability check passed."
+display "Max eigenvalue: " max_eig
+display "Min/Max ratio: " min_ratio
+*=======================================================================			
+		
+		
 * Labels
 putexcel set "$dir_work/reg_health_${country}", sheet("H1") modify
 
