@@ -11,16 +11,14 @@ public enum RegressionName {
     EducationE1b(RegressionType.Probit),
     EducationE2a(RegressionType.GenOrderedLogit),
 
-    FertilityF1a(RegressionType.Probit),
-    FertilityF1b(RegressionType.Probit),
+    FertilityF1(RegressionType.Probit),
 
-    PartnershipU1a(RegressionType.Probit),
-    PartnershipU1b(RegressionType.Probit),
-    PartnershipU2b(RegressionType.Probit),
+    PartnershipU1(RegressionType.Probit),
+    PartnershipU2(RegressionType.Probit),
 
-    HealthH1a(RegressionType.GenOrderedLogit),
-    HealthH1b(RegressionType.GenOrderedLogit),
-    HealthH2b(RegressionType.Probit),
+
+    HealthH1(RegressionType.GenOrderedLogit),
+    HealthH2(RegressionType.Probit),
 
     HealthHM1Level(RegressionType.Linear),
     HealthHM2LevelMales(RegressionType.Linear),
@@ -56,11 +54,11 @@ public enum RegressionName {
     UnemploymentU1d(RegressionType.Probit),
 
     WagesMales(RegressionType.Linear),
-    WagesMalesE(RegressionType.Linear),
-    WagesMalesNE(RegressionType.Linear),
+    W1mb(RegressionType.Linear),
+    W1ma(RegressionType.Linear),
     WagesFemales(RegressionType.Linear),
-    WagesFemalesE(RegressionType.Linear),
-    WagesFemalesNE(RegressionType.Linear);
+    W1fb(RegressionType.Linear),
+    W1fa(RegressionType.Linear);
 
     private final RegressionType type;
 

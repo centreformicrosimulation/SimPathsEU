@@ -13,7 +13,6 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Map;
 
-import static simpaths.data.Parameters.FLAG_USE_F1A;
 
 /**
  * class to manage expansion of expectations to account for each successive state variable
@@ -197,11 +196,7 @@ public class ExpectationsFactory {
                         // expand expectations
                         if (Gender.Female == currentStates.getGenderCode() || anticipated[ii].getCohabitation()) {
                             // birth possible
-                            if (anticipated[ii].getStudent()==1 && FLAG_USE_F1A) {
-                                expandExpectationsFertility(ii, stateIndexNextPeriod, jj, options, RegressionName.FertilityF1a);
-                            } else {
-                                expandExpectationsFertility(ii, stateIndexNextPeriod, jj, options, RegressionName.FertilityF1b);
-                            }
+                            expandExpectationsFertility(ii, stateIndexNextPeriod, jj, options, RegressionName.FertilityF1);
 
                         } else {
                             // birth not possible
@@ -429,7 +424,7 @@ public class ExpectationsFactory {
             val0 = personProxyNextPeriod.getRegion();
             val1 = states.getRegionCode();
         } else if (Axis.Education.equals(axis)) {
-            val0 = personProxyNextPeriod.getDeh_c3();
+            val0 = personProxyNextPeriod.getDeh_c4();
             val1 = states.getEducationCode();
             if (val0==val1) {
                 val0 = personProxyNextPeriod.getDed();
@@ -470,7 +465,7 @@ public class ExpectationsFactory {
             if (Axis.Region.equals(axis)) {
                 personProxyNextPeriod.setRegion(states.getRegionCode());
             } else if (Axis.Education.equals(axis)) {
-                personProxyNextPeriod.setDeh_c3(states.getEducationCode());
+                personProxyNextPeriod.setDeh_c4(states.getEducationCode());
                 personProxyNextPeriod.setDed(states.getStudentIndicator());
             } else if (Axis.Health.equals(axis)) {
                 personProxyNextPeriod.setDhe(states.getHealthCode());

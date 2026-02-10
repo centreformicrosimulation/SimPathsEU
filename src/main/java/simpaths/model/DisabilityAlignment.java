@@ -12,7 +12,7 @@ import java.util.Set;
 
 /**
  * DisabilityAlignment adjusts the probability of becoming disabled.
- * The object is designed to assist modification of the intercept of the "H2b" disability model.
+ * The object is designed to assist modification of the intercept of the "H2" disability model.
  *
  * A search routine is used to find the value by which the intercept should be adjusted.
  * If the projected share of disabled individuals in the population differs from the desired target by more than a specified threshold,

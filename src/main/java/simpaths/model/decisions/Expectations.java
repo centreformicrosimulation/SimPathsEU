@@ -102,7 +102,7 @@ public class Expectations {
         benefitUnitProxyThisPeriod = new BenefitUnit(true);
         benefitUnitProxyThisPeriod.setYearLocal(currentStates.getYear());
         benefitUnitProxyThisPeriod.setOccupancyLocal(currentStates.getOccupancyCode());
-        benefitUnitProxyThisPeriod.setDeh_c3Local(currentStates.getEducationCode());
+        benefitUnitProxyThisPeriod.setDeh_c4Local(currentStates.getEducationCode());
         benefitUnitProxyThisPeriod.setRegion(currentStates.getRegionCode());
     }
 
@@ -175,7 +175,7 @@ public class Expectations {
         personProxyThisPeriod.setRegionLocal(currentStates.getRegionCode());
         personProxyThisPeriod.setDgn(currentStates.getGenderCode());
         personProxyThisPeriod.setDhe(currentStates.getHealthCode());
-        personProxyThisPeriod.setDeh_c3(currentStates.getEducationCode());
+        personProxyThisPeriod.setDeh_c4(currentStates.getEducationCode());
         personProxyThisPeriod.setDcpstLocal(currentStates.getDcpst());
         personProxyThisPeriod.setSocialCareProvision(currentStates.getSocialCareProvisionCode());
         personProxyThisPeriod.populateSocialCareReceipt(currentStates.getSocialCareReceiptStateCode());
@@ -198,10 +198,10 @@ public class Expectations {
         personProxyNextPeriod.populateSocialCareReceipt_lag1(currentStates.getSocialCareReceiptStateCode());
         personProxyNextPeriod.setSocialCareProvision_lag1(currentStates.getSocialCareProvisionCode());
         personProxyNextPeriod.setDed(currentStates.getStudentIndicator());
-        personProxyNextPeriod.setDeh_c3(currentStates.getEducationCode());
-        personProxyNextPeriod.setDeh_c3_lag1(currentStates.getEducationCode());
-        personProxyNextPeriod.setDehf_c3(DecisionParams.EDUCATION_FATHER);
-        personProxyNextPeriod.setDehm_c3(DecisionParams.EDUCATION_MOTHER);
+        personProxyNextPeriod.setDeh_c4(currentStates.getEducationCode());
+        personProxyNextPeriod.setDeh_c4_lag1(currentStates.getEducationCode());
+        personProxyNextPeriod.setDehf_c4(DecisionParams.EDUCATION_FATHER);
+        personProxyNextPeriod.setDehm_c4(DecisionParams.EDUCATION_MOTHER);
         if (ageYearsNextPeriod <= DecisionParams.MAX_AGE_COHABITATION) {
             personProxyNextPeriod.setDcpstLocal(currentStates.getDcpst());
         } else {
@@ -212,7 +212,7 @@ public class Expectations {
         personProxyNextPeriod.setL1_fullTimeHourlyEarningsPotential(fullTimeHourlyEarningsPotential);
         personProxyNextPeriod.setIoFlag(true);
         if (cohabitation) {
-            personProxyNextPeriod.setDehsp_c3_lag1(currentStates.getEducationCode());
+            personProxyNextPeriod.setDehsp_c4_lag1(currentStates.getEducationCode());
             personProxyNextPeriod.setDhesp_lag1(DecisionParams.DEFAULT_HEALTH);
             personProxyNextPeriod.setDcpyy_lag1(DecisionParams.DEFAULT_YEARS_MARRIED);
             personProxyNextPeriod.setDcpagdf_lag1(DecisionParams.DEFAULT_AGE_DIFFERENCE);
@@ -392,7 +392,7 @@ public class Expectations {
             }
 
             // student - don't need to track separately from education (no need for flagStudentVaries)
-            if (DecisionParams.flagEducation && ageYearsNextPeriod<=Parameters.MAX_AGE_TO_LEAVE_CONTINUOUS_EDUCATION) {
+            if (DecisionParams.flagEducation && ageYearsNextPeriod<=Parameters.MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION) {
                 futures.updateStudent();
             }
 
@@ -576,9 +576,9 @@ public class Expectations {
         } else {
             double ptPremium;
             if (currentStates.getGenderCode()==Gender.Male) {
-                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesMalesE, "Pt");
+                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.W1mb, "Pt");
             } else {
-                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.WagesFemalesE, "Pt");
+                ptPremium = ManagerRegressions.getRegressionCoeff(RegressionName.W1fb, "Pt");
             }
             return Math.exp( Math.log(fullTimeHourlyEarningsPotential) + ptPremium);
         }

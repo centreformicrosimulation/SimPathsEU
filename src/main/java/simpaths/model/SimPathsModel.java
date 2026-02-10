@@ -96,9 +96,21 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     //@GUIparameter(description = "Fix year used in the regressions to one specified below")
     private boolean fixTimeTrend = true;
+    private boolean fixTimeTrendR1a = true;
+    private boolean fixTimeTrendR1b = true;
+
+    private boolean fixTimeTrendE1a = true;
+    private boolean fixTimeTrendE1b = true;
+    private boolean fixTimeTrendE2a = true;
 
     @GUIparameter(description = "Fix year used in the regressions to")
-    private Integer timeTrendStopsIn = 2022;
+    private Integer timeTrendStopsIn = 2023;
+    private Integer timeTrendStopsInR1a = 2023;
+    private Integer timeTrendStopsInR1b = 2023;
+
+    private Integer timeTrendStopsInE1a = 2023;
+    private Integer timeTrendStopsInE1b = 2023;
+    private Integer timeTrendStopsInE2a = 2023;
 
     private Integer timeTrendStopsInMonetaryProcesses = 2022; // For monetary processes, time trend always continues to 2017 (last observed year in the estimation sample) and then values are grown at the growth rate read from Excel
 
@@ -161,7 +173,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean alignPopulation = true; //TODO: routine fails to replicate results for minor variations between simulations
 
     //	@GUIparameter(description = "If checked, will align fertility")
-    private boolean alignFertility = true;
+    private boolean alignFertility = false;
     private boolean alignRetirement = false;
 
     private boolean alignDisability = false;
@@ -169,7 +181,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     private boolean alignInSchool = false; //Set to true to align share of students among 16-29 age group
 
-    private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
+    private boolean alignCohabitation = false; //Set to true to align share of couples (cohabiting individuals)
 
     private boolean alignEmployment = false; //true; //Set to true to align employment share
 
@@ -227,6 +239,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     public int lowEd = 0;
     public int medEd = 0;
     public int highEd = 0;
+    public int naEd = 0;
     public int nothing = 0;
 
     Map<String, Double> policyNameIncomeMedianMap = new LinkedHashMap<>(); // Initialise a <String, Double> map to store names of policies and median incomes
@@ -359,8 +372,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // load model parameters
         Parameters.loadParameters(country, maxAge, enableIntertemporalOptimisations, projectFormalChildcare,
-                projectSocialCare, donorPoolAveraging, fixTimeTrend, flagDefaultToTimeSeriesAverages, saveImperfectTaxDBMatches,
-                timeTrendStopsIn, startYear, endYear, interestRateInnov, disposableIncomeFromLabourInnov, flagSuppressChildcareCosts,
+                projectSocialCare, donorPoolAveraging,
+                fixTimeTrend, fixTimeTrendR1a, fixTimeTrendR1b,  fixTimeTrendE1a, fixTimeTrendE1b, fixTimeTrendE2a,
+                flagDefaultToTimeSeriesAverages, saveImperfectTaxDBMatches,
+                timeTrendStopsIn, timeTrendStopsInR1a, timeTrendStopsInR1b, timeTrendStopsInE1a, timeTrendStopsInE1b, timeTrendStopsInE2a,
+                startYear, endYear, interestRateInnov, disposableIncomeFromLabourInnov, flagSuppressChildcareCosts,
                 flagSuppressSocialCareCosts, macroShockPopulation, macroShockProductivity, macroShockGreenPolicy, macroShocksOn);
         if (enableIntertemporalOptimisations) {
 
@@ -1797,10 +1813,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             for(Person person : persons) {
                 if( person.getDgn().equals(gender) && person.getDag() >= 16 && person.getDag() <= 45) {        //Alignment projections are based only on persons younger than 66 years old
                     if (person.isToLeaveSchool()) { //Align only people leaving school?
-                        if(person.getDeh_c3() != null) {
-                            if (person.getDeh_c3().equals(Education.Low)) {
+                        if(person.getDeh_c4() != null) {
+                            if (person.getDeh_c4().equals(Education.Low)) {
                                 numPersonsOfThisGenderWithLowEduPreAlignment++;
-                            } else if (person.getDeh_c3().equals(Education.High)) {
+                            } else if (person.getDeh_c4().equals(Education.High)) {
                                 numPersonsOfThisGenderWithHighEduPreAlignment++;
                             }
                             numPersonsOfThisGender++;
@@ -1831,7 +1847,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             int countHigh = 0, countLow = 0;
             for(Person schoolLeaver : personsLeavingEducation.get(gender)) {        //This tries to maintain the naturally generated number of school-leavers with medium education, so that an increase in the number of school-leavers with high education is achieved through a reduction in the number of school-leavers with low education.  However, in the event that the number of school-leavers with either high or medium education are more than the total number of school leavers (in this year), we end up having no school leavers with low education and we have to reduce the number of school leavers with medium education
 
-                if (schoolLeaver.getDeh_c3().equals(Education.Medium)) {
+                if (schoolLeaver.getDeh_c4().equals(Education.Medium)) {
                     if(numPersonsOfThisGenderWithHighEduPreAlignment + countHigh < numPersonsWithHighEduAlignmentTarget) {                //Only align if number of people in population with high education is too low.
                         schoolLeaver.setEducation(Education.High);            //As the personsLeavingEducation list is sorted by descending age, the oldest people leaving education are assigned to have high education levels
                         countHigh++;
@@ -1839,12 +1855,12 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                         schoolLeaver.setEducation(Education.Low);        //When the number of high education level people have been assigned, the next oldest people are assigned to have medium education levels
                         countLow++;
                     }
-                } else if (schoolLeaver.getDeh_c3().equals(Education.High)) {
+                } else if (schoolLeaver.getDeh_c4().equals(Education.High)) {
                     if (numPersonsOfThisGenderWithHighEduPreAlignment + countHigh > numPersonsWithHighEduAlignmentTarget) { //If too many people with high education
                         schoolLeaver.setEducation(Education.Medium);
                         countHigh--;
                     }
-                } else if (schoolLeaver.getDeh_c3().equals(Education.Low)) {
+                } else if (schoolLeaver.getDeh_c4().equals(Education.Low)) {
                     if (numPersonsOfThisGenderWithLowEduPreAlignment + countLow > numPersonsWithLowEduAlignmentTarget) {
                         schoolLeaver.setEducation(Education.Medium);
                         countLow--;
@@ -1861,10 +1877,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 for(Person person : persons) {
                     if( person.getDgn().equals(gender) && (person.getDag() <= 65) ) {        //Alignment projections are based only on persons younger than 66 years old
                         if (person.isToLeaveSchool()) {
-                            if(person.getDeh_c3() != null) {
-                                if(person.getDeh_c3().equals(Education.High)) {
+                            if(person.getDeh_c4() != null) {
+                                if(person.getDeh_c4().equals(Education.High)) {
                                     countHighEdPeople++;
-                                } else if(person.getDeh_c3().equals(Education.Medium)) {
+                                } else if(person.getDeh_c4().equals(Education.Medium)) {
                                     countMediumEdPeople++;
                                 }
                             }
