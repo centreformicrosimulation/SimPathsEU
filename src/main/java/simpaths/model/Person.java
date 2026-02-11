@@ -1059,7 +1059,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     protected void disability(double probitAdjustment) {
         double healthInnov2 = innovations.getDoubleDraw(4);
-        if (dag >= AGE_TO_BECOME_SEMI_RESPONSIBLE && (!Les_c4.Retired.equals(les_c4)) && (!Les_c4.Student.equals(les_c4) || (leftEducation == true))) {
+        if (dag >= AGE_TO_BECOME_SEMI_RESPONSIBLE && (!Les_c4.Retired.equals(les_c4)) && (!Les_c4.Student.equals(les_c4) )) {
             //If age is over 16 follow process H2 to calculate the probability of long-term sickness / disability:
             boolean becomeLTSickDisabled = false;
             if (!Parameters.enableIntertemporalOptimisations || DecisionParams.flagDisability) {
