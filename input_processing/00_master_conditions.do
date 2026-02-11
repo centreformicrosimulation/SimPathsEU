@@ -1,29 +1,16 @@
 /*******************************************************************************
 * PROJECT:             	SimPaths EU
-* DO-FILE NAME:        	00_master.do
-* DESCRIPTION:         	Main do-file to set the main parameters (country, paths)
-*  						and call sub-scripts to construct dataset for 
-* 						analysis of Poland. 
+* DO-FILE NAME:        	00_master_conditions.do
+* DESCRIPTION:         	Sets out the assumptions and conditions imposed in the 
+* 						creation of the unique dataset and the if conditions 
+* 						imposed when estimating the processes for SimPaths.  
 ********************************************************************************
 * COUNTRY:              PL
-* DATA:         	    Longitudinal EU-SILC UDB version, 2005 - 2020 
-* AUTHORS: 				Clare Fenwick, Daria Popova, Ashley Burdett, 
-* 						Aleksandra Kolndrekaj
-* LAST UPDATE:          Jan 2026 AB
-* 
+* AUTHORS: 				Ashley Burdett
+* LAST UPDATE:          Feb 2026 AB
 ********************************************************************************
-* NOTES:
-*   Before running these files, the cumulative panel for each file type 
-* 	(D, H, R, P) must be constructed. These cumulative panels should be created 
-* 	following the procedure set out in *GESIS Papers 2022/10*. The do-files to 
-* 	perform this procedure are contained in the "GESIS set-ups" subfolder 
-* 	located in the same directory as this file.
-*
-*   Currently, compiling the master* files is done separately to avoid data  
-*   storage constraints.
-*
 *   -----------------------------------------------------------------------
-*    Assumptions imposed to align the initial populations with simulation rules:
+*    Assumptions imposed to align the SILC data with simulation rules:
 *   -----------------------------------------------------------------------
 *
 *   - Retirement:
@@ -60,8 +47,9 @@
 *
 *   The relevant age thresholds are defined in globals defined in "DEFINE 
 * 	PARAMETERS" section below. 
-* 	Throughout also construct relevant flags and produce a log file "xxxx" to 
-* 	see the extent of the adjustments to the raw data. 
+* 	Throughout also construct relevant flags and produce a log file 
+* 	"flag_descriptives.xlsx" to see the extent of the adjustments to the raw 
+* 	data. 
 *
 *   -----------------------------------------------------------------------
 *    Additional notes on implementation: 
@@ -73,8 +61,6 @@
 *       → Use interview age (RX010) where available
 *       → Otherwise use age at end of interview year (PX020). This results in 
 * 			upward bias of age.
-*   - Impute education status using lagged observation and generalized ordered 
-* 	  logit. [Have a more compete version if necessary]
 *   - Set education = 0 (na) while in initial education spell. 
 *
 *   -----------------------------------------------------------------------
@@ -82,74 +68,20 @@
 *   -----------------------------------------------------------------------
 *
 *   - Ages at which females can have a child. [Be informed by the sample?]
-	  Permit teenage mothers in this script (deal with in 03_ )
-*   - A few higher/older education spells (30+) that last multiple years, whilst 
+*	  Permit teenage mothers in this script (deal with in 03_ )
+*   - A few higher/older education spells (30+) that last multiple years 
 *     in the simulation can only return to education for single year spells. 
-*   - Wages: currently have missing wages if not working however the timing 
-* 		mismatch in SILC leaves some additional  missing values [impute?]
-* 	- Should we have people becoming adults at 18 or 16 for income/number of 
-* 		children purposes?
-* 		Considered a child if live with parents until 18 and in ft education? 
-* 	- Don't impose monotoncity on reported educational attainment information.  
 * 	- Number of children vars (all ages or 0-2) don't account for feasibility 
 * 		of age at birth of the mother. 
+*
 *******************************************************************************/
-
-/*
-* Stata packages to install 
-ssc install fre
-ssc install tsspell 
-ssc install carryforward 
-ssc install outreg2
-ssc install filelist
-*/
-
-clear all
-set more off
-set type double
-set maxvar 30000
-set matsize 1000
-
-/*******************************************************************************
-* DEFINE DIRECTORIES
-*******************************************************************************/
-
-// Ashley - /Users/ashleyburdett/Library/CloudStorage/Box-Box
-// Aleksandra - C:/Users/ak25793/Box
-
-* Working directory
-global dir_work "/Users/ashleyburdett/Library/CloudStorage/Box-Box/CeMPA shared area/_SimPaths/_SimPathsEU/initial_populations/PL"
-
-* Directory containing do files
-global dir_do "$dir_work/do_files"
-
-* Directory containing data files 
-global dir_data "$dir_work/data" 
-
-* Directory containing log files 
-global dir_log "$dir_work/log"
-
-* Directory containing graphs 
-global dir_graphs "$dir_work/graphs"
-
-* Directory containing 2005-2023 EU-SILC paneldata 
-global dir_long_eusilc "/Users/ashleyburdett/Library/CloudStorage/Box-Box/CeMPA shared area/projects - completed/ESPON - OVERLAP/_countries/Cumulative Longitudional Dataset (all countries)/2005_2023_panel/data"
-// location the master*.dta files that make up the EU-SILC panel 
-
-//"/Users/aburdett/Library/CloudStorage/Box-Box/ESPON - OVERLAP/_countries/Cumulative Longitudional Dataset (all countries)/2005_2023_panel/data"
-
-* Directory containing 2005-2020 EU-SILC paneldata 
-global dir_long_eusilc_05_20 "/Users/ashleyburdett/Library/CloudStorage/Box-Box/CeMPA shared area/projects - completed/ESPON - OVERLAP/_countries/Cumulative Longitudional Dataset (all countries)/2005_2020_panel"
-
-* Directory containing 2005-2020 PL panel 
-global dir_data_05_20 "$dir_data/orig_panel_2005_2020"
 
 
 /*******************************************************************************
-* DEFINE PARAMETERS
+* DEFINTE PARAMETERS
 *******************************************************************************/
 
-global country "PL" 
+global country "PL"
 
 global first_sim_year "2011"
 
@@ -168,6 +100,8 @@ and empirical considerations drawn from observed data.
 * Age become an adult in various dimensions	
 global age_becomes_responsible 18 
 
+global age_becomes_semi_responsible 16 
+
 global age_seek_employment 16 
 	
 global age_leave_school 16 
@@ -178,11 +112,7 @@ global age_have_child_min 18
 
 global age_leave_parental_home 18
 
-	
-* Age can/must/cannot make various transitions 	
-global age_max_dep_child 17     
-
-global age_adult 18 
+global age_own_home 18
 
 global age_can_retire 50
 
@@ -190,13 +120,17 @@ global age_force_retire 75
 
 global age_force_leave_spell1_edu 30   
 
-global age_have_child_max 49  	// allow this to be led by the data  
+global age_have_child_max 49  	
+	// allow this to be informed by the data  
 
+global age_cannot_separate 79
 
-* Age in samples 
-global age_sample_min 16
- 	       
-		   
+global age_max_dep_child 17   
+	// used for defining BU and number of dependent children variables in data construction   
+
+global age_adult 18 
+	// used when slicing up hh level income information in data construction
+
 /*******************************************************************************
 * PROCESS IF CONDITIONS 
 *******************************************************************************/
@@ -222,17 +156,17 @@ global f1_if_condition "dag >= ${age_have_child_min} & dag <= ${age_have_child_m
 * Health 
 global h1_if_condition "dag >= ${age_becomes_semi_responsible} & flag_dhe_imp == 0 & flag_deceased != 1"
 
-global h2_if_condition "dag >= ${age_becomes_semi_responsible} & ded == 0 & les_c4 != 4 & flag_deceased != 1"
+global h2_if_condition "dag >= ${age_becomes_semi_responsible} & ded == 0 & les_c4 != 4 & les_c4 != 2 & flag_deceased != 1"
 
 * Home ownership
 global ho1_if_condition "dag >= ${age_own_home} & flag_deceased != 1"
 
-* Retirment 
-global r1a_if_condition "dcpst == 2  & dag >= ${age_can_retire} & flag_deceased != 1"
+* Retirement 
+global r1a_if_condition "dcpst == 2 & dag >= ${age_can_retire} & flag_deceased != 1"
 
 global r1b_if_condition "ssscp != 1 & dcpst == 1 & dag >= ${age_can_retire} & flag_deceased != 1"
 
-* WAGES
+* Wages
 global W1fa_if_condition "dgn == 0 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & flag_deceased != 1"
 
 global W1ma_if_condition "dgn == 1 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & flag_deceased != 1"
@@ -241,24 +175,10 @@ global W1fb_if_condition "dgn == 0 & dag >= ${age_seek_employment} & dag <= ${ag
 
 global W1mb_if_condition "dgn == 1 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & previouslyWorking == 1 & flag_deceased != 1"
 
-* CAPITAL INCOME 
+* Capital income 
 global i1a_if_condition "dag >= ${age_becomes_semi_responsible} & flag_deceased != 1" 
 
-global i1b_if_condition "dag >= ${age_becomes_semi_responsible} & receives_ypncp == 1 & flag_deceased != 1" 		   
+global i1b_if_condition "dag >= ${age_becomes_semi_responsible} & receives_ypncp == 1 & flag_deceased != 1" 
 
-
-/*******************************************************************************
-* EXECUTE FILES
-*******************************************************************************/
-//do "$dir_do/01_prepare_pooled_data.do"
-
-do "$dir_do/02_create_variables_PL.do"
-
-do "$dir_do/03_create_benefit_units_PL.do"
-
-do "$dir_do/04_reweight_PL.do"
-
-do "$dir_do/05_drop_hholds_and_slice_PL.do"
-
-do "$dir_do/06_check_yearly_data_PL.do"
-
+* Labour supply
+//??
