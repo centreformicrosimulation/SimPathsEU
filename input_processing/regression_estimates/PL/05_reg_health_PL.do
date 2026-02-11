@@ -41,7 +41,7 @@ putexcel B6 = "Generalized ordered logit regression estimates of self reported h
 putexcel B7 = "Covariates that satisfy the parallel lines assumption have one estimate for all categories of the dependent variable and are present once in the table"
 putexcel B8 = "Covariates that do not satisfy the parallel lines assumption have an estimate for each estimated category of the dependent variable. These covariates have the dependent variable category appended to their name."
 putexcel A11 = "H2"
-putexcel B11 = "Probit regression estimates of the probability of being long-term sick or disabled - people aged 16+,  not in initial education spell (cannot be a student and disabled/long-term sick in the data) and not retired."
+putexcel B11 = "Probit regression estimates of the probability of being long-term sick or disabled - people aged 16+, non-students and non-retirees."
 putexcel A12 = "H1_raw"
 putexcel B12 = "Raw generalized ordered logit regression estimates of self reported health status. Useful for the 'Gologit predictor' file."
 
@@ -637,11 +637,10 @@ xtset idperson stm
 
 
 * Estimation 	
-probit dlltsd i.Dgn c.Dag c.Dag_sq i.Ded Ded_Dag Ded_Dag_sq Ded_Dgn ///
-	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
-	i.Deh_c4_High i.Deh_c4_Medium i.Deh_c4_Low i.Dhe_Poor i.Dhe_Fair ///
-	i.Dhe_Good i.Dhe_VeryGood li.Dhe_Poor li.Dhe_Fair li.Dhe_Good ///
-	li.Dhe_VeryGood l.Dlltsd li.Dhhtp_c4_CoupleChildren ///
+probit dlltsd i.Dgn c.Dag c.Dag_sq li.Ydses_c5_Q2 li.Ydses_c5_Q3 ///
+	li.Ydses_c5_Q4 li.Ydses_c5_Q5 i.Deh_c4_High i.Deh_c4_Medium ///
+	i.Dhe_Poor i.Dhe_Fair i.Dhe_Good i.Dhe_VeryGood li.Dhe_Poor li.Dhe_Fair ///
+	li.Dhe_Good li.Dhe_VeryGood l.Dlltsd li.Dhhtp_c4_CoupleChildren ///
 	li.Dhhtp_c4_SingleNoChildren li.Dhhtp_c4_SingleChildren $regions ///
 	Year_transformed Y2020 Y2021 if ${h2_if_condition} [pw=dwt], vce(robust)
 	
@@ -788,7 +787,7 @@ frame temp_frame: {
 * Export model fit statistics	
 putexcel set "$dir_work/reg_health_${country}", sheet("Gof") modify
 
-putexcel A15 = "H2 -  Long-term sick or disabled, left initial edu spell", bold		
+putexcel A15 = "H2 -  Long-term sick or disabled", bold		
 putexcel A17 = "Pseudo R-squared" 
 putexcel B17 = r2_p 
 putexcel A18 = "N"
