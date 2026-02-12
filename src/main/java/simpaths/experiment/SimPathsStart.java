@@ -42,8 +42,10 @@ import simpaths.model.taxes.database.TaxDonorDataParser;
 public class SimPathsStart implements ExperimentBuilder {
 
 	// default simulation parameters
-	private static Country country = Country.EL;
+	private static Country country = Country.PL;
 	private static int startYear = Parameters.getMaxStartYear();
+	private static int endYear = 2013;
+	private static int popSize = 30000;
 
 	private static boolean showGui = true;  // Show GUI by default
 
@@ -129,6 +131,9 @@ public class SimPathsStart implements ExperimentBuilder {
 		SimPathsStart experimentBuilder = new SimPathsStart();
 		engine.setExperimentBuilder(experimentBuilder);
 		engine.setup();
+		if (!showGui) {
+			engine.startSimulation();
+		}
 	}
 
 	private static boolean parseCommandLineArgs(String[] args) {
@@ -141,6 +146,14 @@ public class SimPathsStart implements ExperimentBuilder {
 		Option startYearOption = new Option("s", "startYear", true, "Start year");
 		startYearOption.setArgName("year");
 		options.addOption(startYearOption);
+
+		Option endYearOption = new Option("e", "endYear", true, "End year");
+		endYearOption.setArgName("year");
+		options.addOption(endYearOption);
+
+		Option popSizeOption = new Option("p", "popSize", true, "Population size");
+		popSizeOption.setArgName("int");
+		options.addOption(popSizeOption);
 
 		Option setupOption = new Option("Setup", "Setup only");
 		options.addOption(setupOption);
@@ -183,6 +196,14 @@ public class SimPathsStart implements ExperimentBuilder {
 				startYear = Integer.parseInt(cmd.getOptionValue("s"));
 			}
 
+			if (cmd.hasOption("e")) {
+				endYear = Integer.parseInt(cmd.getOptionValue("e"));
+			}
+
+			if (cmd.hasOption("p")) {
+				popSize = Integer.parseInt(cmd.getOptionValue("p"));
+			}
+
 			if (cmd.hasOption("Setup")) {
 				setupOnly = true;
 			}
@@ -221,12 +242,16 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		// instantiate simulation processes
 		SimPathsModel model = new SimPathsModel(country, startYear);
+		model.setEndYear(endYear);
+		model.setPopSize(popSize);
 		SimPathsCollector collector = new SimPathsCollector(model);
-		SimPathsObserver observer = new SimPathsObserver(model, collector);
 
 		engine.addSimulationManager(model);
 		engine.addSimulationManager(collector);
-		engine.addSimulationManager(observer);
+		if (showGui) {
+			SimPathsObserver observer = new SimPathsObserver(model, collector);
+			engine.addSimulationManager(observer);
+		}
 
 		model.setCollector(collector);
 	}
@@ -262,9 +287,14 @@ public class SimPathsStart implements ExperimentBuilder {
 		data[0][0] = country.toString();
 		data[0][1] = startYear;
 
-		// Save into the same country-specific folder
+		// Save into the shared input folder (used later on startup)
+		String rootInputPath = "input";
+		File rootFolder = new File(rootInputPath);
+		if (!rootFolder.exists()) {
+			rootFolder.mkdirs();
+		}
 		XLSXfileWriter.createXLSX(
-				countryInputPath,
+				rootInputPath,
 				Parameters.DatabaseCountryYearFilename,
 				"Data",
 				columnNames,
