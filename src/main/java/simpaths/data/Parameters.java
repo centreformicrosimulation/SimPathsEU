@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.util.Pair;
+import org.apache.commons.collections4.MapIterator;
 import simpaths.data.startingpop.DataParser;
 import simpaths.model.AnnuityRates;
 import simpaths.model.decisions.Grids;
@@ -1155,25 +1156,12 @@ public class Parameters {
         //Labour Supply utility function coefficients
         //Employment alignment adjusts *fixed-cost* -> add the relevant alignment fixed-cost regressors to each subgroup
         coeffLabourSupplyUtilityMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Single_male", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityMales,List.of("AlignmentFixedCostMen"));
-
         coeffLabourSupplyUtilityFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Single_female", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityFemales,List.of("AlignmentFixedCostWomen"));
-
         coeffLabourSupplyUtilityMalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleDep_Males", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityMalesWithDependent,List.of("AlignmentFixedCostMen"));
-
         coeffLabourSupplyUtilityFemalesWithDependent = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleDep_Females", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityFemalesWithDependent,List.of("AlignmentFixedCostWomen"));
-
         coeffLabourSupplyUtilityACMales =ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleAC_Males", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityACMales,List.of("AlignmentFixedCostMen"));
-
         coeffLabourSupplyUtilityACFemales =ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"SingleAC_Females", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityACFemales,List.of("AlignmentFixedCostWomen"));
-
         coeffLabourSupplyUtilityCouples =ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_labourSupplyUtility.xlsx"),"Couples", 1);
-        addFixedCostRegressors(coeffLabourSupplyUtilityCouples,List.of("AlignmentFixedCostMen", "AlignmentFixedCostWomen"));
 
 
         //Heckman model employment selection
@@ -1194,10 +1182,6 @@ public class Parameters {
         //Partnership
         coeffCovariancePartnershipU1 = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"),"U1", 1);
         coeffCovariancePartnershipU2 = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"), "U2", 1);
-
-//        coeffCovariancePartnershipU1a = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"),"U1a", 1);
-//        coeffCovariancePartnershipU1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"), "U1b", 1);
-//        coeffCovariancePartnershipU2b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_partnership.xlsx"), "U2b", 1);
 
         //Partnership - parameters for matching based on wage and age differential
         meanCovarianceParametricMatching = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "scenario_parametricMatching.xlsx"), "Parameters", 1);
@@ -1222,6 +1206,44 @@ public class Parameters {
 
         //Bootstrap the coefficients
         if(bootstrapAll) {
+            validateCoefficientMapsForBootstrap(new Object[][]{
+
+                    {"coeffCovarianceW1mb", coeffCovarianceW1mb},
+                    {"coeffCovarianceW1ma", coeffCovarianceW1ma},
+                    {"coeffCovarianceW1fb", coeffCovarianceW1fb},
+                    {"coeffCovarianceW1fa", coeffCovarianceW1fa},
+
+                    {"coeffCovarianceEmploymentSelectionMalesE", coeffCovarianceEmploymentSelectionMalesE},
+                    {"coeffCovarianceEmploymentSelectionMalesNE", coeffCovarianceEmploymentSelectionMalesNE},
+                    {"coeffCovarianceEmploymentSelectionFemalesE", coeffCovarianceEmploymentSelectionFemalesE},
+                    {"coeffCovarianceEmploymentSelectionFemalesNE", coeffCovarianceEmploymentSelectionFemalesNE},
+
+                    {"coeffLabourSupplyUtilityMales", coeffLabourSupplyUtilityMales},
+                    {"coeffLabourSupplyUtilityFemales", coeffLabourSupplyUtilityFemales},
+                    {"coeffLabourSupplyUtilityMalesWithDependent", coeffLabourSupplyUtilityMalesWithDependent},
+                    {"coeffLabourSupplyUtilityFemalesWithDependent", coeffLabourSupplyUtilityFemalesWithDependent},
+                    {"coeffLabourSupplyUtilityACMales", coeffLabourSupplyUtilityACMales},
+                    {"coeffLabourSupplyUtilityACFemales", coeffLabourSupplyUtilityACFemales},
+                    {"coeffLabourSupplyUtilityCouples", coeffLabourSupplyUtilityCouples},
+                    {"coeffCovarianceEducationE1a", coeffCovarianceEducationE1a},
+                    {"coeffCovarianceEducationE1b", coeffCovarianceEducationE1b},
+                    {"coeffCovarianceEducationE2a", coeffCovarianceEducationE2a},
+
+                    {"coeffCovarianceHealthH1", coeffCovarianceHealthH1},
+                    {"coeffCovarianceHealthH2", coeffCovarianceHealthH2},
+
+                    {"coeffCovarianceIncomeI1a", coeffCovarianceIncomeI1a},
+                    {"coeffCovarianceIncomeI1b", coeffCovarianceIncomeI1b},
+                    {"coeffCovarianceLeaveHomeP1", coeffCovarianceLeaveHomeP1},
+                    {"coeffCovarianceHomeownership", coeffCovarianceHomeownership},
+                    {"coeffCovarianceRetirementR1a", coeffCovarianceRetirementR1a},
+                    {"coeffCovarianceRetirementR1b", coeffCovarianceRetirementR1b},
+
+                    {"coeffCovariancePartnershipU1", coeffCovariancePartnershipU1},
+                    {"coeffCovariancePartnershipU2", coeffCovariancePartnershipU2},
+                    {"coeffCovarianceFertilityF1", coeffCovarianceFertilityF1},
+            });
+
 
             //Wages
             coeffCovarianceW1mb = RegressionUtils.bootstrap(coeffCovarianceW1mb);
@@ -1236,15 +1258,23 @@ public class Parameters {
             coeffCovarianceEmploymentSelectionFemalesNE = RegressionUtils.bootstrap(coeffCovarianceEmploymentSelectionFemalesNE);
 
             //Labour supply utility
-            /*
             coeffLabourSupplyUtilityMales = RegressionUtils.bootstrap(coeffLabourSupplyUtilityMales);
+            addFixedCostRegressors(coeffLabourSupplyUtilityMales,List.of("AlignmentFixedCostMen"));
             coeffLabourSupplyUtilityFemales = RegressionUtils.bootstrap(coeffLabourSupplyUtilityFemales);
+            addFixedCostRegressors(coeffLabourSupplyUtilityFemales,List.of("AlignmentFixedCostWomen"));
             coeffLabourSupplyUtilityMalesWithDependent = RegressionUtils.bootstrap(coeffLabourSupplyUtilityMalesWithDependent);
+            addFixedCostRegressors(coeffLabourSupplyUtilityMalesWithDependent,List.of("AlignmentFixedCostMen"));
             coeffLabourSupplyUtilityFemalesWithDependent = RegressionUtils.bootstrap(coeffLabourSupplyUtilityFemalesWithDependent);
+            addFixedCostRegressors(coeffLabourSupplyUtilityFemalesWithDependent,List.of("AlignmentFixedCostWomen"));
             coeffLabourSupplyUtilityACMales = RegressionUtils.bootstrap(coeffLabourSupplyUtilityACMales);
+            addFixedCostRegressors(coeffLabourSupplyUtilityACMales,List.of("AlignmentFixedCostMen"));
             coeffLabourSupplyUtilityACFemales = RegressionUtils.bootstrap(coeffLabourSupplyUtilityACFemales);
+            addFixedCostRegressors(coeffLabourSupplyUtilityACFemales,List.of("AlignmentFixedCostWomen"));
             coeffLabourSupplyUtilityCouples = RegressionUtils.bootstrap(coeffLabourSupplyUtilityCouples);
-            */
+            addFixedCostRegressors(coeffLabourSupplyUtilityCouples,List.of("AlignmentFixedCostMen", "AlignmentFixedCostWomen"));
+
+
+
 
             //Education
             coeffCovarianceEducationE1a = RegressionUtils.bootstrap(coeffCovarianceEducationE1a);
@@ -1269,15 +1299,11 @@ public class Parameters {
             coeffCovarianceRetirementR1a = RegressionUtils.bootstrap(coeffCovarianceRetirementR1a);
             coeffCovarianceRetirementR1b = RegressionUtils.bootstrap(coeffCovarianceRetirementR1b);
 
-
-            //Specification of some processes depends on the country:
+            //Partnership:
             coeffCovariancePartnershipU1 = RegressionUtils.bootstrap(coeffCovariancePartnershipU1);
             coeffCovariancePartnershipU2 = RegressionUtils.bootstrap(coeffCovariancePartnershipU2);
 
-//            coeffCovariancePartnershipU1a = RegressionUtils.bootstrap(coeffCovariancePartnershipU1a);
-//            coeffCovariancePartnershipU1b = RegressionUtils.bootstrap(coeffCovariancePartnershipU1b);
-//            coeffCovariancePartnershipU2b = RegressionUtils.bootstrap(coeffCovariancePartnershipU2b);
-
+            //Fertility
             coeffCovarianceFertilityF1 = RegressionUtils.bootstrap(coeffCovarianceFertilityF1);
 
         }
@@ -1303,14 +1329,6 @@ public class Parameters {
         MultiKeyCoefficientMap coeffPartnershipU2Appended = appendCoefficientMaps(coeffCovariancePartnershipU2, partnershipTimeAdjustment, "Year", true);
         regPartnershipU1 = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1Appended);
         regPartnershipU2 = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2Appended);
-
-//        //Partnership
-//        MultiKeyCoefficientMap coeffPartnershipU1aAppended = appendCoefficientMaps(coeffCovariancePartnershipU1a, partnershipTimeAdjustment, "Year");
-//        MultiKeyCoefficientMap coeffPartnershipU1bAppended = appendCoefficientMaps(coeffCovariancePartnershipU1b, partnershipTimeAdjustment, "Year");
-//        MultiKeyCoefficientMap coeffPartnershipU2bAppended = appendCoefficientMaps(coeffCovariancePartnershipU2b, partnershipTimeAdjustment, "Year", true);
-//        regPartnershipU1a = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1aAppended);
-//        regPartnershipU1b = new BinomialRegression(RegressionType.Probit, Indicator.class, coeffPartnershipU1bAppended);
-//        regPartnershipU2b = new BinomialRegression(RegressionType.Probit, ReversedIndicator.class, coeffPartnershipU2bAppended);
 
         //Fertility
         MultiKeyCoefficientMap coeffFertilityF1Appended = appendCoefficientMaps(coeffCovarianceFertilityF1, fertilityTimeAdjustment, "Year");
@@ -1365,86 +1383,6 @@ public class Parameters {
         calculatePopulationGrowthRatiosFromProjections();
 
     }
-
-    /**
-     *
-     * Update the probability of sickness by age profile for those old enough to work, catering
-     * for the change (increase) in retirement age in future years, by 'stretching' the
-     * (approximated) curves for males and females using the instructions below.
-     *
-     * From Matteo:
-     * " In every year we will evolve this fraction together with the state retirement age.
-     * This means that the fraction of sick people at the minimum age (18) and at the maximum age
-     * (the state retirement age) remain the same, and the fitted curve is scaled accordingly."
-     *
-     *	This means that if the fraction of people with bad health at age 60 is x% when state
-     *	retirement age is 65, after state retirement age increases to 66 that fraction will be met
-     *	at age 60/65*66 = 61 (rounded).
-     *
-     *	I don't mind using a cubic rather than a quadratic spline, try it out if you wish
-     *	(differences are small). We can also use the actual numbers, I have used a spline just
-     *	to smooth out the profiles.
-     *
-     */
-
-    /*
-    public static void updateProbSick(int year) {
-
-        //Only need to update prob of sick profile if retirement years have changed, so check
-        //For males
-        boolean retirementYearsHaveChanged = ((Number)fixedRetireAge.getValue(year, Gender.Male.toString())) != ((Number)fixedRetireAge.getValue(year-1, Gender.Male.toString()));
-        //For females - if case for males is already true, the boolean will always be true
-        retirementYearsHaveChanged = retirementYearsHaveChanged || ((Number)fixedRetireAge.getValue(year, Gender.Female.toString())) != ((Number)fixedRetireAge.getValue(year-1, Gender.Female.toString()));
-
-        if(retirementYearsHaveChanged) {
-            LinkedHashMap<Gender, Integer> retirementAge = new LinkedHashMap<>();
-            retirementAge.put(Gender.Male, ((Number)fixedRetireAge.getValue(year, Gender.Male.toString())).intValue());
-            retirementAge.put(Gender.Female, ((Number)fixedRetireAge.getValue(year, Gender.Female.toString())).intValue());
-
-            probSick.clear();
-            for(Gender gender: Gender.values()) {
-                int minAge = Parameters.MIN_AGE_TO_LEAVE_EDUCATION;
-                probSick.put(gender, minAge, rawProbSick.getValue(gender.toString(), minAge));
-            }
-
-            for(Object o: rawProbSick.keySet()) {
-                MultiKey mk = (MultiKey)o;
-                String gender = (String) mk.getKey(0);
-                int rawAge = (int) mk.getKey(1);
-                int adjustedAge;
-                if(gender.equals(Gender.Male.toString())) {
-                    adjustedAge = (int)(rawAge * retirementAge.get(Gender.Male)/(double)maleMaxAgeSick);
-                    probSick.put(Gender.Male, adjustedAge, rawProbSick.get(mk));
-                }
-                else {
-                    adjustedAge = (int)(rawAge * retirementAge.get(Gender.Female)/(double)femaleMaxAgeSick);
-                    probSick.put(Gender.Female, adjustedAge, rawProbSick.get(mk));
-                }
-
-            }
-
-            //Fill in any gaps in age, due to shift in ages, filling with linear interpolation (arithmetic
-            //average of neighbouring ages)
-            for(Gender gender: Gender.values()) {
-                for(int i = Parameters.MIN_AGE_TO_LEAVE_EDUCATION; i < retirementAge.get(gender); i++) {
-                    if(!probSick.containsKey(gender, i)) {
-                        double youngerVal = ((Number)probSick.get(gender, i-1)).doubleValue();
-                        double olderVal = ((Number)probSick.get(gender, i+1)).doubleValue();
-                        probSick.put(gender, i, 0.5*(youngerVal + olderVal));	//Insert arithmetic average between ages
-                    }
-                }
-            }
-
-        }
-    }
-
-    public static void updateUnemploymentRate(int year) {
-//		unemploymentRatesByRegion.clear();
-        for(Region region: countryRegions) {
-            unemploymentRatesByRegion.put(region, ((Number)unemploymentRates.getValue(region.toString(), year)).doubleValue());
-        }
-    }
-*/
 
 
     public static NormalDistribution getStandardNormalDistribution() {
@@ -3054,6 +2992,94 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
         } catch (Throwable e) {
             e.printStackTrace();
             throw e;
+        }
+    }
+
+
+
+    private static void validateCoefficientMapsForBootstrap(Object[][] namedMaps) {
+        if (namedMaps == null) {
+            return;
+        }
+        for (Object[] entry : namedMaps) {
+            if (entry == null || entry.length != 2) {
+                continue;
+            }
+            validateCoefficientMapForBootstrap((String) entry[0], (MultiKeyCoefficientMap) entry[1]);
+        }
+    }
+
+    private static void validateCoefficientMapForBootstrap(String name, MultiKeyCoefficientMap map) {
+        if (map == null) {
+            System.out.println("Bootstrap validation: map is null: " + name);
+            return;
+        }
+        String[] keyNames = map.getKeysNames();
+        if (keyNames == null || keyNames.length == 0
+                || !RegressionColumnNames.REGRESSOR.toString().equals(keyNames[0])) {
+            System.out.println("Bootstrap validation: unexpected key names for " + name + ": " + Arrays.toString(keyNames));
+        }
+        String[] valueNames = map.getValuesNames();
+        if (valueNames == null || valueNames.length == 0) {
+            System.out.println("Bootstrap validation: missing value names for " + name);
+            return;
+        }
+        for (int i = 0; i < valueNames.length; i++) {
+            String valueName = valueNames[i];
+            if (valueName == null || valueName.trim().isEmpty()) {
+                System.out.println("Bootstrap validation: blank value name for " + name + " at index " + i
+                        + " valueNames=" + Arrays.toString(valueNames));
+            }
+        }
+        int coeffIndex = -1;
+        Map<String, Integer> covariateIndex = new HashMap<>();
+        for (int i = 0; i < valueNames.length; i++) {
+            String valueName = valueNames[i];
+            if (RegressionColumnNames.COEFFICIENT.toString().equals(valueName)) {
+                coeffIndex = i;
+            } else {
+                covariateIndex.put(valueName, i);
+            }
+        }
+        if (coeffIndex == -1) {
+            System.out.println("Bootstrap validation: missing COEFFICIENT column for " + name);
+        }
+        int issueCount = 0;
+        MapIterator<Object, Object> it = map.mapIterator();
+        while (it.hasNext()) {
+            it.next();
+            MultiKey key = (MultiKey) it.getKey();
+            Object[] rowValues = (Object[]) map.getValue(new Object[]{key});
+            String regressor = String.valueOf(key.getKey(0));
+            if (rowValues == null) {
+                System.out.println("Bootstrap validation: null row for " + name + " regressor=" + regressor);
+                issueCount++;
+                if (issueCount >= 20) {
+                    break;
+                }
+                continue;
+            }
+            if (coeffIndex >= 0) {
+                if (coeffIndex >= rowValues.length || rowValues[coeffIndex] == null) {
+                    System.out.println("Bootstrap validation: missing coefficient for " + name + " regressor=" + regressor);
+                    issueCount++;
+                }
+            }
+            for (Map.Entry<String, Integer> entry : covariateIndex.entrySet()) {
+                Integer idx = entry.getValue();
+                if (idx == null || idx >= rowValues.length || rowValues[idx] == null) {
+                    System.out.println("Bootstrap validation: missing covariance for " + name
+                            + " regressor=" + regressor + " covariate=" + entry.getKey());
+                    issueCount++;
+                    if (issueCount >= 20) {
+                        break;
+                    }
+                }
+            }
+            if (issueCount >= 20) {
+                System.out.println("Bootstrap validation: stopping after 20 issues for " + name);
+                break;
+            }
         }
     }
 }
