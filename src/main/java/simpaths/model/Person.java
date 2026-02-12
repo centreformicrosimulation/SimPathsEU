@@ -4059,6 +4059,16 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setLabourSupplyWeekly(Labour labourSupply) {
         labourSupplyWeekly = labourSupply;
+        if (labourSupplyWeekly != null && labourSupplyWeekly != Labour.ZERO) {
+            String country = Parameters.COUNTRY_STRING;
+            if (country != null && !country.isEmpty()) {
+                String expectedPrefix = "CATEGORY_" + country + "_";
+                String name = labourSupplyWeekly.name();
+                if (name.startsWith("CATEGORY_") && !name.startsWith(expectedPrefix)) {
+                    throw new IllegalStateException("Non-" + country + " labour category assigned: " + labourSupplyWeekly);
+                }
+            }
+        }
         hoursWorkedWeekly = getLabourSupplyHoursWeekly(); // Update number of hours worked weekly
     }
 

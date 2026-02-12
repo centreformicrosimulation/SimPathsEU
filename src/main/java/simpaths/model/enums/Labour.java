@@ -115,6 +115,23 @@ public enum Labour implements IntegerValuedEnum {
         }
     }
 
+    public static Labour[] valuesForCurrentCountry() {
+        return valuesForCountry(COUNTRY_STRING);
+    }
+
+    public static Labour[] valuesForCountry(String country) {
+        if (country == null || country.isEmpty()) {
+            return values();
+        }
+        return switch (country) {
+            case "EL" -> new Labour[]{ZERO, CATEGORY_EL_1, CATEGORY_EL_2, CATEGORY_EL_3};
+            case "IT" -> new Labour[]{ZERO, CATEGORY_IT_1, CATEGORY_IT_2, CATEGORY_IT_3, CATEGORY_IT_4};
+            case "PL" -> new Labour[]{ZERO, CATEGORY_PL_1, CATEGORY_PL_2, CATEGORY_PL_3};
+            case "HU" -> new Labour[]{ZERO, CATEGORY_HU_1, CATEGORY_HU_2, CATEGORY_HU_3};
+            default -> values();
+        };
+    }
+
     public int getHours(Person person) {
         if (this == ZERO) return 0;
 

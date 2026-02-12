@@ -438,14 +438,14 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             // single person Labour Supply set.
             Labour[] labourMaleValues;
             if (male.atRiskOfWork()) {
-                labourMaleValues = Labour.values();
+                labourMaleValues = Labour.valuesForCountry(COUNTRY_STRING);
             } else {
                 labourMaleValues = new Labour[]{Labour.ZERO};
             }
 
             Labour[] labourFemaleValues;
             if (female.atRiskOfWork()) {
-                labourFemaleValues = Labour.values();
+                labourFemaleValues = Labour.valuesForCountry(COUNTRY_STRING);
             } else {
                 labourFemaleValues = new Labour[]{Labour.ZERO};
             }
@@ -460,11 +460,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             // as this has already been done when passing this household to the labour supply module (see first loop over benefitUnits
             // in LabourMarket#update()).
             if (male!=null) {
-                for (Labour labour : Labour.values()) {
+                for (Labour labour : Labour.valuesForCountry(COUNTRY_STRING)) {
                     combinationsToReturn.add(new MultiKey<>(labour, Labour.ZERO));
                 }
             } else { //Must be single female
-                for (Labour labour : Labour.values()) {
+                for (Labour labour : Labour.valuesForCountry(COUNTRY_STRING)) {
                     combinationsToReturn.add(new MultiKey<>(Labour.ZERO, labour));
                 }
             }
