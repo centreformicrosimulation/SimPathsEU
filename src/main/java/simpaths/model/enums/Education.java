@@ -15,18 +15,20 @@ public enum Education implements IntegerValuedEnum {
 
 	@Override
 	public int getValue() {return value;}
-	public static Education getCode(int val) {
-		switch (val) {
-			case 0:
-				return NotAssigned;
-			case 1:
-				return Low;
-			case 2:
-				return Medium;
-			case 3:
-				return High;
+
+	// Rank for comparing highest qualification; NotAssigned is treated as below Low.
+	public int getRank() {
+		switch (this) {
+			case High:
+				return 3;
+			case Medium:
+				return 2;
+			case Low:
+				return 1;
+			case NotAssigned:
+				return 0;
 			default:
-				throw new IllegalArgumentException("Invalid Education code: " + val + " (expected 0–3)");
+				return -1;
 		}
 	}
 }

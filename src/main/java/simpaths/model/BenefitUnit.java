@@ -3235,7 +3235,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case MaleLeisure_MaleDeh_c3_Low -> {
-                if(getMale().getDeh_c4().equals(Education.Low)) {
+                if(getMale().getDeh_c4().equals(Education.Low) || getMale().getDeh_c4().equals(Education.NotAssigned)) {
                     return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly());
                 } else return 0.;
             }
@@ -3274,7 +3274,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case FemaleLeisure_FemaleDeh_c3_Low -> {
-                if(getFemale().getDeh_c4().equals(Education.Low)) {
+                if(getFemale().getDeh_c4().equals(Education.Low) || getFemale().getDeh_c4().equals(Education.NotAssigned)) {
                     return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly());
                 } else return 0.;
             }
@@ -3615,7 +3615,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (!getCoupleBoolean() && (getMaxWeeklyHoursWorked() == 0)) ? 1.0 : 0.0;
             }
             case Graduate -> {
-                return (Education.High.equals(getHighestDehC3())) ? 1.0 : 0.0;
+                return (Education.High.equals(getHighestDehC4())) ? 1.0 : 0.0;
             }
 
             case n_children_0 -> {
@@ -4578,7 +4578,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         deh_c4Local = edu;
     }
 
-    private Education getHighestDehC3() {
+    private Education getHighestDehC4() {
 
         Education max = Education.Low;
         if (model==null) {
@@ -4592,13 +4592,13 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             Person female = getFemale();
             if(male != null || female != null) {
 
-                if (male != null) max = male.getDeh_c4();
-                if (female != null) {
-
-                    if (Education.High.equals(female.getDeh_c4())) {
-                        max = Education.High;
-                    } else if (Education.Medium.equals(female.getDeh_c4()) && !(max == Education.High)) {
-                        max = Education.Medium;
+                if (male != null && male.getDeh_c4() != null) {
+                    max = male.getDeh_c4();
+                }
+                if (female != null && female.getDeh_c4() != null) {
+                    Education femaleEdu = female.getDeh_c4();
+                    if (max == null || femaleEdu.getRank() > max.getRank()) {
+                        max = femaleEdu;
                     }
                 }
             }

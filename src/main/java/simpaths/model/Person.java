@@ -1708,7 +1708,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         // --- Step 3: process E2 in the diagaram ---
         if(deh_c4 != null) {
-            if(newEducationLevel.ordinal() > deh_c4.ordinal()) {		//Assume Education level cannot decrease after re-entering school.
+            if (newEducationLevel.getRank() > deh_c4.getRank()) {		//Assume Education level cannot decrease after re-entering school.
                 deh_c4 = newEducationLevel;
             }
         } /*else {
@@ -2598,7 +2598,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (Education.Medium.equals(deh_c4)) ? 1.0 : 0.0;
             }
             case Deh_c3_Low -> {
-                return (Education.Low.equals(deh_c4)) ? 1.0 : 0.0;
+                return (Education.Low.equals(deh_c4) || Education.NotAssigned.equals(deh_c4)) ? 1.0 : 0.0;
             }
             case Deh_c4_High -> {
                 return (Education.High.equals(deh_c4)) ? 1.0 : 0.0;
@@ -2649,7 +2649,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (checkHighestParentalEducationEquals(Education.Medium)) ? 1.0 : 0.0;
             }
             case Dehmf_c3_Low -> {
-                return (checkHighestParentalEducationEquals(Education.Low)) ? 1.0 : 0.0;
+                return (checkHighestParentalEducationEquals(Education.Low) || checkHighestParentalEducationEquals(Education.NotAssigned)) ? 1.0 : 0.0;
             }
             case Dehmf_c4_High -> {
                 return (checkHighestParentalEducationEquals(Education.High)) ? 1.0 : 0.0;
@@ -3510,7 +3510,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 }
             }
             case Deh_c3_Low_Dag -> {
-                return (Education.Low.equals(deh_c4)) ? dag : 0.0;
+                return (Education.Low.equals(deh_c4) || Education.NotAssigned.equals(deh_c4)) ? dag : 0.0;
             }
             case Deh_c3_Medium_Dag -> {
                 return (Education.Medium.equals(deh_c4)) ? dag : 0.0;
