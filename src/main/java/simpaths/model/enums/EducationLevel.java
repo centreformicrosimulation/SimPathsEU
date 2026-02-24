@@ -13,4 +13,17 @@ public enum EducationLevel implements IntegerValuedEnum {
 
 	@Override
 	public int getValue() {return value;}
+
+	public int getRank() {
+		switch (this) {
+			case High:
+				return 3;
+			case Medium:
+				return 2;
+			case Low:
+				return 1;
+			default:
+				return -1;
+		}
+	}
 }

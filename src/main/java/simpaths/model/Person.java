@@ -1708,7 +1708,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
         // --- Step 3: process E2 in the diagaram ---
         if(deh_c4 != null) {
-            if(newEducationLevel.ordinal() > deh_c4.ordinal()) {		//Assume Education level cannot decrease after re-entering school.
+            if (newEducationLevel.getRank() > deh_c4.getRank()) {		//Assume Education level cannot decrease after re-entering school.
                 deh_c4 = newEducationLevel;
             }
         } /*else {
