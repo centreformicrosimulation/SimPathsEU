@@ -3235,7 +3235,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case MaleLeisure_MaleDeh_c3_Low -> {
-                if(getMale().getDeh_c4().equals(Education.Low)) {
+                if(getMale().getDeh_c4().equals(Education.Low) || getMale().getDeh_c4().equals(Education.NotAssigned)) {
                     return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly());
                 } else return 0.;
             }
@@ -3274,7 +3274,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case FemaleLeisure_FemaleDeh_c3_Low -> {
-                if(getFemale().getDeh_c4().equals(Education.Low)) {
+                if(getFemale().getDeh_c4().equals(Education.Low) || getFemale().getDeh_c4().equals(Education.NotAssigned)) {
                     return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly());
                 } else return 0.;
             }
