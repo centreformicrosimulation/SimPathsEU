@@ -7,6 +7,7 @@ import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
 import simpaths.model.enums.Education;
+import simpaths.model.enums.EducationLevel;
 import simpaths.model.enums.Indicator;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.Innovations;
@@ -54,7 +55,7 @@ public class PersonTest {
 
     // Using the actual regression types for strong type checking and accuracy
     private BinomialRegression mockBinomialRegression;
-    private GeneralisedOrderedRegression<Education> mockGeneralisedOrderedRegression;
+    private GeneralisedOrderedRegression<EducationLevel> mockGeneralisedOrderedRegression;
 
     // --- Critical Constructor Mocking Helper ---
 
@@ -85,24 +86,24 @@ public class PersonTest {
     /**
      * Helper method to configure the regression mock for setEducationLevel().
      */
-    private void setupEducationLevelRegressionMock(Education expectedEducationLevel, double draw) throws Exception {
+    private void setupEducationLevelRegressionMock(EducationLevel expectedEducationLevel, double draw) throws Exception {
         // Mock random draw for setEducationLevel to ensure assignment happens
         Mockito.when(mockInnovations.getDoubleDraw(30)).thenReturn(draw);
 
         // Mock the static dependency on Parameters and ManagerRegressions
 
         // Set up probabilities map (simplified logic to ensure 'draw' selects 'expectedEducationLevel')
-            Map<Education, Double> mockProbs = new HashMap<>();
-            mockProbs.put(Education.Low, 0.3);
-            mockProbs.put(Education.Medium, 0.3);
-            mockProbs.put(Education.High, 0.4);
+            Map<EducationLevel, Double> mockProbs = new HashMap<>();
+            mockProbs.put(EducationLevel.Low, 0.3);
+            mockProbs.put(EducationLevel.Medium, 0.3);
+            mockProbs.put(EducationLevel.High, 0.4);
 
         // Mock regression to return the probabilities map
         Mockito.when(mockGeneralisedOrderedRegression.getProbabilities(Mockito.any(), Mockito.any()))
                 .thenReturn((Map) mockProbs);
 
         // Stub the static call to return our deterministic probabilities map
-         managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
+        managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
                 .thenReturn(mockProbs);
 
         // Mock Parameters static method to return regression
@@ -292,7 +293,7 @@ public class PersonTest {
             testPerson.setDeh_c4(Education.Low);
             testPerson.setDer(Indicator.False);
 
-            setupEducationLevelRegressionMock(Education.High, 0.9);
+            setupEducationLevelRegressionMock(EducationLevel.High, 0.9);
 
             testPerson.setEducationLevel();
 
@@ -305,7 +306,7 @@ public class PersonTest {
             testPerson.setDeh_c4(Education.Low);
             testPerson.setDer(Indicator.True);
 
-            setupEducationLevelRegressionMock(Education.Medium, 0.5); // Draw 0.5 < 0.6 (Cumulative Medium) --> Selects Medium
+            setupEducationLevelRegressionMock(EducationLevel.Medium, 0.5); // Draw 0.5 < 0.6 (Cumulative Medium) --> Selects Medium
 
             testPerson.setEducationLevel();
 
@@ -318,7 +319,7 @@ public class PersonTest {
             testPerson.setDeh_c4(Education.Medium);
             testPerson.setDer(Indicator.True);
 
-            setupEducationLevelRegressionMock(Education.Low, 0.2);
+            setupEducationLevelRegressionMock(EducationLevel.Low, 0.2);
 
             testPerson.setEducationLevel();
 
@@ -331,7 +332,7 @@ public class PersonTest {
             testPerson.setDeh_c4(Education.Medium);
             testPerson.setDer(Indicator.True);
 
-            setupEducationLevelRegressionMock(Education.Medium, 0.5);
+            setupEducationLevelRegressionMock(EducationLevel.Medium, 0.5);
 
             testPerson.setEducationLevel();
 
@@ -358,7 +359,7 @@ public class PersonTest {
             testPerson.setLes_c4(Les_c4.Student);
             testPerson.setLes_c4_lag1(Les_c4.Student);
 
-            setupEducationLevelRegressionMock(Education.Medium, 0.5);
+            setupEducationLevelRegressionMock(EducationLevel.Medium, 0.5);
 
             testPerson.leavingSchool();
 
