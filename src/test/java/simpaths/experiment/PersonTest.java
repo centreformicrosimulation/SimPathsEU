@@ -103,7 +103,7 @@ public class PersonTest {
                 .thenReturn((Map) mockProbs);
 
         // Stub the static call to return our deterministic probabilities map
-         managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
+        managerRegressionsMock.when(() -> ManagerRegressions.getProbabilities(Mockito.any(Person.class), Mockito.eq(RegressionName.EducationE2a)))
                 .thenReturn(mockProbs);
 
         // Mock Parameters static method to return regression

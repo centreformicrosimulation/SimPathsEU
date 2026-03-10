@@ -173,17 +173,17 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean alignPopulation = true; //TODO: routine fails to replicate results for minor variations between simulations
 
     //	@GUIparameter(description = "If checked, will align fertility")
-    private boolean alignFertility = false;
+    private boolean alignFertility = true;
     private boolean alignRetirement = false;
 
     private boolean alignDisability = false;
     private boolean alignEducation = false; //Set to true to align level of education
 
-    private boolean alignInSchool = false; //Set to true to align share of students among 16-29 age group
+    private boolean alignInSchool = true; //Set to true to align share of students among 16-29 age group
 
-    private boolean alignCohabitation = false; //Set to true to align share of couples (cohabiting individuals)
+    private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
 
-    private boolean alignEmployment = false; //true; //Set to true to align employment share
+    private boolean alignEmployment = true; //true; //Set to true to align employment share
 
     public boolean addRegressionStochasticComponent = true; //If set to true, and regression contains ResStanDev variable, will evaluate the regression score including stochastic part, and omits the stochastic component otherwise.
 
@@ -490,7 +490,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         //yearlySchedule.addEvent(this, Processes.CheckForEmptyHouseholds);
 
         // Check whether persons have reached retirement Age
-        yearlySchedule.addEvent(this, Processes.RetirementAlignment);
+        addEventToAllYears(Processes.RetirementAlignment);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.ConsiderRetirement, false);
 
         // EDUCATION MODULE
@@ -503,14 +503,14 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(persons, Person.Processes.LeavingSchool);
 
         // Align the level of education if required
-        yearlySchedule.addEvent(this, Processes.EducationLevelAlignment);
+        addEventToAllYears(Processes.EducationLevelAlignment);
 
         // Homeownership status
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.Homeownership);
 
         // HEALTH MODULE
         // Update Health - determine health (continuous) based on regression models: done here because health depends on education
-        yearlySchedule.addEvent(this, Processes.DisabilityAlignment);
+        addEventToAllYears(Processes.DisabilityAlignment);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.Health);
 
         // HOUSEHOLD COMPOSITION MODULE: Decide whether to enter into a union (marry / cohabit), and then perform union matching (marriage) between a male and female
@@ -534,23 +534,23 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         yearlySchedule.addCollectionEvent(persons, Person.Processes.GiveBirth, false);        //Cannot use read-only collection schedule as newborn children cause concurrent modification exception.  Need to specify false in last argument of Collection event.
 
         // TIME USE MODULE
-        addEventToAllYears(Processes.LabourMarketAndIncomeUpdate);
+        yearlySchedule.addEvent(this, Processes.LabourMarketAndIncomeUpdate);
 
         // Assign benefit status to individuals in benefit units, from donors. Based on donor tax unit status.
-        addCollectionEventToAllYears(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.ReceivesBenefits);
 
         // CONSUMPTION AND SAVINGS MODULE
-        addCollectionEventToAllYears(persons, Person.Processes.ProjectEquivConsumption);
+        yearlySchedule.addCollectionEvent(persons, Person.Processes.ProjectEquivConsumption);
 
         // equivalised disposable income
-        addCollectionEventToAllYears(benefitUnits, BenefitUnit.Processes.CalculateChangeInEDI);
+        yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.CalculateChangeInEDI);
 
         // mortality (migration) and population alignment at year's end
         addCollectionEventToAllYears(persons, Person.Processes.ConsiderMortality);
         addEventToAllYears(Processes.PopulationAlignment);
 
         // END OF YEAR PROCESSES
-        addEventToAllYears(Processes.CheckForImperfectTaxDBMatches);
+        yearlySchedule.addEvent(this, Processes.CheckForImperfectTaxDBMatches);
         addEventToAllYears(tests, Tests.Processes.RunTests); //Run tests
         addCollectionEventToAllYears(persons, Person.Processes.UpdateOutputVariables); // Update idPartner, dhhtp_c4
         addCollectionEventToAllYears(benefitUnits, BenefitUnit.Processes.UpdateOutputVariables); // Update dhhtp_c4
