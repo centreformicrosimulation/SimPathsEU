@@ -3,7 +3,7 @@ clear all
 set more off
 
 * Paths (edit if needed)
-local work_dir "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/validate_alignments"
+local work_dir "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
 local country "PL"
 local input_dir  "`work_dir'/`country'/input_data"
 
@@ -134,10 +134,11 @@ order year n_eligible n_partnered partnered_share
 * ============================================================
 * 5) Slim target-format file: year + partnered_share only
 * ============================================================
+
 preserve
     keep year partnered_share
     format partnered_share %12.7f
-    export excel using "`work_dir'/partnered_share_targets_BUlogic.xlsx", ///
+    export excel using "`work_dir'/`country'/partnered_share_targets_BUlogic.xlsx", ///
         firstrow(variables) replace
 restore
 

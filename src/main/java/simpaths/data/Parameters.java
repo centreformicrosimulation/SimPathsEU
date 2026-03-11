@@ -218,6 +218,11 @@ public class Parameters {
 
     //Alignment parameters
     public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
+    public static final int IN_SCHOOL_ALIGNMENT_END_YEAR = 2023;
+    public static final int PARTNERSHIP_ALIGNMENT_END_YEAR = 2023;
+    public static final int FERTILITY_ALIGNMENT_END_YEAR = 2040;
+    public static final int RETIREMENT_ALIGNMENT_END_YEAR = 2023;
+    public static final int DISABILITY_ALIGNMENT_END_YEAR = 2023;
     public static final double FERTILITY_ALIGNMENT_BOUND = 10.0;
 
     // parameters to manage simulation of optimised decisions
@@ -2009,8 +2014,8 @@ public class Parameters {
         // load year-specific fiscal policy parameters
         socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "social care", 1);
         partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "partnered_share_targets_BUlogic.xlsx"), "Sheet1", 1);
-        retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "retirement", 1);
-        disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "disability", 1);
+        retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "retirement_targets.xlsx"), "retirement", 1);
+        disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "disability_targets.xlsx"), "disability", 1);
         studentShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "inSchool_targets.xlsx"), "students", 1);
 
         //Employment targets
