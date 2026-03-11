@@ -218,6 +218,11 @@ public class Parameters {
 
     //Alignment parameters
     public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
+    public static final int IN_SCHOOL_ALIGNMENT_END_YEAR = 2023;
+    public static final int PARTNERSHIP_ALIGNMENT_END_YEAR = 2023;
+    public static final int FERTILITY_ALIGNMENT_END_YEAR = 2040;
+    public static final int RETIREMENT_ALIGNMENT_END_YEAR = 2023;
+    public static final int DISABILITY_ALIGNMENT_END_YEAR = 2023;
     public static final double FERTILITY_ALIGNMENT_BOUND = 10.0;
 
     // parameters to manage simulation of optimised decisions

@@ -7,7 +7,6 @@ import microsim.data.db.PanelEntityKey;
 import simpaths.data.Parameters;
 import simpaths.data.filters.FertileFilter;
 import simpaths.model.SimPathsModel;
-import simpaths.model.enums.AlignmentVariable;
 import simpaths.model.enums.Dcpst;
 import simpaths.model.enums.TargetShares;
 import simpaths.model.enums.TimeSeriesVariable;
@@ -167,8 +166,9 @@ public class Statistics3 {
     public void update(SimPathsModel model) {
 
         // cohabitation
-        double val = Parameters.getTimeSeriesValue(model.getYear()-1, TimeSeriesVariable.PartnershipAdjustment) +
-                Parameters.getAlignmentValue(model.getYear()-1, AlignmentVariable.PartnershipAlignment);
+        int lagYear = model.getYear() - 1;
+        double val = Parameters.getTimeSeriesValue(lagYear, TimeSeriesVariable.PartnershipAdjustment) +
+                model.getPartnershipAdjustment(lagYear);
         setPartnershipAdjustmentFactor(val);
         long numPersonsWhoCanHavePartner = model.getPersons().stream()
                 .filter(person -> person.getDag() >= Parameters.MIN_AGE_COHABITATION)
@@ -181,8 +181,8 @@ public class Statistics3 {
         setShareCohabitingTarget(Parameters.getTargetShare(model.getYear()-1, TargetShares.Partnership));
 
         // fertility
-        val = Parameters.getTimeSeriesValue(model.getYear()-1, TimeSeriesVariable.FertilityAdjustment) +
-                Parameters.getAlignmentValue(model.getYear()-1, AlignmentVariable.FertilityAlignment);
+        val = Parameters.getTimeSeriesValue(lagYear, TimeSeriesVariable.FertilityAdjustment) +
+                model.getFertilityAdjustment(lagYear);
         setFertilityAdjustmentFactor(val);
         FertileFilter filter = new FertileFilter();
         long numFertilePersons = model.getPersons().stream()

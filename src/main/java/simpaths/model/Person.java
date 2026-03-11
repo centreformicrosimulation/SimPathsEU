@@ -768,7 +768,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     // ---------------------------------------------------------------------
 
     public void fertility() {
-        double probitAdjustment = (model.isAlignFertility()) ? Parameters.getAlignmentValue(getYear(), AlignmentVariable.FertilityAlignment) : 0.0;
+        double probitAdjustment = model.getFertilityAdjustment();
         fertility(probitAdjustment);
     }
 
@@ -934,7 +934,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public boolean considerRetirement() {
-        double probitAdjustment = (model.isAlignRetirement()) ? Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.RetirementAdjustment) : 0.0;
+        double probitAdjustment = model.getRetirementAdjustment();
         return considerRetirement(probitAdjustment);
     }
 
@@ -1052,7 +1052,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public void disability() {
-        double probitAdjustment = (model.isAlignDisability()) ? Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.DisabilityAdjustment) : 0.0;
+        double probitAdjustment = model.getDisabilityAdjustment();
         disability(probitAdjustment);
     }
 
@@ -1295,7 +1295,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public void cohabitation() {
-        double probitAdjustment = (model.isAlignCohabitation()) ? Parameters.getAlignmentValue(getYear(), AlignmentVariable.PartnershipAlignment) : 0.0;
+        double probitAdjustment = model.getPartnershipAdjustment();
         cohabitation(probitAdjustment);
     }
 
@@ -1354,7 +1354,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     }
 
     public boolean inSchool() {
-        double probitAdjustment = (model.isAlignInSchool()) ? Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.InSchoolAdjustment) : 0.0;
+        double probitAdjustment = model.getInSchoolAdjustment();
         return inSchool(probitAdjustment);
     }
 
