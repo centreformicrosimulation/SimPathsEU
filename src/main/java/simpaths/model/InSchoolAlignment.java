@@ -21,6 +21,9 @@ import java.util.Set;
  */
 public class InSchoolAlignment implements IEvaluation {
 
+    private static final int MIN_STUDENT_AGE = 16;
+    private static final int MAX_STUDENT_AGE = 29;
+
     private double targetStudentShare;
     private Set<Person> persons;
     private SimPathsModel model;
@@ -65,10 +68,13 @@ public class InSchoolAlignment implements IEvaluation {
     private double evalStudentShare() {
 
         long numStudents = model.getPersons().stream()
+                .filter(person -> person.getLes_c4() != null)
+                .filter(person -> person.getDag() >= MIN_STUDENT_AGE && person.getDag() <= MAX_STUDENT_AGE)
                 .filter(person -> (!person.isToLeaveSchool() && !Les_c4.EmployedOrSelfEmployed.equals(person.getLes_c4()) && !Les_c4.NotEmployed.equals(person.getLes_c4()) && !Les_c4.Retired.equals(person.getLes_c4()))) // count number of students who are not supposed to leave school
                 .count();
         long numPeople = model.getPersons().stream()
                 .filter(person -> person.getLes_c4() != null)
+                .filter(person -> person.getDag() >= MIN_STUDENT_AGE && person.getDag() <= MAX_STUDENT_AGE)
                 .count();
 
         return (numStudents > 0) ? (double) numStudents / numPeople : 0.0;
