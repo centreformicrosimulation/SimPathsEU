@@ -182,9 +182,9 @@ public class RootSearch2 {
                 fb=fc;
                 fc=fa;
             }
-            tol1 = 2.0 * EPS * Math.abs(bb) + 0.5 * epsFunction;      //Convergence check.
+            tol1 = 2.0 * EPS * Math.abs(bb) + 0.5 * epsOrdinates;     // Step tolerance (x-units).
             xm = 0.5 * (cc - bb);
-            if (Math.abs(xm) <= tol1 || Math.abs(fb) <= epsFunction) {
+            if (Math.abs(fb) <= epsFunction) {
                 bbv[0] = bb;
 
                 // final logging step
