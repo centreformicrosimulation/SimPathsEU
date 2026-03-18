@@ -159,7 +159,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     private boolean initialisePotentialEarningsFromDatabase = true;
 
     //	@GUIparameter(description = "If unchecked, will expand population and not use weights")
-    private boolean useWeights = false;
+    private boolean useWeights = true;
+    private double medianEquivalisedHouseholdDisposableIncome = 0.;
 
     private boolean ignoreTargetsAtPopulationLoad = false;
 
@@ -550,11 +551,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // equivalised disposable income
         yearlySchedule.addCollectionEvent(benefitUnits, BenefitUnit.Processes.CalculateChangeInEDI);
+        yearlySchedule.addEvent(this, Processes.CalculateEquivalisedHouseholdDisposableIncome);
 
         // mortality (migration) and population alignment at year's end
         addCollectionEventToAllYears(persons, Person.Processes.ConsiderMortality);
         addEventToAllYears(Processes.PopulationAlignment);
-
         // END OF YEAR PROCESSES
         yearlySchedule.addEvent(this, Processes.CheckForImperfectTaxDBMatches);
         addEventToAllYears(tests, Tests.Processes.RunTests); //Run tests
@@ -752,6 +753,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         CheckForEmptyBenefitUnits,
         GarbageCollection,
         CheckForImperfectTaxDBMatches,
+        CalculateEquivalisedHouseholdDisposableIncome,
     }
 
     @Override
@@ -876,6 +878,33 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             }
             case GarbageCollection -> {
                 screenForExitingObjects();
+            }
+            case CalculateEquivalisedHouseholdDisposableIncome -> {
+                List<BenefitUnit> included = new ArrayList<>();
+                double totalWeight = 0.;
+                for (BenefitUnit bu : benefitUnits) {
+                    double hedi = bu.calculateEquivalisedDisposableIncomeYearly();
+                    if (hedi >= 0.) {
+                        included.add(bu);
+                        totalWeight += bu.getWeight();
+                    } else {
+                        bu.setAtRiskOfPoverty(1);
+                    }
+                }
+                included.sort(Comparator.comparingDouble(BenefitUnit::calculateEquivalisedDisposableIncomeYearly));
+                medianEquivalisedHouseholdDisposableIncome = 0.;
+                double weightCounter = 0.;
+                for (BenefitUnit bu : included) {
+                    weightCounter += bu.getWeight();
+                    if (weightCounter >= totalWeight / 2.) {
+                        medianEquivalisedHouseholdDisposableIncome = bu.calculateEquivalisedDisposableIncomeYearly();
+                        break;
+                    }
+                }
+                double threshold = medianEquivalisedHouseholdDisposableIncome * 0.6;
+                for (BenefitUnit bu : included) {
+                    bu.setAtRiskOfPoverty(bu.calculateEquivalisedDisposableIncomeYearly() < threshold ? 1 : 0);
+                }
             }
             case CheckForImperfectTaxDBMatches -> {
 
@@ -2822,6 +2851,8 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     public LabourMarket getLabourMarket() {
         return labourMarket;
     }
+
+    public double getMedianEquivalisedHouseholdDisposableIncome() { return medianEquivalisedHouseholdDisposableIncome; }
 
     public boolean isUseWeights() {
         return useWeights;

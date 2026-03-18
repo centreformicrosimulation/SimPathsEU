@@ -166,8 +166,6 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             calculateSIndex();
         case CalculateHouseholdsGrossIncome:
             calculateGrossIncome();
-        case CalculateEquivalisedHouseholdDisposableIncome:
-            calculateEquivalisedHouseholdDisposableIncome();
             calculateEDI();
             break;
         case CalculateGiniCoefficients:
@@ -196,6 +194,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             }
             break;
         case DumpStatistics:
+            stats.setMedianEquivalisedHouseholdDisposableIncome(model.getMedianEquivalisedHouseholdDisposableIncome());
             try {
                 exportStatistics.export();
             } catch (Exception e) {
@@ -780,61 +779,6 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     // methods
     // ---------------------------------------------------------------------
 
-    private void calculateEquivalisedHouseholdDisposableIncome() {
-
-        ArrayList<Pair<BenefitUnit, Double>> arrHouse_eqHouseholdDispIncome = new ArrayList<Pair<BenefitUnit, Double>>();
-        double totalWeight = 0.;
-        for(BenefitUnit house: model.getBenefitUnits()) {
-            double hedi = house.calculateEquivalisedDisposableIncomeYearly();
-            if(hedi >= 0.) {
-                arrHouse_eqHouseholdDispIncome.add(new Pair<BenefitUnit, Double>(house, hedi));
-                totalWeight += house.getWeight();
-            }
-            else {		//Cannot include house in statistics as unable to calculate eq disp income
-                house.setAtRiskOfPoverty(1);		//If benefit unit has equivalised disposable income < 0, it should be classified as at risk of poverty
-            }
-        }
-
-        arrHouse_eqHouseholdDispIncome.sort(new Comparator<Pair<BenefitUnit, Double>>(){
-                @Override
-                public int compare(Pair<BenefitUnit, Double> pair1, Pair<BenefitUnit, Double> pair2) {
-                    return (int) Math.signum(pair1.getSecond() - pair2.getSecond());
-                }
-            }
-        );
-
-        double WeightCounter = 0.;
-        Double median = null;
-//		log.info("arrHouse_eqHouseholdDispIncome " + arrHouse_eqHouseholdDispIncome + ", size " + arrHouse_eqHouseholdDispIncome.size());
-        for(Pair<BenefitUnit, Double> pairHouse_Income: arrHouse_eqHouseholdDispIncome) {
-
-            WeightCounter += pairHouse_Income.getFirst().getWeight();
-//			log.info("eq hh disp income " + pairHouse_Income.getSecond() + ", WeightCounter " + WeightCounter + ", total Weight " + totalWeight + ", proportion so far " + WeightCounter/totalWeight);
-            if(WeightCounter >= totalWeight/2.) {
-                median = pairHouse_Income.getSecond();
-//				log.info("WeightCounter " + WeightCounter + ", median " + median);
-                break;
-            }
-        }
-
-        double atRiskOfPovertyThreshold = median * 0.6;
-//		log.info("atRiskOfPovertyThreshold = " + atRiskOfPovertyThreshold);
-        stats.setMedianEquivalisedHouseholdDisposableIncome(median);		//Save median household equivalised disposable income in statistics object
-//		stats.setRiskOfPovertyThreshold(atRiskOfPovertyThreshold);			//Risk-of-poverty threshold is set at 60% of the national median equivalised household disposable income.
-//		System.out.println("Median EDI " + median + " Poverty threshold " + atRiskOfPovertyThreshold);
-
-        //For use in charts
-        for(Pair<BenefitUnit, Double> pairHouse_Income: arrHouse_eqHouseholdDispIncome) {
-            BenefitUnit house = pairHouse_Income.getFirst();
-            if(house.getEquivalisedDisposableIncomeYearly() < atRiskOfPovertyThreshold) {
-                house.setAtRiskOfPoverty(1);
-            }
-            else {
-                house.setAtRiskOfPoverty(0);
-            }
-        }
-
-    }
 
     private void calculateGiniCoefficients() {			//Called just before database dump of statistics entity
 
@@ -965,7 +909,4 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 		persistStatistics3 = val;
 	}
 
-    public void calculateAtRiskOfPoverty() {
-        calculateEquivalisedHouseholdDisposableIncome();
-    }
 }
