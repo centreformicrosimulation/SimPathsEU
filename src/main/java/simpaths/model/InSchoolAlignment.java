@@ -51,8 +51,17 @@ public class InSchoolAlignment implements IEvaluation {
     @Override
     public double evaluate(double[] args) {
 
-        persons.parallelStream()
-                .forEach(person -> person.inSchool(args[0]));
+        // Ensure each trial point is evaluated from lagged status (pure function for root search).
+        // IMPORTANT: only reset les_c4 for persons in the eligible age range (16-29).
+        // Resetting ALL persons would undo retirement and other status changes made
+        // earlier in the schedule (RetirementAlignment → ConsiderRetirement fires before this).
+        persons.parallelStream().forEach(person -> {
+            if (person.getDag() >= MIN_STUDENT_AGE && person.getDag() <= MAX_STUDENT_AGE
+                    && person.getLes_c4_lag1() != null) {
+                person.setLes_c4(person.getLes_c4_lag1());
+            }
+            person.inSchool(args[0]);
+        });
 
         return targetStudentShare - evalStudentShare();
     }
@@ -70,7 +79,7 @@ public class InSchoolAlignment implements IEvaluation {
         long numStudents = model.getPersons().stream()
                 .filter(person -> person.getLes_c4() != null)
                 .filter(person -> person.getDag() >= MIN_STUDENT_AGE && person.getDag() <= MAX_STUDENT_AGE)
-                .filter(person -> (!person.isToLeaveSchool() && !Les_c4.EmployedOrSelfEmployed.equals(person.getLes_c4()) && !Les_c4.NotEmployed.equals(person.getLes_c4()) && !Les_c4.Retired.equals(person.getLes_c4()))) // count number of students who are not supposed to leave school
+                .filter(person -> (!person.isToLeaveSchool() && Les_c4.Student.equals(person.getLes_c4()) ))
                 .count();
         long numPeople = model.getPersons().stream()
                 .filter(person -> person.getLes_c4() != null)

@@ -49,6 +49,12 @@ public class RootSearch {
                 } else {
                     target = xp;
                 }
+                // Re-evaluate at the chosen bound so that person state is
+                // consistent with the stored factor.  CheckBoundsForRoot
+                // evaluated both bounds, leaving state from the *last* one;
+                // without this call the simulation would continue with state
+                // from the wrong bound.
+                function.evaluate(target);
             }
         }
     }

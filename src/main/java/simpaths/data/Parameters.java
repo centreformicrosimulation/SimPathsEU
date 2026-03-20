@@ -211,19 +211,27 @@ public class Parameters {
     public static final int MinimumIterationsBeforeTestingConvergenceCriteria = 20;    //Run this number of iterations to accumulate estimates of (aggregate) labour supply (cross) elasticities before testing the convergence criterion (i.e. the norm of (supply * demand elasticities) matrix < 1)
     public static final int MaxConvergenceAttempts = 2 * MinimumIterationsBeforeTestingConvergenceCriteria;        //Allow the equilibrium convergence criterion to fail the test this number of times before potentially terminating the simulation.
     public static final double RateOfConvergenceFactor = 0.9;
-    public static final int MAX_EMPLOYMENT_ALIGNMENT = 5; // the amount by which the coefficient used in the employment alignment can be shifted up or down;
-
     //Childcare
     public static int MAX_CHILD_AGE_FOR_FORMAL_CARE = 14;
 
-    //Alignment parameters
+    //Alignment parameters — search bounds (max shift ± from starting value)
+    public static final double RETIREMENT_ALIGNMENT_BOUND = 3.0;
+    public static final double DISABILITY_ALIGNMENT_BOUND = 2.0;
+    public static final double IN_SCHOOL_ALIGNMENT_BOUND = 4.0;
+    public static final double EMPLOYMENT_ALIGNMENT_BOUND = 10.0;
+    public static final double PARTNERSHIP_ALIGNMENT_BOUND = 4.0;
+    public static final double FERTILITY_ALIGNMENT_BOUND = 10.0;
+
+    // Set to true to print root-search diagnostics (iteration tables, summaries) to console
+    public static final boolean LOG_ALIGNMENT_DETAILS = true;
+
+    //Alignment parameters — end years
     public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
     public static final int IN_SCHOOL_ALIGNMENT_END_YEAR = 2023;
     public static final int PARTNERSHIP_ALIGNMENT_END_YEAR = 2023;
     public static final int FERTILITY_ALIGNMENT_END_YEAR = 2040;
     public static final int RETIREMENT_ALIGNMENT_END_YEAR = 2023;
     public static final int DISABILITY_ALIGNMENT_END_YEAR = 2023;
-    public static final double FERTILITY_ALIGNMENT_BOUND = 10.0;
 
     // parameters to manage simulation of optimised decisions
     public static boolean projectLiquidWealth = false;
@@ -379,6 +387,10 @@ public class Parameters {
             utilityTimeAdjustmentCouples, utilityTimeAdjustmentACMales, utilityTimeAdjustmentACFemales, utilityTimeAdjustmentMaleWithDep, utilityTimeAdjustmentFemaleWithDep, upratingIndexMapRealWageGrowth, priceMapRealSavingReturns, priceMapRealDebtCostLow, priceMapRealDebtCostHigh,
             wageRateFormalSocialCare, socialCarePolicy, partneredShare, retiredShare, disabledShare, studentShare, employedShare, employedShareSingleMales, employedShareACMales, employedShareSingleFemales, employedShareACFemales, employedShareCouples, employedShareMaleWithDep, employedShareFemaleWithDep;
     public static Map<Integer, Double> partnershipAlignAdjustment, fertilityAlignAdjustment, retirementAlignAdjustment, studentsAlignAdjustment, disabilityAlignAdjustment;
+    // Snapshot of initial utility adjustment values loaded from time_series_factor.xlsx,
+    // preserved so that activity alignment can cold-start from xlsx values each year
+    // instead of warm-starting from the previous year's (potentially overshooting) result.
+    private static final java.util.Map<TimeSeriesVariable, java.util.Map<Integer, Double>> initialUtilityAdjustments = new java.util.EnumMap<>(TimeSeriesVariable.class);
     public static MultiKeyMap upratingFactorsMap = new MultiKeyMap<>();
 
     //Education level projections
@@ -2000,11 +2012,15 @@ public class Parameters {
         utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_smales", 1);
         utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acmales", 1);
         utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acfemales", 1);
-        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_sFemales", 1);
+        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_sfemales", 1);
         utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_couples", 1);
         utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_malewdep", 1);
         utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_femalewdep", 1);
         utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_all", 1);
+
+        // Snapshot initial utility adjustment values from xlsx before alignment can overwrite them.
+        // Activity alignment uses these as cold-start values each year to avoid whiplash oscillation.
+        snapshotInitialUtilityAdjustments();
 
         // rebase indices to base year defined by BASE_PRICE_YEAR
         rebaseIndexMap(TimeSeriesVariable.GDP);
@@ -2215,6 +2231,48 @@ public class Parameters {
 
     public static double getTimeSeriesValue(int year, TimeSeriesVariable timeSeriesVariable) {
         return getTimeSeriesValue(year, null, null, timeSeriesVariable);
+    }
+
+    /**
+     * Returns the initial utility adjustment value loaded from time_series_factor.xlsx,
+     * ignoring any overwrites made by alignment during the simulation.
+     * Falls back to 0.0 if no initial value was recorded for the given year/variable.
+     */
+    public static double getInitialUtilityAdjustment(int year, TimeSeriesVariable timeSeriesVariable) {
+        java.util.Map<Integer, Double> yearMap = initialUtilityAdjustments.get(timeSeriesVariable);
+        if (yearMap == null) return 0.0;
+        Double val = yearMap.get(year);
+        return (val != null) ? val : 0.0;
+    }
+
+    /**
+     * Snapshots the initial utility adjustment values from the just-loaded xlsx maps
+     * into {@link #initialUtilityAdjustments} so they are preserved even after
+     * alignment overwrites the live maps via putTimeSeriesValue.
+     */
+    private static void snapshotInitialUtilityAdjustments() {
+        TimeSeriesVariable[] utilityVars = {
+                TimeSeriesVariable.UtilityAdjustmentSingleMales,
+                TimeSeriesVariable.UtilityAdjustmentSingleFemales,
+                TimeSeriesVariable.UtilityAdjustmentCouples,
+                TimeSeriesVariable.UtilityAdjustmentACMales,
+                TimeSeriesVariable.UtilityAdjustmentACFemales,
+                TimeSeriesVariable.UtilityAdjustmentMaleWithDep,
+                TimeSeriesVariable.UtilityAdjustmentFemaleWithDep,
+        };
+        for (TimeSeriesVariable tsv : utilityVars) {
+            java.util.Map<Integer, Double> yearMap = new java.util.HashMap<>();
+            MultiKeyCoefficientMap liveMap = getTimeSeriesValueMap(tsv);
+            if (liveMap != null) {
+                for (int year = startYear; year <= endYear; year++) {
+                    Object val = liveMap.getValue(year);
+                    if (val != null) {
+                        yearMap.put(year, ((Number) val).doubleValue());
+                    }
+                }
+            }
+            initialUtilityAdjustments.put(tsv, yearMap);
+        }
     }
 
     public static double getTimeSeriesValue(int year, String stringKey1, TimeSeriesVariable timeSeriesVariable) {
