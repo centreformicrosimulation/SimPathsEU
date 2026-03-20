@@ -54,7 +54,6 @@ import simpaths.model.taxes.Match;
 import simpaths.model.taxes.Matches;
 import simpaths.model.taxes.database.TaxDonorDataParser;
 
-import static simpaths.data.Parameters.FERTILITY_ALIGNMENT_BOUND;
 
 
 /**
@@ -174,9 +173,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     //	@GUIparameter(description = "If checked, will align fertility")
     private boolean alignFertility = true;
-    private boolean alignRetirement = false;
+    private boolean alignRetirement = true;
 
-    private boolean alignDisability = false;
+    private boolean alignDisability = true;
     private boolean alignEducation = false; //Set to true to align level of education
 
     private boolean alignInSchool = true; //Set to true to align share of students among 16-29 age group
@@ -837,7 +836,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
                 if (alignInSchool) {
                     inSchoolAlignment();
-                    System.out.println("Proportion of students will be aligned.");
                 }
             }
             case EducationLevelAlignment -> {
@@ -1481,17 +1479,22 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         RetirementAlignment retirementAlignment = new RetirementAlignment(persons);
         if (getYear() > Parameters.RETIREMENT_ALIGNMENT_END_YEAR) {
             double frozen = getFrozenRetirementAdjustmentAtEnd();
-            System.out.println("Retirement alignment skipped after " + Parameters.RETIREMENT_ALIGNMENT_END_YEAR
-                    + "; holding adjustment at " + frozen);
+            // alignment period ended; hold at frozen value
             return;
         }
-        double retirementAdjustment = getRetirementAdjustment(getYear());
-        RootSearch search = getRootSearch(retirementAdjustment, retirementAlignment, 1.0E-2, 1.0E-2, 10); // epsOrdinates and epsFunction determine the stopping condition for the search. For retirementAlignment error term is the difference between target and observed share of partnered individuals.
+        // Warm-start from the previously solved year to stabilise/accelerate yearly root search.
+        double retirementAdjustment;
+        if (getYear() > startYear) {
+            retirementAdjustment = Parameters.getTimeSeriesValue(getYear() - 1, TimeSeriesVariable.RetirementAdjustment);
+        } else {
+            retirementAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.RetirementAdjustment);
+        }
+        RootSearch search = getRootSearch(retirementAdjustment, retirementAlignment, 1.0E-2, 1.0E-2, Parameters.RETIREMENT_ALIGNMENT_BOUND);
 
         // update and exit
-        if (search.isTargetAltered()) {
-            Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.RetirementAdjustment); // If adjustment is altered from the initial value, update the map
-            System.out.println("Retirement adjustment value was " + search.getTarget()[0]);
+        Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.RetirementAdjustment);
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] Retirement               | year=%d | adjustment=%.6f%n", getYear(), search.getTarget()[0]);
         }
     }
 
@@ -1499,31 +1502,24 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         DisabilityAlignment disabilityAlignment = new DisabilityAlignment(persons);
         if (getYear() > Parameters.DISABILITY_ALIGNMENT_END_YEAR) {
             double frozen = getFrozenDisabilityAdjustmentAtEnd();
-            System.out.println("Disability alignment skipped after " + Parameters.DISABILITY_ALIGNMENT_END_YEAR
-                    + "; holding adjustment at " + frozen);
+            // alignment period ended; hold at frozen value
             return;
         }
-        double disabilityAdjustment = getDisabilityAdjustment(getYear());
-
-        System.out.println("Disability alignment has started");
-        // start timer
-        Instant beforeDsbltRS2 = Instant.now();
-
-        RootSearch search = getRootSearch(disabilityAdjustment, disabilityAlignment, 5.0E-3, 5.0E-3, 2);
-
-        // update and exit
-        if (search.isTargetAltered()) {
-            Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.DisabilityAdjustment); // If adjustment is altered from the initial value, update the map
-            System.out.println("Disability adjustment value was " + search.getTarget()[0]);
+        // Warm-start from the previously solved year to stabilise/accelerate yearly root search.
+        double disabilityAdjustment;
+        if (getYear() > startYear) {
+            disabilityAdjustment = Parameters.getTimeSeriesValue(getYear() - 1, TimeSeriesVariable.DisabilityAdjustment);
+        } else {
+            disabilityAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.DisabilityAdjustment);
         }
 
-        // stop timer
-        Instant afterDsbltRS2 = Instant.now();
+        RootSearch search = getRootSearch(disabilityAdjustment, disabilityAlignment, 5.0E-3, 5.0E-3, Parameters.DISABILITY_ALIGNMENT_BOUND);
 
-        // display time to complete
-        Duration durationTotalRS2 = Duration.between(beforeDsbltRS2, afterDsbltRS2);
-        System.out.println("Disability alignment completed in " +
-                String.format("%.3f", (double)durationTotalRS2.toSeconds()/60.0) + " minutes");
+        // update and exit
+        Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.DisabilityAdjustment);
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] Disability               | year=%d | adjustment=%.6f%n", getYear(), search.getTarget()[0]);
+        }
     }
 
     public void activityAlignmentMacroShock() {
@@ -1551,12 +1547,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 persons, benefitUnits, coefficientMaps, regressorsToModify, initialUtilityAdjustment
         );
 
-        RootSearch search = getRootSearch(initialUtilityAdjustment, activityAlignment, 5.0E-1, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
+        RootSearch search = getRootSearch(initialUtilityAdjustment, activityAlignment, 5.0E-1, 5.0E-3, Parameters.EMPLOYMENT_ALIGNMENT_BOUND);
 
         if (search.isTargetAltered()) {
             double newAdjustment = search.getTarget()[0];
             Parameters.putTimeSeriesValue(getYear(), newAdjustment, TimeSeriesVariable.UtilityAdjustment);
-            System.out.println("Utility adjustment for all types was " + newAdjustment);
         }
     }
 
@@ -1570,41 +1565,31 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             OccupancyExtended occupancy, // benefit unit occupancy extended to allow all types used in labour supply module
             String occupancyLabel // displays the type of benefit unit to which adjustment is applied
     ) {
-        //double utilityAdjustment = Parameters.getValuePreferPrev(getYear(), adjustmentMap);
-        double utilityAdjustment = Parameters.getTimeSeriesValue(getYear(), adjustmentMap);
-        System.out.println("Utility adjustment for " + occupancyLabel + " has started");
+        // Use the initial value from time_series_factor.xlsx as the cold start each year,
+        // rather than the previous year's alignment result, to prevent whiplash oscillation
+        // where overshooting in one year causes overcorrection in the next.
+        double utilityAdjustment = Parameters.getInitialUtilityAdjustment(getYear(), adjustmentMap);
 
-        // start timer
-        Instant beforeRS2 = Instant.now();
-
-
-        ActivityAlignmentV2 activityAlignment = new ActivityAlignmentV2(benefitUnits, coefficientMap, regressionCoefficientName, occupancy);
-        RootSearch2 search = getRootSearch2(utilityAdjustment, activityAlignment, 0.5, 5.0E-3, Parameters.MAX_EMPLOYMENT_ALIGNMENT);
-        // epsFunction tolerance is set to 0.5% seem to be sufficient
-
-        System.out.println("=== Root Search Summary ===");
-        System.out.println("Root found at: " + search.getTarget()[0]);
-        System.out.println("Target altered: " + search.isTargetAltered());
-        System.out.println("Iterations: " + search.getIterationCount());
-
-        for (RootSearch2.IterationInfo it : search.getIterationHistory()) {
-            System.out.printf("Iter %3d | x=% .6f | f(x)=% .3e | step=% .3e | funcTol=%-5s | ordTol=%-5s%n",
-                    it.getIteration(), it.getX(), it.getFx(), it.getStep(),
-                    it.isFuncTolMet(), it.isOrdTolMet());
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] Activity %-20s | year=%d | cold-start=%.4f%n",
+                    occupancyLabel, getYear(), utilityAdjustment);
         }
 
-        // stop timer
-        Instant afterRS2 = Instant.now();
+        ActivityAlignmentV2 activityAlignment = new ActivityAlignmentV2(benefitUnits, coefficientMap, regressionCoefficientName, occupancy);
+        RootSearch2 search = getRootSearch2(utilityAdjustment, activityAlignment, 0.5, 5.0E-3, Parameters.EMPLOYMENT_ALIGNMENT_BOUND);
 
-        // display time to complete
-        Duration durationTotalRS2 = Duration.between(beforeRS2, afterRS2);
-        System.out.println("Utility adjustment for " + occupancyLabel + " completed in " +
-                String.format("%.3f", (double)durationTotalRS2.toSeconds()/60.0) + " minutes");
-
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] Activity %-20s | result=%.6f | altered=%s | iters=%d%n",
+                    occupancyLabel, search.getTarget()[0], search.isTargetAltered(), search.getIterationCount());
+            for (RootSearch2.IterationInfo it : search.getIterationHistory()) {
+                System.out.printf("  iter %2d | x=% .6f | f(x)=% .3e | step=% .3e | funcTol=%-5s | ordTol=%-5s%n",
+                        it.getIteration(), it.getX(), it.getFx(), it.getStep(),
+                        it.isFuncTolMet(), it.isOrdTolMet());
+            }
+        }
 
         if (search.isTargetAltered()) {
             Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], adjustmentMap);
-            System.out.println("Utility adjustment for " + occupancyLabel + " was " + search.getTarget()[0]);
         }
 
     }
@@ -1687,26 +1672,30 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         if (getYear() > Parameters.PARTNERSHIP_ALIGNMENT_END_YEAR) {
             double frozen = getFrozenPartnershipAdjustmentAtEnd();
-            System.out.println("Partnership alignment skipped after " + Parameters.PARTNERSHIP_ALIGNMENT_END_YEAR
-                    + "; holding adjustment at " + frozen);
+            // alignment period ended; hold at frozen value
             return;
         }
 
-        // define limits of search algorithm
-        double partnershipAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.PartnershipAdjustment);
-        double minVal = Math.max(-4.0, - partnershipAdjustment - 4.0);
-        double maxVal = Math.min(4.0, - partnershipAdjustment + 4.0);
+        // Warm-start from the previously solved year to stabilise/accelerate yearly root search.
+        double partnershipAdjustment;
+        if (getYear() > startYear) {
+            partnershipAdjustment = Parameters.getTimeSeriesValue(getYear() - 1, TimeSeriesVariable.PartnershipAdjustment);
+        } else {
+            partnershipAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.PartnershipAdjustment);
+        }
+        double minVal = Math.max(-Parameters.PARTNERSHIP_ALIGNMENT_BOUND, - partnershipAdjustment - Parameters.PARTNERSHIP_ALIGNMENT_BOUND);
+        double maxVal = Math.min(Parameters.PARTNERSHIP_ALIGNMENT_BOUND, - partnershipAdjustment + Parameters.PARTNERSHIP_ALIGNMENT_BOUND);
 
         // run search
-        RootSearch search = getRootSearch(0.0, minVal, maxVal, partnershipAlignment, 5.0E-3, 5.0E-3); // epsOrdinates and epsFunction determine the stopping condition for the search. For partnershipAlignment error term is the difference between target and observed share of partnered individuals.
+        RootSearch search = getRootSearch(partnershipAdjustment, minVal, maxVal, partnershipAlignment, 5.0E-3, 5.0E-3); // epsOrdinates and epsFunction determine the stopping condition for the search. For partnershipAlignment error term is the difference between target and observed share of partnered individuals.
 
         // check result
         //double val = partnershipAlignment.evaluate(search.getTarget());
 
         // update and exit
-        if (search.isTargetAltered()) {
-            Parameters.setAlignmentValue(getYear(), search.getTarget()[0], AlignmentVariable.PartnershipAlignment); // If adjustment is altered from the initial value, update the map
-            System.out.println("Partnership adjustment value was " + search.getTarget()[0]);
+        Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.PartnershipAdjustment);
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] Partnership               | year=%d | adjustment=%.6f%n", getYear(), search.getTarget()[0]);
         }
     }
 
@@ -1802,17 +1791,22 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         InSchoolAlignment inSchoolAlignment = new InSchoolAlignment(persons);
         if (getYear() > Parameters.IN_SCHOOL_ALIGNMENT_END_YEAR) {
             double frozen = getFrozenInSchoolAdjustmentAtEnd();
-            System.out.println("InSchool alignment skipped after " + Parameters.IN_SCHOOL_ALIGNMENT_END_YEAR
-                    + "; holding adjustment at " + frozen);
+            // alignment period ended; hold at frozen value
             return;
         }
-        double inSchoolAdjustment = getInSchoolAdjustment(getYear());
-        RootSearch search = getRootSearch(inSchoolAdjustment, inSchoolAlignment, 1.0E-2, 1.0E-2, 4); // epsOrdinates and epsFunction determine the stopping condition for the search. For inSchoolAlignment error term is the difference between target and observed share of partnered individuals.
+        // Warm-start from the previously solved year to stabilise/accelerate yearly root search.
+        double inSchoolAdjustment;
+        if (getYear() > startYear) {
+            inSchoolAdjustment = Parameters.getTimeSeriesValue(getYear() - 1, TimeSeriesVariable.InSchoolAdjustment);
+        } else {
+            inSchoolAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.InSchoolAdjustment);
+        }
+        RootSearch search = getRootSearch(inSchoolAdjustment, inSchoolAlignment, 1.0E-2, 1.0E-2, Parameters.IN_SCHOOL_ALIGNMENT_BOUND);
 
         // update and exit
-        if (search.isTargetAltered()) {
-            Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.InSchoolAdjustment); // If adjustment is altered from the initial value, update the map
-            System.out.println("InSchool adjustment value was " + search.getTarget()[0]);
+        Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.InSchoolAdjustment);
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] InSchool                  | year=%d | adjustment=%.6f%n", getYear(), search.getTarget()[0]);
         }
     }
 
@@ -1859,16 +1853,16 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         if (year < startYear) {
             return getFrozenPartnershipAdjustmentAtStart();
         }
-        return Parameters.getAlignmentValue(year, AlignmentVariable.PartnershipAlignment);
+        return Parameters.getTimeSeriesValue(year, TimeSeriesVariable.PartnershipAdjustment);
     }
 
     private double getFrozenPartnershipAdjustmentAtStart() {
-        return Parameters.getAlignmentValue(startYear, AlignmentVariable.PartnershipAlignment);
+        return Parameters.getTimeSeriesValue(startYear, TimeSeriesVariable.PartnershipAdjustment);
     }
 
     private double getFrozenPartnershipAdjustmentAtEnd() {
         if (lastPartnershipAdjustment == null) {
-            lastPartnershipAdjustment = Parameters.getAlignmentValue(Parameters.PARTNERSHIP_ALIGNMENT_END_YEAR, AlignmentVariable.PartnershipAlignment);
+            lastPartnershipAdjustment = Parameters.getTimeSeriesValue(Parameters.PARTNERSHIP_ALIGNMENT_END_YEAR, TimeSeriesVariable.PartnershipAdjustment);
         }
         return lastPartnershipAdjustment;
     }
@@ -1887,16 +1881,16 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         if (year < startYear) {
             return getFrozenFertilityAdjustmentAtStart();
         }
-        return Parameters.getAlignmentValue(year, AlignmentVariable.FertilityAlignment);
+        return Parameters.getTimeSeriesValue(year, TimeSeriesVariable.FertilityAdjustment);
     }
 
     private double getFrozenFertilityAdjustmentAtStart() {
-        return Parameters.getAlignmentValue(startYear, AlignmentVariable.FertilityAlignment);
+        return Parameters.getTimeSeriesValue(startYear, TimeSeriesVariable.FertilityAdjustment);
     }
 
     private double getFrozenFertilityAdjustmentAtEnd() {
         if (lastFertilityAdjustment == null) {
-            lastFertilityAdjustment = Parameters.getAlignmentValue(Parameters.FERTILITY_ALIGNMENT_END_YEAR, AlignmentVariable.FertilityAlignment);
+            lastFertilityAdjustment = Parameters.getTimeSeriesValue(Parameters.FERTILITY_ALIGNMENT_END_YEAR, TimeSeriesVariable.FertilityAdjustment);
         }
         return lastFertilityAdjustment;
     }
@@ -2080,36 +2074,28 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         if (getYear() > Parameters.FERTILITY_ALIGNMENT_END_YEAR) {
             double frozen = getFrozenFertilityAdjustmentAtEnd();
-            System.out.println("Fertility alignment skipped after " + Parameters.FERTILITY_ALIGNMENT_END_YEAR
-                    + "; holding adjustment at " + frozen);
+            // alignment period ended; hold at frozen value
             return;
         }
 
-        // define limits of search algorithm
-        double fertilityAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.FertilityAdjustment);
-        double minVal = Math.max(-FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment - FERTILITY_ALIGNMENT_BOUND);
-        double maxVal = Math.min(FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment + FERTILITY_ALIGNMENT_BOUND);
-
-        System.out.println("Fertility alignment has started");
-        // start timer
-        Instant beforeFrtltRS2 = Instant.now();
+        // Warm-start from the previously solved year to stabilise/accelerate yearly root search.
+        double fertilityAdjustment;
+        if (getYear() > startYear) {
+            fertilityAdjustment = Parameters.getTimeSeriesValue(getYear() - 1, TimeSeriesVariable.FertilityAdjustment);
+        } else {
+            fertilityAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.FertilityAdjustment);
+        }
+        double minVal = Math.max(-Parameters.FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment - Parameters.FERTILITY_ALIGNMENT_BOUND);
+        double maxVal = Math.min(Parameters.FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment + Parameters.FERTILITY_ALIGNMENT_BOUND);
 
         // run search
-        RootSearch search = getRootSearch(0.0, minVal, maxVal, fertilityAlignment, 5.0E-3, 5.0E-3); // epsOrdinates and epsFunction determine the stopping condition for the search. For partnershipAlignment error term is the difference between target and observed share of partnered individuals.
+        RootSearch search = getRootSearch(fertilityAdjustment, minVal, maxVal, fertilityAlignment, 5.0E-3, 5.0E-3); // epsOrdinates and epsFunction determine the stopping condition for the search. For partnershipAlignment error term is the difference between target and observed share of partnered individuals.
 
         // update and exit
-        if (search.isTargetAltered()) {
-            Parameters.setAlignmentValue(getYear(), search.getTarget()[0], AlignmentVariable.FertilityAlignment); // If adjustment is altered from the initial value, update the map
-            System.out.println("Fertility adjustment value was " + search.getTarget()[0]);
+        Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.FertilityAdjustment);
+        if (Parameters.LOG_ALIGNMENT_DETAILS) {
+            System.out.printf("[Alignment] Fertility                 | year=%d | adjustment=%.6f%n", getYear(), search.getTarget()[0]);
         }
-
-        // stop timer
-        Instant afterFrtltRS2 = Instant.now();
-
-        // display time to complete
-        Duration durationTotalRS2 = Duration.between(beforeFrtltRS2, afterFrtltRS2);
-        System.out.println("Fertiility alignment completed in " +
-                String.format("%.3f", (double)durationTotalRS2.toSeconds()/60.0) + " minutes");
     }
 
 

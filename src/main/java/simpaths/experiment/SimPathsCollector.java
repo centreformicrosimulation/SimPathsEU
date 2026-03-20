@@ -31,7 +31,7 @@ import microsim.statistics.IDoubleSource;
 import simpaths.data.Parameters;
 import simpaths.data.statistics.Statistics;
 import simpaths.data.statistics.Statistics2;
-import simpaths.data.statistics.Statistics3;
+import simpaths.data.statistics.AlignmentAdjustmentFactors;
 import simpaths.model.Person;
 import simpaths.model.enums.Region;
 
@@ -55,7 +55,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
     private boolean persistStatistics2 = true;
 
     @GUIparameter(description="Report alignment adjustments")
-    private boolean persistStatistics3 = true;
+    private boolean persistAlignmentAdjustmentFactors = true;
 
     @GUIparameter(description="Toggle to turn database persistence on/off")
     private boolean exportToDatabase = false;
@@ -89,7 +89,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private Statistics2 stats2;
 
-    private Statistics3 stats3;
+    private AlignmentAdjustmentFactors alignmentAdjustmentFactors;
 
     private GiniPersonalGrossEarnings giniPersonalGrossEarnings;
 
@@ -113,7 +113,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     private DataExport exportStatistics2;
 
-    private DataExport exportStatistics3;
+    private DataExport exportAlignmentAdjustmentFactors;
 
     protected MultiTraceFunction.Double fGiniPersonalGrossEarningsNational;
 
@@ -149,7 +149,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         DumpHouseholds,
         DumpStatistics,
         DumpStatistics2,
-		DumpStatistics3,
+		DumpAlignmentAdjustmentFactors,
     }
 
 
@@ -210,10 +210,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
                 log.error(e.getMessage());
             }
             break;
-		case DumpStatistics3:
-			stats3.update(model);
+		case DumpAlignmentAdjustmentFactors:
+			alignmentAdjustmentFactors.update(model);
 			try {
-				exportStatistics3.export();
+				exportAlignmentAdjustmentFactors.export();
 			} catch (Exception e) {
 				log.error(e.getMessage());
 			}
@@ -233,7 +233,7 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
         stats = new Statistics();
         stats2 = new Statistics2();
-        stats3 = new Statistics3();
+        alignmentAdjustmentFactors = new AlignmentAdjustmentFactors();
 
         //For export to database or .csv files.
         if(persistPersons)
@@ -246,8 +246,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             exportStatistics = new DataExport(stats, exportToDatabase, exportToCSV);
         if (persistStatistics2)
             exportStatistics2 = new DataExport(stats2, exportToDatabase, exportToCSV);
-        if (persistStatistics3)
-            exportStatistics3 = new DataExport(stats3, exportToDatabase, exportToCSV);
+        if (persistAlignmentAdjustmentFactors)
+            exportAlignmentAdjustmentFactors = new DataExport(alignmentAdjustmentFactors, exportToDatabase, exportToCSV);
 
 
         if (calculateGiniCoefficients) {
@@ -304,8 +304,8 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
             getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpStatistics2), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
         }
 
-		if (persistStatistics3) {
-			getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpStatistics3), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
+		if (persistAlignmentAdjustmentFactors) {
+			getEngine().getEventQueue().scheduleRepeat(new SingleTargetEvent(this, Processes.DumpAlignmentAdjustmentFactors), model.getStartYear() + dataDumpStartTime, ordering, dataDumpTimePeriod);
 		}
 
         if (persistPersons) {
@@ -911,10 +911,10 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
 
     public void setStats2(Statistics2 stats2) { this.stats2 = stats2; }
 
-	public Statistics3 getStats3() { return stats3; }
+	public AlignmentAdjustmentFactors getAlignmentAdjustmentFactors() { return alignmentAdjustmentFactors; }
 
-	public void setStats3(Statistics3 stats3) {
-		this.stats3 = stats3;
+	public void setAlignmentAdjustmentFactors(AlignmentAdjustmentFactors alignmentAdjustmentFactors) {
+		this.alignmentAdjustmentFactors = alignmentAdjustmentFactors;
 	}
 
     public boolean isExportToDatabase() {
@@ -957,12 +957,12 @@ public class SimPathsCollector extends AbstractSimulationCollectorManager implem
         persistStatistics2 = val;
     }
 
-	public boolean isPersistStatistics3() {
-		return persistStatistics3;
+	public boolean isPersistAlignmentAdjustmentFactors() {
+		return persistAlignmentAdjustmentFactors;
 	}
 
-	public void setPersistStatistics3(boolean val) {
-		persistStatistics3 = val;
+	public void setPersistAlignmentAdjustmentFactors(boolean val) {
+		persistAlignmentAdjustmentFactors = val;
 	}
 
     public void calculateAtRiskOfPoverty() {
