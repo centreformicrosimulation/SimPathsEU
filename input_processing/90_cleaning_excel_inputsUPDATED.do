@@ -28,7 +28,7 @@ local passthrough "Info Gof"
 
 * Workbooks to process (filenames WITHOUT extension, without country suffix)
 local workbooks ///
-"reg_education reg_health reg_partnership reg_fertility reg_home_ownership reg_leaveParentalHome reg_retirement reg_income reg_wages reg_labourSupplyUtility reg_RMSE reg_employmentSelection"
+"reg_education reg_health reg_partnership reg_fertility reg_home_ownership reg_leave_parental_home reg_retirement reg_income reg_wages reg_labourSupplyUtility reg_RMSE reg_employmentSelection"
 
 foreach wb of local workbooks {
     di as txt "--------------------------------------------"
@@ -64,7 +64,7 @@ foreach wb of local workbooks {
     if "`wb'" == "reg_partnership"           local models "U1 U2"
     if "`wb'" == "reg_fertility"             local models "F1"
     if "`wb'" == "reg_home_ownership"        local models "HO1"
-    if "`wb'" == "reg_leaveParentalHome"     local models "P1"
+    if "`wb'" == "reg_leave_parental_home"     local models "P1"
     if "`wb'" == "reg_retirement"            local models "R1a R1b"
     if "`wb'" == "reg_income"                local models "I1a I1b"
     if "`wb'" == "reg_wages"                 local models "W1fa W1ma W1fb W1mb"

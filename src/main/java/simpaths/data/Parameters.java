@@ -1211,7 +1211,7 @@ public class Parameters {
         coeffCovarianceIncomeI1b = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_income.xlsx"), "I1b", 1);
 
         //Leaving parental home
-        coeffCovarianceLeaveHomeP1 = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_leaveParentalHome.xlsx"), "P1", 1);
+        coeffCovarianceLeaveHomeP1 = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_leave_parental_home.xlsx"), "P1", 1);
 
         //Homeownership
         coeffCovarianceHomeownership = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "reg_home_ownership.xlsx"), "HO1", 1);
