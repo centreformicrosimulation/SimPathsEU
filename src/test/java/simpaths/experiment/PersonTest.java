@@ -170,6 +170,31 @@ public class PersonTest {
         }
     }
 
+    @Nested
+    @DisplayName("RegressorTests: Child Dummies")
+    class RegressorTests {
+
+        @Test
+        @DisplayName("D_Children_L1 matches D_Children when both periods have children")
+        public void dChildrenLagMatchesCurrentWhenChildrenPresent() {
+            Mockito.when(mockBenefitUnit.getNumberChildrenAll()).thenReturn(2);
+            Mockito.when(mockBenefitUnit.getNumberChildrenAll_lag1()).thenReturn(2);
+
+            assertEquals(1.0, testPerson.getDoubleValue(Person.DoublesVariables.D_Children));
+            assertEquals(1.0, testPerson.getDoubleValue(Person.DoublesVariables.D_Children_L1));
+        }
+
+        @Test
+        @DisplayName("D_Children_L1 matches D_Children when both periods have no children")
+        public void dChildrenLagMatchesCurrentWhenNoChildrenPresent() {
+            Mockito.when(mockBenefitUnit.getNumberChildrenAll()).thenReturn(0);
+            Mockito.when(mockBenefitUnit.getNumberChildrenAll_lag1()).thenReturn(0);
+
+            assertEquals(0.0, testPerson.getDoubleValue(Person.DoublesVariables.D_Children));
+            assertEquals(0.0, testPerson.getDoubleValue(Person.DoublesVariables.D_Children_L1));
+        }
+    }
+
     // -------------------------------------------------------------------------
     // NESTED TESTS FOR inSchool()
     // -------------------------------------------------------------------------
