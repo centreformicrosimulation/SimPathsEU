@@ -1,12 +1,12 @@
 # This file can be used to override defaults for multirun arguments.
 # Arguments of the SimPathsMultiRun object overridden by the command-line
 
-maxNumberOfRuns: 2
+maxNumberOfRuns: 5
 executeWithGui: false
 randomSeed: 1821
 startYear: 2011
-endYear: 2018
-popSize: 30000
+endYear: 2023
+popSize: 50000
 
 # Arguments passed to the SimPathsModel
 model_args:

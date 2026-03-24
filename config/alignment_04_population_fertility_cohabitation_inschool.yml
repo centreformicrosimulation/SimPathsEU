@@ -1,0 +1,11 @@
+# Scenario 4: population + fertility + cohabitation + in-school alignment
+
+model_args:
+  alignPopulation: true
+  alignFertility: true
+  alignCohabitation: true
+  alignInSchool: true
+  alignEmployment: false
+  alignRetirement: false
+  alignDisability: false
+  alignEducation: false

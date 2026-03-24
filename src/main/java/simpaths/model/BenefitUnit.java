@@ -1,6 +1,8 @@
 package simpaths.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import microsim.agent.Weight;
 import microsim.data.db.PanelEntityKey;
 import microsim.engine.SimulationEngine;
@@ -45,7 +47,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             @JoinColumn(name="prid", referencedColumnName = "working_id")
     })
     private Household household;
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "benefitUnit")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "benefitUnit")
+    @Fetch(FetchMode.SUBSELECT)
     private Set<Person> members = new LinkedHashSet<>();
 
     // identifiers
