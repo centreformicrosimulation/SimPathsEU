@@ -9,7 +9,6 @@
 *       * drop rows that are completely empty (type-safe, no egen)
 *       * drop columns that are completely empty (type-safe)
 ****************************************************
-
 clear all
 set more off
 
@@ -17,7 +16,6 @@ set more off
 * USER SETTINGS
 ****************************************************/
 local country "PL"
-
 local INPUT_DIR  "/Users/pineapple/IdeaProjects/SimPathsEU_JAN/input_processing/excel_files_`country'"
 local OUTPUT_DIR "/Users/pineapple/IdeaProjects/SimPathsEU_JAN/input_processing/clean_excel_files_`country'"
 local EXT "xlsx"
@@ -28,19 +26,36 @@ capture mkdir "`OUTPUT_DIR'"
 * Sheets to copy unchanged (if present)
 local passthrough "Info Gof"
 
-* Workbooks to process (filenames WITHOUT extension)
+* Workbooks to process (filenames WITHOUT extension, without country suffix)
 local workbooks ///
-"reg_education reg_health reg_partnership reg_fertility reg_home_ownership reg_leaveParentalHome reg_retirement reg_income reg_wages reg_labourSupplyUtility reg_RMSE reg_employmentSelection"
-
+"reg_education reg_health reg_partnership reg_fertility reg_home_ownership reg_leave_parental_home reg_retirement reg_income reg_wages reg_labourSupplyUtility reg_RMSE reg_employmentSelection"
 
 foreach wb of local workbooks {
-
     di as txt "--------------------------------------------"
     di as txt "Processing workbook: `wb'"
     di as txt "--------------------------------------------"
 
-    local infile  "`INPUT_DIR'/`wb'.`EXT'"
-    local outfile "`OUTPUT_DIR'/`wb'.`EXT'"   // same name, different folder
+    * Try without suffix first, then with _`country' suffix
+    local infile ""
+    capture confirm file "`INPUT_DIR'/`wb'.`EXT'"
+    if !_rc {
+        local infile "`INPUT_DIR'/`wb'.`EXT'"
+    }
+    else {
+        capture confirm file "`INPUT_DIR'/`wb'_`country'.`EXT'"
+        if !_rc {
+            local infile "`INPUT_DIR'/`wb'_`country'.`EXT'"
+            di as txt "  Found with country suffix: `wb'_`country'.`EXT'"
+        }
+    }
+
+    if "`infile'" == "" {
+        di as err "WARNING: Input file not found (`wb'.`EXT' or `wb'_`country'.`EXT') -> skipping"
+        continue
+    }
+
+    * Output always uses the base name (no country suffix)
+    local outfile "`OUTPUT_DIR'/`wb'.`EXT'"
 
     * Define model sheets for each workbook
     local models ""
@@ -49,7 +64,7 @@ foreach wb of local workbooks {
     if "`wb'" == "reg_partnership"           local models "U1 U2"
     if "`wb'" == "reg_fertility"             local models "F1"
     if "`wb'" == "reg_home_ownership"        local models "HO1"
-    if "`wb'" == "reg_leaveParentalHome"     local models "P1"
+    if "`wb'" == "reg_leave_parental_home"     local models "P1"
     if "`wb'" == "reg_retirement"            local models "R1a R1b"
     if "`wb'" == "reg_income"                local models "I1a I1b"
     if "`wb'" == "reg_wages"                 local models "W1fa W1ma W1fb W1mb"
@@ -63,7 +78,6 @@ foreach wb of local workbooks {
     * A) Copy Info + Gof unchanged
     **********************/
     foreach s of local passthrough {
-
         capture noisily import excel "`infile'", sheet("`s'") firstrow clear
         if _rc {
             di as txt "  Passthrough sheet `s' not found -> skipping"
@@ -89,7 +103,6 @@ foreach wb of local workbooks {
     * B) Clean model sheets
     **********************/
     foreach s of local models {
-
         di as txt "  Cleaning sheet: `s'"
 
         capture noisily import excel "`infile'", sheet("`s'") firstrow clear
@@ -101,13 +114,11 @@ foreach wb of local workbooks {
         * 1) Drop rows that are completely empty (NO egen; type-safe)
         gen byte __row_has_any = 0
         foreach v of varlist _all {
-
             capture confirm numeric variable `v'
             if !_rc {
                 replace __row_has_any = 1 if __row_has_any==0 & `v' < .
                 continue
             }
-
             capture confirm string variable `v'
             if !_rc {
                 replace __row_has_any = 1 if __row_has_any==0 & strlen(itrim(`v')) > 0
@@ -119,14 +130,12 @@ foreach wb of local workbooks {
 
         * 2) Drop columns that are completely empty (type-safe)
         foreach v of varlist _all {
-
             capture confirm numeric variable `v'
             if !_rc {
                 quietly count if `v' < .
                 if r(N) == 0 drop `v'
                 continue
             }
-
             capture confirm string variable `v'
             if !_rc {
                 quietly count if strlen(itrim(`v')) > 0

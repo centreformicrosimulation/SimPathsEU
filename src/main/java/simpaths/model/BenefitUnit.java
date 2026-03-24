@@ -1,6 +1,8 @@
 package simpaths.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import microsim.agent.Weight;
 import microsim.data.db.PanelEntityKey;
 import microsim.engine.SimulationEngine;
@@ -45,7 +47,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             @JoinColumn(name="prid", referencedColumnName = "working_id")
     })
     private Household household;
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "benefitUnit")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "benefitUnit")
+    @Fetch(FetchMode.SUBSELECT)
     private Set<Person> members = new LinkedHashSet<>();
 
     // identifiers
@@ -1749,7 +1752,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         HoursMaleByAgeMaleSquared,
         HoursMaleByNumberChildren,
         HoursMaleByDelderly,
-        HoursMaleByDregion,
         HoursFemale,
         HoursFemaleByAgeFemale,
         HoursFemaleByAgeFemaleSquared,
@@ -1758,7 +1760,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         HoursFemaleByDchildren7_12,
         HoursFemaleByDchildren13_17,
         HoursFemaleByDelderly,
-        HoursFemaleByDregion,
 
         FixedCostMaleByNumberChildren,
         FixedCostMaleByDchildren2under,
@@ -1785,11 +1786,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         MaleLeisure_DChildren2Under,
         MaleLeisure_MaleDeh_c3_Low,
         MaleLeisure_MaleDeh_c3_Medium,
-        MaleLeisure_PL2,
-        MaleLeisure_PL4,
-        MaleLeisure_PL5,
-        MaleLeisure_PL6,
-        MaleLeisure_PL10,
 
         MaleLeisure_MaleAge50Above,         //Male leisure interacted with dummy for age >= 50
         MaleLeisure_FemaleLeisure,            //Male leisure interacted with female leisure
@@ -1802,11 +1798,6 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         FemaleLeisure_DChildren2Under,
         FemaleLeisure_FemaleDeh_c3_Low,
         FemaleLeisure_FemaleDeh_c3_Medium,
-        FemaleLeisure_PL2,
-        FemaleLeisure_PL4,
-        FemaleLeisure_PL5,
-        FemaleLeisure_PL6,
-        FemaleLeisure_PL10,
 
         FemaleLeisure_FemaleAge50Above,         //Female leisure interacted with dummy for age >= 50
         FixedCostMale,

@@ -15,6 +15,7 @@ import java.util.random.RandomGenerator;
 
 // import plug-in packages
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.Transient;
@@ -75,6 +76,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     // default simulation parameters
     private static Logger log = Logger.getLogger(SimPathsModel.class);
+    private static EntityManagerFactory emfStartingPopulation = null;
 
     //@GUIparameter(description = "Country to be simulated")
     private Country country;
@@ -169,20 +171,18 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     @GUIparameter(description = "tick to project mortality based on gender, age, and year specific probabilities")
     private boolean projectMortality = true;
 
-    private boolean alignPopulation = true; //TODO: routine fails to replicate results for minor variations between simulations
+    private boolean alignPopulation = false; //TODO: routine fails to replicate results for minor variations between simulations
 
-    //	@GUIparameter(description = "If checked, will align fertility")
-    private boolean alignFertility = true;
-    private boolean alignRetirement = true;
+    private boolean alignFertility = false; // Align births to fertility targets.
+    private boolean alignCohabitation = false; // Align couple/cohabitation shares.
+    private boolean alignInSchool = false; // Align student shares within the 16-29 age group.
+    private boolean alignEmployment = false; // Align employment prevalence to target employment shares.
 
-    private boolean alignDisability = true;
-    private boolean alignEducation = false; //Set to true to align level of education
+    private boolean alignRetirement = false; // Align retirement prevalence to target retired shares.
+    private boolean alignDisability = false; // Align disability prevalence to target disabled shares.
 
-    private boolean alignInSchool = true; //Set to true to align share of students among 16-29 age group
-
-    private boolean alignCohabitation = true; //Set to true to align share of couples (cohabiting individuals)
-
-    private boolean alignEmployment = true; //true; //Set to true to align employment share
+    private boolean alignEducation = false; // Align educational attainment to target education shares.
+    
 
     private Double lastInSchoolAdjustment = null;
     private Double lastPartnershipAdjustment = null;
@@ -3181,10 +3181,12 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         try {
 
             // query database
-            EntityManager em = Persistence.createEntityManagerFactory("starting-population").createEntityManager();
+            if (emfStartingPopulation == null)
+                emfStartingPopulation = Persistence.createEntityManagerFactory("starting-population");
+            EntityManager em = emfStartingPopulation.createEntityManager();
             txn = em.getTransaction();
             txn.begin();
-            String query = "SELECT processed FROM Processed processed LEFT JOIN FETCH processed.households households LEFT JOIN FETCH households.benefitUnits benefitUnits LEFT JOIN FETCH benefitUnits.members members WHERE processed.startYear = " + startYear + " AND processed.popSize = " + popSize + " AND processed.country = " + country + " AND processed.noTargets = " + ignoreTargetsAtPopulationLoad + " ORDER BY households.key.id";
+            String query = "SELECT processed FROM Processed processed WHERE processed.startYear = " + startYear + " AND processed.popSize = " + popSize + " AND processed.country = " + country + " AND processed.noTargets = " + ignoreTargetsAtPopulationLoad;
 
             List<Processed> processedList = em.createQuery(query).getResultList();
             if (!processedList.isEmpty()) {
@@ -3192,6 +3194,13 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 if (processedList.size()>1)
                     throw new RuntimeException("more than one relevant dataset returned from database");
                 processed = processedList.get(0);
+                // Force-initialize all collections within the session (triggers SUBSELECT fetches:
+                // one query per collection level, no Cartesian product)
+                for (Household hh : processed.getHouseholds()) {
+                    for (BenefitUnit bu : hh.getBenefitUnits()) {
+                        bu.getMembers().size();
+                    }
+                }
                 processed.resetDependents();
             }
 
@@ -3220,8 +3229,15 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             EntityManager em = Persistence.createEntityManagerFactory("starting-population", propertyMap).createEntityManager();
             txn = em.getTransaction();
             txn.begin();
-            String query = "SELECT households FROM Household households LEFT JOIN FETCH households.benefitUnits benefitUnits LEFT JOIN FETCH benefitUnits.members members";
+            String query = "SELECT households FROM Household households";
             households = em.createQuery(query).getResultList();
+            // Force-initialize all collections within the session (triggers SUBSELECT fetches:
+            // one query per collection level, no Cartesian product)
+            for (Household hh : households) {
+                for (BenefitUnit bu : hh.getBenefitUnits()) {
+                    bu.getMembers().size();
+                }
+            }
 
             // close database connection
             em.close();
@@ -3245,7 +3261,9 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         EntityTransaction txn = null;
         try {
 
-            EntityManager em = Persistence.createEntityManagerFactory("starting-population").createEntityManager();
+            if (emfStartingPopulation == null)
+                emfStartingPopulation = Persistence.createEntityManagerFactory("starting-population");
+            EntityManager em = emfStartingPopulation.createEntityManager();
             txn = em.getTransaction();
             txn.begin();
 

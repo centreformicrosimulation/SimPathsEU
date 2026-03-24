@@ -2090,6 +2090,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Age,
         Constant, 						// For the constant (intercept) term of the regression
         D_Children,
+        D_Children_L1,
         D_Children_2under,				// Indicator (dummy variables for presence of children of certain ages in the benefitUnit)
         D_Children_3_6,
         D_Children_7_12,
@@ -2106,9 +2107,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dcpagdf_L1, 					//Lag(1) of age difference between partners
         Dcpyy_L1, 						//Lag(1) number of years in partnership
         Dcpst_Partnered,				//Partnered
+        Dcpst_Partnered_L1,
         Dcpst_Single,					//Single never married
         Dcpst_Single_L1, 				//Lag(1) of partnership status is Single
-        Dcrisis,
         Ded,
         Ded_L1,
 
@@ -2176,6 +2177,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Dgn,							//Gender: returns 1 if male
         Dgn_baseline,
         Dgn_Dag,
+        Dgn_Les_c4_NotEmployed_L1,
+        Dgn_Les_c4_Retired_L1,
+        Dgn_Les_c4_Student_L1,
         Dgn_Lhw_L1,
         Dhe,							//Health status
         Dhe_Poor,
@@ -2268,11 +2272,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         NotEmployed_L1,
         NumberChildren,
         NumberChildren_2under,
-        OnleaveBenefits,
         OtherIncome,
         Parents,
-        PartTime_AND_Ld_children_3under,			//Interaction term conditional on if the person had a child under 3 at the previous time-step
-        PartTimeRate,
         PersistentPoverty,
         PersistentUnemployed,
 
@@ -2294,7 +2295,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         ReceiveCare_L1,
         ResStanDev,
         Retired,
-        Sfr, 										//Scenario : fertility rate This retrieves the fertility rate by region and year to use in fertility regression
         sIndex,
         sIndexNormalised,
         Single,
@@ -2493,6 +2493,12 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case Dcpst_Partnered -> {
                 return (Dcpst.Partnered.equals(getDcpst())) ? 1.0 : 0.0;
+            }
+
+            case Dcpst_Partnered_L1 -> {
+                if (dcpst_lag1 != null) {
+                    return dcpst_lag1.equals(Dcpst.Partnered) ? 1. : 0.;
+                } else return 0.;
             }
             case Dcpst_Single_L1 -> {
                 if (dcpst_lag1 != null) {
@@ -2837,6 +2843,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case D_Children -> {
                 return (getNumberChildrenAll() > 0) ? 1. : 0.;
             }
+            case D_Children_L1 -> {
+                return (getNumberChildrenAll_lag1() > 0) ? 1. : 0.;
+            }
             case FertilityRate -> {
                 if (ioFlag)
                     return Parameters.getFertilityProjectionsByYear(getYear());
@@ -2891,25 +2900,25 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return (Les_c4.NotEmployed.equals(les_c4_lag1)) ? 1.0 : 0.0;
             }
             case Les_c4_NotEmployed_Dgn -> {
-                return (Les_c4.NotEmployed.equals(les_c4_lag1) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
+                return (Les_c4.NotEmployed.equals(les_c4) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
             }
 
             case Les_c4_Retired_L1 -> {
                 return (Les_c4.Retired.equals(les_c4_lag1)) ? 1.0 : 0.0;
             }
             case Les_c4_Retired_Dgn -> {
-                return (Les_c4.Retired.equals(les_c4_lag1) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
+                return (Les_c4.Retired.equals(les_c4) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
             }
             case Les_c4_Student_Dgn -> {
+                return (Les_c4.Student.equals(les_c4) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
+            }
+            case Dgn_Les_c4_Student_L1, Les_c4_Student_L1_Dgn -> {
                 return (Les_c4.Student.equals(les_c4_lag1) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
             }
-            case Les_c4_Student_L1_Dgn -> {
-                return (Les_c4.Student.equals(les_c4_lag1) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
-            }
-            case Les_c4_NotEmployed_L1_Dgn -> {
+            case Dgn_Les_c4_NotEmployed_L1, Les_c4_NotEmployed_L1_Dgn -> {
                 return (Les_c4.NotEmployed.equals(les_c4_lag1) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
             }
-            case Les_c4_Retired_L1_Dgn -> {
+            case Dgn_Les_c4_Retired_L1, Les_c4_Retired_L1_Dgn -> {
                 return (Les_c4.Retired.equals(les_c4_lag1) && Gender.Male.equals(dgn)) ? 1.0 : 0.0;
             }
             case Les_c3_NotEmployed_L1 -> {
@@ -3247,7 +3256,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
 
             case Year_transformed_E1a -> {
-                return (Parameters.isFixTimeTrendR1a && getYear() >= Parameters.timeTrendStopsInE1a) ? (double) Parameters.timeTrendStopsInE1a - 2000 : (double) getYear() - 2000;
+                return (Parameters.isFixTimeTrendE1a && getYear() >= Parameters.timeTrendStopsInE1a) ? (double) Parameters.timeTrendStopsInE1a - 2000 : (double) getYear() - 2000;
             }
             case Year_transformed_E1b -> {
                 return (Parameters.isFixTimeTrendE1b && getYear() >= Parameters.timeTrendStopsInE1b) ? (double) Parameters.timeTrendStopsInE1b - 2000 : (double) getYear() - 2000;
@@ -3525,7 +3534,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return Region.HUA.equals(getRegion()) ? 1.0 : 0.0;
             }
             case HUB -> {
-                return Region.HUC.equals(getRegion()) ? 1.0 : 0.0;
+                return Region.HUB.equals(getRegion()) ? 1.0 : 0.0;
             }
             case HUC -> {
                 return Region.HUC.equals(getRegion()) ? 1.0 : 0.0;
