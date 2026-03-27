@@ -133,6 +133,7 @@ public class SimPathsStart implements ExperimentBuilder {
 		engine.setup();
 		if (!showGui) {
 			engine.startSimulation();
+			System.exit(0);
 		}
 	}
 
