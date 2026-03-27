@@ -2029,7 +2029,7 @@ public class Parameters {
 
         // load year-specific fiscal policy parameters
         socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "social care", 1);
-        partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "partnered_share_targets_BUlogic.xlsx"), "Sheet1", 1);
+        partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "partnered_share_targets_BUlogic.xlsx"), "partnered", 1);
         retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "retirement_targets.xlsx"), "retirement", 1);
         disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "disability_targets.xlsx"), "disability", 1);
         studentShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "inSchool_targets.xlsx"), "students", 1);

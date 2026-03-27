@@ -44,9 +44,9 @@ set more off
   USER SETTINGS  – edit these three locals to run for a different country
 ============================================================================*/
 local country         "PL"
-local CLEAN_INPUT_DIR "/Users/pineapple/IdeaProjects/SimPathsEU_JAN/input_processing/clean_excel_files_`country'"
-local RAW_INPUT_DIR   "/Users/pineapple/IdeaProjects/SimPathsEU_JAN/input/`country'"
-local OUTPUT_FILE     "/Users/pineapple/IdeaProjects/SimPathsEU_JAN/documentation/SimPaths_lag_structure_full_`country'.xlsx"
+local CLEAN_INPUT_DIR "/Users/pineapple/IdeaProjects/SimPathsEU_APR/input_processing/clean_excel_files_`country'"
+local RAW_INPUT_DIR   "/Users/pineapple/IdeaProjects/SimPathsEU_APR/input/`country'"
+local OUTPUT_FILE     "/Users/pineapple/IdeaProjects/SimPathsEU_APR/documentation/SimPaths_lag_structure_full_`country'.xlsx"
 
 
 /*============================================================================
@@ -92,7 +92,7 @@ local proc_keys ///
     W1fa_sel W1ma_sel W1fb_sel W1mb_sel
 
 * ---- Workbooks ----
-local proc_wb_P1                reg_leaveParentalHome
+local proc_wb_P1                reg_leave_parental_home
 local proc_wb_R1a               reg_retirement
 local proc_wb_R1b               reg_retirement
 local proc_wb_E1a               reg_education
