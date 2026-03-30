@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JInternalFrame;
@@ -26,6 +28,7 @@ import microsim.data.MultiKeyCoefficientMap;
 import microsim.data.excel.ExcelAssistant;
 import microsim.engine.ExperimentBuilder;
 import microsim.engine.SimulationEngine;
+import microsim.event.SystemEventType;
 import microsim.gui.shell.MicrosimShell;
 
 // import SimPaths packages
@@ -60,7 +63,6 @@ public class SimPathsStart implements ExperimentBuilder {
 	 *
 	 */
 	public static void main(String[] args) {
-
 
 		if (!parseCommandLineArgs(args)) {
 			// If parseCommandLineArgs returns false (indicating help option is provided), exit main
@@ -132,9 +134,40 @@ public class SimPathsStart implements ExperimentBuilder {
 		engine.setExperimentBuilder(experimentBuilder);
 		engine.setup();
 		if (!showGui) {
-			engine.startSimulation();
-			System.exit(0);
+			runHeadlessSimulation(engine);
 		}
+	}
+
+	private static void runHeadlessSimulation(SimulationEngine engine) {
+		CountDownLatch simulationFinished = new CountDownLatch(1);
+		AtomicReference<Throwable> simulationFailure = new AtomicReference<>();
+
+		// Headless JAS-mine runs are asynchronous, so wait for the model's End event before quitting.
+		engine.addEngineListener(type -> {
+			if (type == SystemEventType.End || type == SystemEventType.Shutdown) {
+				simulationFinished.countDown();
+			}
+		});
+		engine.setUncaughtExceptionHandler((thread, throwable) -> {
+			simulationFailure.compareAndSet(null, throwable);
+			simulationFinished.countDown();
+		});
+
+		engine.startSimulation();
+
+		try {
+			simulationFinished.await();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new RuntimeException("Interrupted while waiting for the simulation to finish.", e);
+		}
+
+		Throwable failure = simulationFailure.get();
+		if (failure != null) {
+			throw new RuntimeException("Simulation failed before completion.", failure);
+		}
+
+		engine.quit();
 	}
 
 	private static boolean parseCommandLineArgs(String[] args) {
