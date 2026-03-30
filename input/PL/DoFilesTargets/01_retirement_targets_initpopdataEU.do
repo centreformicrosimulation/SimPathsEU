@@ -30,7 +30,8 @@ clear all
 * --- DEFINE GLOBALS -------------------------------------------------------- *
 
 * Working directory (project root)
-global dir_w "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
+//global dir_w "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
+global dir_w "/Users/pineapple/IdeaProjects/SimPathsEU_APR"
 
 
 * Country code and time span for which targets are produced
@@ -39,14 +40,19 @@ global min_year 2011
 global max_year 2023
 
 * Directory structure
-global dir_input_data   "$dir_w/${country}/input_data"
-global dir_working_data "$dir_w/${country}/working_data"
-global dir_output       "$dir_w/${country}"
+global dir_input_data   "$dir_w/input/${country}/InitialPopulations"
+global dir_working_data "$dir_w/input/${country}/DoFilesTargets/working_data"
+global dir_output       "$dir_w/input/${country}/DoFilesTargets"
 
 
 * Initialise file that will store retirement shares for all years
-clear
-save "${dir_working_data}/retirement_shares_${country}_initpopdata.dta", emptyok replace
+
+capture confirm file "${dir_working_data}/retirement_shares_${country}_initpopdata.dta"
+if _rc {
+    clear
+    save "${dir_working_data}/retirement_shares_${country}_initpopdata.dta", emptyok
+}
+
 
 * ========================================================================== *
 
@@ -83,17 +89,34 @@ use "${dir_working_data}/retirement_shares_${country}_initpopdata.dta", clear
 sort year
 
 * Create/overwrite Excel file that will hold all sheets
-putexcel set "${dir_output}/retirement_targets.xlsx", replace
+putexcel set "${dir_output}/alignment_targets_retirement.xlsx", replace
 
 
-* Build a matrix of all rows for the two variables (year, retired_share)
-mkmat year retired_share, matrix(M)
+* Build separate matrices for year and share (written with explicit Excel formats)
+mkmat year,          matrix(Yr)
+mkmat retired_share, matrix(Sh)
 
 * Point putexcel at the output file and the group-specific sheet
-putexcel set "${dir_output}/retirement_targets.xlsx", sheet("retirement") modify
+putexcel set "${dir_output}/alignment_targets_retirement.xlsx", sheet("retirement") modify
 
 * Write headers
 putexcel A1=("year") B1=("retired_share")
 
-* Write data from matrix M (Stata 15+ supports varlists here)
-putexcel A2=matrix(M)
+* Write data: years as integers, shares with 7 decimal places
+putexcel A2=matrix(Yr), nformat("0")
+putexcel B2=matrix(Sh), nformat("0.000000")
+
+* --- INFO SHEET ------------------------------------------------------------ *
+local today "`c(current_date)'"
+putexcel set "${dir_output}/alignment_targets_retirement.xlsx", sheet("info") modify
+putexcel A1=("Field")       B1=("Value")
+putexcel A2=("Target")      B2=("Share of retired persons among adults with non-missing labour status")
+putexcel A3=("Population")  B3=("All persons in the initial population with non-missing les_c4")
+putexcel A4=("Definition")  B4=("les_c4 == 4 (Retired)")
+putexcel A5=("Age filter")  B5=("None (all ages included)")
+putexcel A6=("Weighting")   B6=("Population weights (dwt)")
+putexcel A7=("Source")      B7=("EU-SILC-based SimPaths initial populations")
+putexcel A8=("Country")     B8=("${country}")
+putexcel A9=("Years")       B9=("${min_year}-${max_year}")
+putexcel A10=("Do-file")    B10=("01_retirement_targets_initpopdataEU.do")
+putexcel A11=("Produced")   B11=("`today'")

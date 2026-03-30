@@ -398,7 +398,6 @@ public class Parameters {
     private static MultiKeyCoefficientMap projectionsLowEdu;            //Alignment projections for Medium Education
 
     //Student share projections for alignment
-    private static MultiKeyCoefficientMap studentShareProjections;        //Alignment projections for Student share of population
 
     //Employment alignment targets
     private static MultiKeyCoefficientMap employmentAlignment;
@@ -1145,7 +1144,6 @@ public class Parameters {
         projectionsHighEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "High", 1);
         projectionsLowEdu = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_educLevel.xlsx"), "Low", 1);
 
-        studentShareProjections = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "align_student_under30.xlsx"), "Student_share", 1);
         //Employment alignment
         //employmentAlignment = ExcelAssistant.loadCoefficientMap("input/align_employment.xlsx", countryString, 2);
 
@@ -1567,8 +1565,6 @@ public class Parameters {
     //-----------------------------------------------------------------------------------------------------
 
     public static MultiKeyCoefficientMap getBenefitUnitVariableNames() { return benefitUnitVariableNames; }
-
-    public static MultiKeyCoefficientMap getStudentShareProjections() { return studentShareProjections; }
 
     public static MultinomialRegression<Education> getRegEducationLevel() {
         return regEducationLevel;
@@ -2029,19 +2025,19 @@ public class Parameters {
 
         // load year-specific fiscal policy parameters
         socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "social care", 1);
-        partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "partnered_share_targets_BUlogic.xlsx"), "partnered", 1);
-        retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "retirement_targets.xlsx"), "retirement", 1);
-        disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "disability_targets.xlsx"), "disability", 1);
-        studentShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "inSchool_targets.xlsx"), "students", 1);
+        partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_partnered_share.xlsx"), "partnered", 1);
+        retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_retirement.xlsx"), "retirement", 1);
+        disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_disability.xlsx"), "disability", 1);
+        studentShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_inSchool.xlsx"), "students", 1);
 
         //Employment targets
-        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "Single_male", 1);
-        employedShareACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "SingleAC_Males", 1);
-        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "Single_female", 1);
-        employedShareACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "SingleAC_Females", 1);
-        employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "Couples", 1);
-        employedShareMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "SingleDep_Males", 1);
-        employedShareFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "employment_targets.xlsx"), "SingleDep_Females", 1);
+        employedShareSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "Single_male", 1);
+        employedShareACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "SingleAC_Males", 1);
+        employedShareSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "Single_female", 1);
+        employedShareACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "SingleAC_Females", 1);
+        employedShareCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "Couples", 1);
+        employedShareMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "SingleDep_Males", 1);
+        employedShareFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_employment.xlsx"), "SingleDep_Females", 1);
     }
 
     public static void instantiateAlignmentMaps() {
