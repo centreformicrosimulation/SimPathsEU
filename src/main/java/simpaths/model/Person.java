@@ -1432,7 +1432,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             else{
 
             double score = Parameters.getRegEducationE1b().getScore(this, Person.DoublesVariables.class);
-            double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
+            double prob = Parameters.getRegEducationE1b().getProbability(score);
 
             if (labourInnov < prob) {
                 // Become a student *OUTCOME E*
@@ -1604,8 +1604,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (Parameters.enableIntertemporalOptimisations)
             throw new RuntimeException("request to update non-labour income in person object when wealth is explicit");
 
-        // ypncp: inverse hyperbolic sine of capital income per month
+
         // ypnoab: inverse hyperbolic sine of pension income per month
+        // when intertemporal optimisation is disabled, pension income is assumed to be zero,
+        // code below ensures any inherited values from initial populations are not persisted, irrelevant of person's activity status
+        double pensionIncLevel = 0.;
+        ypnoab = Parameters.asinh(pensionIncLevel);
+
+        // ypncp: inverse hyperbolic sine of capital income per month
         // yptciihs_dv: inverse hyperbolic sine of capital and pension income per month
         // variables updated with labour supply when enableIntertemporalOptimisations (as retirement can affect wealth and pension income)
         if (dag >= Parameters.MIN_AGE_TO_HAVE_INCOME) {
@@ -1621,10 +1627,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 ypncp = Parameters.asinh(capinclevel); //Capital income amount, asinh
             } else ypncp = 0.; //If no capital income, set amount to 0
 
-            if (Les_c4.Retired.equals(les_c4)) {
-                double pensionIncLevel = 0.;
-                ypnoab = Parameters.asinh(pensionIncLevel);
-            }
+//            if (Les_c4.Retired.equals(les_c4)) {
+//                double pensionIncLevel = 0.;
+//                ypnoab = Parameters.asinh(pensionIncLevel);
+//            }
         }
 
         double capital_income_multiplier = model.getSavingRate()/Parameters.SAVINGS_RATE;
