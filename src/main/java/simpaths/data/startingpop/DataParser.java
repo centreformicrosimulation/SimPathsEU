@@ -207,7 +207,8 @@ public class DataParser {
 				//SYSTEM : Data collection wave
 				+ "ALTER TABLE " + personTable + " ALTER COLUMN swv RENAME TO system_wave;"
 
-				+ "ALTER TABLE " + personTable + " ALTER COLUMN lhw RENAME TO " + Parameters.HOURS_WORKED_WEEKLY + ";"
+				+ "ALTER TABLE " + personTable + " ALTER COLUMN lhw RENAME TO hoursWorkedWeekly;"
+				+ "ALTER TABLE " + personTable + " ALTER COLUMN ydisp RENAME TO ydisp_pers_initial;"
 				+ "ALTER TABLE " + personTable + " ADD work_sector VARCHAR_IGNORECASE DEFAULT 'Private_Employee';"		//Here we assume by default that people are employed - this is because the MultiKeyMaps holding households have work_sector as a key, and cannot handle null values for work_sector. TODO: Need to check that this assumption is OK.
 				+ "ALTER TABLE " + personTable + " ALTER COLUMN idmother BIGINT;"
 				+ "UPDATE " + personTable + " SET idmother = null WHERE idmother = -9;"

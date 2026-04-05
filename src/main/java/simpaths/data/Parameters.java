@@ -143,6 +143,7 @@ public class Parameters {
             "obs_earnings_hourly", //initial value of hourly earnings from the data
             "l1_obs_earnings_hourly", //lag(1) of initial value of hourly earnings from the data
             "liwwh",                    // number of years in employment
+            "ydisp",                    //real personal monthly disposable income
             //"yem", 					//employment income
             //"yse", 					//self-employment income
 

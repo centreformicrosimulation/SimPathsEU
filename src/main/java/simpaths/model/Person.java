@@ -166,6 +166,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Transient private Integer dcpyy_lag1; //Lag(1) of number of years in partnership
     private Double ypnbihs_dv; // asinh of personal non-benefit income per month
     @Transient private Double ypnbihs_dv_lag1; //Lag(1) of gross personal non-benefit income
+    @Column(name="ydisp_pers_initial") private Double ydispPersInitial; // real personal monthly disposable income (from initial population)
     private Double yptciihs_dv; // asinh of non-employment non-benefit income per month (capital and pension)
     private Double ypncp; // asinh of capital income per month
     private Double ypnoab; // asinh of pension income per month
@@ -603,11 +604,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void setAdditionalFieldsInInitialPopulation() {
 
         if (labourSupplyWeekly==null) //check this condition is necessary
-            labourSupplyWeekly = Labour.convertHoursToLabour(model.getInitialHoursWorkedWeekly().get(key.getId()).intValue(), getDgn());
+            labourSupplyWeekly = Labour.convertHoursToLabour(hoursWorkedWeekly != null ? hoursWorkedWeekly : 0, getDgn());
         receivesBenefitsFlag_L1 = receivesBenefitsFlag;
         labourSupplyWeekly_L1 = getLabourSupplyWeekly();
-
-        hoursWorkedWeekly = null;	//Not to be updated as labourSupplyWeekly contains this information.
 
         // NEW: seed immutable parents from existing IDs for EVERYONE (adults and minors)
         if (idMotherImmutable == null) idMotherImmutable = idMother;
@@ -4340,6 +4339,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setYpnbihs_dv(Double val) {
         ypnbihs_dv = val;
+    }
+
+    public Double getYdispPersInitial() {
+        return ydispPersInitial;
     }
 
     public Double getYpnbihs_dv_lag1() {
