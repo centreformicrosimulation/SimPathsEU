@@ -1632,8 +1632,8 @@ public class Parameters {
     public static double getFertilityRateByRegionYear(Region region, int year) {
         int yearHere = Math.max(fertilityProjectionsMinYear, Math.min(fertilityProjectionsMaxYear, year));
         //We calculate the rate per woman, but the standard to report (and what is used in the estimates) is per 1000 hence multiplication
-    //    return 1000*((Number)fertilityRateByRegionYear.get(region, yearHere)).doubleValue();
-        return ((Number)fertilityRateByRegionYear.get(region, yearHere)).doubleValue();
+         return 1000*((Number)fertilityRateByRegionYear.get(region, yearHere)).doubleValue();
+        //return ((Number)fertilityRateByRegionYear.get(region, yearHere)).doubleValue();
     }
 
     public static double getUnemploymentRateByGenderEducationAgeYear(Gender gender, Education education, int age, int year) {

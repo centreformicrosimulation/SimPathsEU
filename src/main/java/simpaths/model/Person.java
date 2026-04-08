@@ -963,6 +963,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void retire() {
         if (toRetire) {
             setLes_c4(Les_c4.Retired);
+            dlltsd = Indicator.False;
         }
     }
 
