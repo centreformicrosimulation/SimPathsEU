@@ -2936,14 +2936,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         // PL specific cases
         if (Objects.equals(COUNTRY_STRING, "PL")){
             switch ((Regressors) variableID) {
-                case IncomeDiv100_EL4 -> {
-                    return Region.EL4.equals(getRegion()) ? ((getDisposableIncomeMonthlyUpratedToBasePriceYear() -
-                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * 1.e-2) : 0.0;
-                }
-                case IncomeDiv100_EL7 -> {
-                    return Region.EL7.equals(getRegion()) ? ((getDisposableIncomeMonthlyUpratedToBasePriceYear() -
-                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * 1.e-2) : 0.0;
-                }
+
                 case Hrs_40plus_Male -> {
                     return (getMale() != null && (getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) || getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2))) ? 1. :0.;
                 }
@@ -2996,10 +2989,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Female_1 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1)) ? getFemale().getLiwwh() : 0.;
+                    // (Male=0, Female=cat1). For SingleAC females there is no male partner — treat absent male as Male=0.
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getFemale().getLiwwh() : 0.;
                 }
                 case LiwwhSq_Female_1 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Male_2 -> {
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2)) ? getMale().getLiwwh() : 0.;
@@ -3008,10 +3002,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Female_2 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2)) ? getFemale().getLiwwh() : 0.;
+                    // (Male=0, Female=cat2). For SingleAC females there is no male partner — treat absent male as Male=0.
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getFemale().getLiwwh() : 0.;
                 }
                 case LiwwhSq_Female_2 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Male_3 -> {
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3)) ? getMale().getLiwwh() : 0.;
@@ -3020,16 +3015,18 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Female_3 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3)) ? getFemale().getLiwwh() : 0.;
+                    // (Male=0, Female=cat3). For SingleAC females there is no male partner — treat absent male as Male=0.
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getFemale().getLiwwh() : 0.;
                 }
                 case LiwwhSq_Female_3 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Male_10 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getMale().getLiwwh() : 0.;
+                    // (Male=cat1, Female=0). For SingleAC males there is no female partner — treat absent female as Female=0.
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getMale().getLiwwh() : 0.;
                 }
                 case LiwwhSq_Male_10 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Female_10 -> {
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getFemale().getLiwwh() : 0.;
@@ -3074,10 +3071,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Male_20 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getMale().getLiwwh() : 0.;
+                    // (Male=cat2, Female=0). For SingleAC males there is no female partner — treat absent female as Female=0.
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getMale().getLiwwh() : 0.;
                 }
                 case LiwwhSq_Male_20 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Female_20 -> {
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getFemale().getLiwwh() : 0.;
@@ -3122,10 +3120,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Male_30 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getMale().getLiwwh() : 0.;
+                    // (Male=cat3, Female=0). For SingleAC males there is no female partner — treat absent female as Female=0.
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getMale().getLiwwh() : 0.;
                 }
                 case LiwwhSq_Male_30 -> {
-                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
                 }
                 case Liwwh_Female_30 -> {
                     return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_PL_3) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getFemale().getLiwwh() : 0.;
@@ -3209,22 +3208,28 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case IncomeDiv100_MeanPartnersAgeDiv100 -> {        //Income divided by 100 interacted with mean age of male and female in the household divided by 100
                 if(getFemale() == null) {        //Single so no need for mean age
-                    return getDisposableIncomeMonthlyUpratedToBasePriceYear() * getMale().getDag() * 1.e-4;
+                    return (getDisposableIncomeMonthlyUpratedToBasePriceYear()-
+                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getMale().getDag() * 1.e-4;
                 } else if(getMale() == null) {
-                    return getDisposableIncomeMonthlyUpratedToBasePriceYear() * getFemale().getDag() * 1.e-4;
+                    return (getDisposableIncomeMonthlyUpratedToBasePriceYear()-
+                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getFemale().getDag() * 1.e-4;
                 } else {        //Must be a couple, so use mean age
                     double meanAge = (getFemale().getDag() + getMale().getDag()) * 0.5;
-                    return getDisposableIncomeMonthlyUpratedToBasePriceYear() * meanAge * 1.e-4;
+                    return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
+                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * meanAge * 1.e-4;
                 }
             }
             case IncomeDiv100_MeanPartnersAgeSqDiv10000 -> {     //Income divided by 100 interacted with square of mean age of male and female in the household divided by 10000
                 if(getFemale() == null) {        //Single so no need for mean age
-                    return getDisposableIncomeMonthlyUpratedToBasePriceYear() * getMale().getDag() * getMale().getDag() * 1.e-6;
+                    return (getDisposableIncomeMonthlyUpratedToBasePriceYear()-
+                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getMale().getDag() * getMale().getDag() * 1.e-6;
                 } else if(getMale() == null) {
-                    return getDisposableIncomeMonthlyUpratedToBasePriceYear() * getFemale().getDag() * getFemale().getDag() * 1.e-6;
+                    return (getDisposableIncomeMonthlyUpratedToBasePriceYear()-
+                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getFemale().getDag() * getFemale().getDag() * 1.e-6;
                 } else {        //Must be a couple, so use mean age
                     double meanAge = (getFemale().getDag() + getMale().getDag()) * 0.5;
-                    return getDisposableIncomeMonthlyUpratedToBasePriceYear() * meanAge * meanAge * 1.e-6;
+                    return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
+                            getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear())* meanAge * meanAge * 1.e-6;
                 }
             }
             case IncomeDiv100_NChildren017, IncomeDiv100_dnc -> {                 //Income divided by 100 interacted with the number of children aged 0-17
@@ -3243,7 +3248,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly());
             }
             case MaleLeisure_IncomeDiv100 -> {
-                return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * getDisposableIncomeMonthlyUpratedToBasePriceYear() * 1.e-2;
+                return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * (getDisposableIncomeMonthlyUpratedToBasePriceYear()-
+                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * 1.e-2;
             }
             case MaleLeisure_MaleAgeDiv100 -> {                //Male Leisure interacted with age of male
                 return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * getMale().getDag() * 1.e-2;
@@ -3282,7 +3288,8 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly());
             }
             case FemaleLeisure_IncomeDiv100 -> {
-                return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * getDisposableIncomeMonthlyUpratedToBasePriceYear() * 1.e-2;
+                return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * (getDisposableIncomeMonthlyUpratedToBasePriceYear()-
+                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * 1.e-2;
             }
             case FemaleLeisure_FemaleAgeDiv100 -> {                //Female Leisure interacted with age of Female
                 return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * getFemale().getDag() * 1.e-2;
@@ -3556,19 +3563,19 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
             case IncomeDiv100_MaleAgeSqDiv10000 -> {
                 return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
-                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getMale().getDag() * 1.e-6;
+                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getMale().getDag() * getMale().getDag() * 1.e-6;
             }
             case IncomeDiv100_FemaleAgeDiv100 -> {
                 return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
-                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getFemale().getDag() * 1.e-4;
+                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getFemale().getDag()  * 1.e-4;
             }
             case IncomeDiv100_FemaleAgeSqDiv10000 -> {
                 return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
-                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getFemale().getDag() * 1.e-6;
+                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getFemale().getDag() * getFemale().getDag() * 1.e-6;
             }
             case IncomeDiv100_dnc02 -> {
                 return (getDisposableIncomeMonthlyUpratedToBasePriceYear() -
-                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getIndicatorChildren(0,1).ordinal() * 1.e-2;
+                        getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear()) * getIndicatorChildren(0,2).ordinal() * 1.e-2;
             }
 
 
@@ -3580,10 +3587,10 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                 return (getFemale() != null && (!getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? 1. :0.; // Note != ZERO condition
             }
             case MaleLeisure_dnc02 -> {
-                return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,1).ordinal();
+                return (Parameters.HOURS_IN_WEEK - getMale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
             }
             case FemaleLeisure_dnc02 -> {
-                return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,1).ordinal();
+                return (Parameters.HOURS_IN_WEEK - getFemale().getLabourSupplyHoursWeekly()) * getIndicatorChildren(0,2).ordinal();
 
             }
 
