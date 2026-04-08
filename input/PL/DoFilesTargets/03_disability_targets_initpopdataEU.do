@@ -30,8 +30,8 @@ clear all
 * --- DEFINE GLOBALS -------------------------------------------------------- *
 
 * Working directory (project root)
-global dir_w "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
-
+//global dir_w "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
+global dir_w "/Users/pineapple/IdeaProjects/SimPathsEU_APR"
 
 * Country code and time span for which targets are produced
 global country = "PL"
@@ -39,9 +39,9 @@ global min_year 2011
 global max_year 2023
 
 * Directory structure
-global dir_input_data   "$dir_w/${country}/input_data"
-global dir_working_data "$dir_w/${country}/working_data"
-global dir_output       "$dir_w/${country}"
+global dir_input_data   "$dir_w/input/${country}/InitialPopulations"
+global dir_working_data "$dir_w/input/${country}/DoFilesTargets/working_data"
+global dir_output       "$dir_w/input/${country}/DoFilesTargets"
 
 
 * Initialise file that will store disability shares for all years
@@ -83,17 +83,35 @@ use "${dir_working_data}/disability_shares_${country}_initpopdata.dta", clear
 sort year
 
 * Create/overwrite Excel file that will hold all sheets
-putexcel set "${dir_output}/disability_targets.xlsx", replace
+putexcel set "${dir_output}/alignment_targets_disability.xlsx", replace
 
 
-* Build a matrix of all rows for the two variables (year, disabled_share)
-mkmat year disabled_share, matrix(M)
+* Build separate matrices for year and share (written with explicit Excel formats)
+mkmat year,           matrix(Yr)
+mkmat disabled_share, matrix(Sh)
 
 * Point putexcel at the output file and the group-specific sheet
-putexcel set "${dir_output}/disability_targets.xlsx", sheet("disability") modify
+putexcel set "${dir_output}/alignment_targets_disability.xlsx", sheet("disability") modify
 
 * Write headers
 putexcel A1=("year") B1=("disabled_share")
 
-* Write data from matrix M (Stata 15+ supports varlists here)
-putexcel A2=matrix(M)
+* Write data: years as integers, shares with 7 decimal places
+putexcel A2=matrix(Yr), nformat("0")
+putexcel B2=matrix(Sh), nformat("0.000000")
+
+* --- INFO SHEET ------------------------------------------------------------ *
+local today "`c(current_date)'"
+putexcel set "${dir_output}/alignment_targets_disability.xlsx", sheet("info") modify
+putexcel A1=("Field")       B1=("Value")
+putexcel A2=("Target")      B2=("Share of disabled persons among those with non-missing disability status")
+putexcel A3=("Population")  B3=("All persons in the initial population with non-missing dlltsd")
+putexcel A4=("Definition")  B4=("dlltsd == 1 (long-term sick or disabled)")
+putexcel A5=("Age filter")  B5=("None (all ages included)")
+putexcel A6=("Weighting")   B6=("Population weights (dwt)")
+putexcel A7=("Note")        B7=("SimPaths H2 model only updates dlltsd for non-retired, non-student persons aged 16+; target denominator includes all ages and statuses")
+putexcel A8=("Source")      B8=("EU-SILC-based SimPaths initial populations")
+putexcel A9=("Country")     B9=("${country}")
+putexcel A10=("Years")      B10=("${min_year}-${max_year}")
+putexcel A11=("Do-file")    B11=("03_disability_targets_initpopdataEU.do")
+putexcel A12=("Produced")   B12=("`today'")

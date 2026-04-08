@@ -166,6 +166,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Transient private Integer dcpyy_lag1; //Lag(1) of number of years in partnership
     private Double ypnbihs_dv; // asinh of personal non-benefit income per month
     @Transient private Double ypnbihs_dv_lag1; //Lag(1) of gross personal non-benefit income
+    @Column(name="ydisp_pers_initial") private Double ydispPersInitial; // real personal monthly disposable income (from initial population)
     private Double yptciihs_dv; // asinh of non-employment non-benefit income per month (capital and pension)
     private Double ypncp; // asinh of capital income per month
     private Double ypnoab; // asinh of pension income per month
@@ -603,11 +604,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void setAdditionalFieldsInInitialPopulation() {
 
         if (labourSupplyWeekly==null) //check this condition is necessary
-            labourSupplyWeekly = Labour.convertHoursToLabour(model.getInitialHoursWorkedWeekly().get(key.getId()).intValue(), getDgn());
+            labourSupplyWeekly = Labour.convertHoursToLabour(hoursWorkedWeekly != null ? hoursWorkedWeekly : 0, getDgn());
         receivesBenefitsFlag_L1 = receivesBenefitsFlag;
         labourSupplyWeekly_L1 = getLabourSupplyWeekly();
-
-        hoursWorkedWeekly = null;	//Not to be updated as labourSupplyWeekly contains this information.
 
         // NEW: seed immutable parents from existing IDs for EVERYONE (adults and minors)
         if (idMotherImmutable == null) idMotherImmutable = idMother;
@@ -964,6 +963,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     public void retire() {
         if (toRetire) {
             setLes_c4(Les_c4.Retired);
+            dlltsd = Indicator.False;
         }
     }
 
@@ -1432,7 +1432,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             else{
 
             double score = Parameters.getRegEducationE1b().getScore(this, Person.DoublesVariables.class);
-            double prob = Parameters.getRegEducationE1b().getProbability(score + probitAdjustment);
+            double prob = Parameters.getRegEducationE1b().getProbability(score);
 
             if (labourInnov < prob) {
                 // Become a student *OUTCOME E*
@@ -1604,8 +1604,14 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (Parameters.enableIntertemporalOptimisations)
             throw new RuntimeException("request to update non-labour income in person object when wealth is explicit");
 
-        // ypncp: inverse hyperbolic sine of capital income per month
+
         // ypnoab: inverse hyperbolic sine of pension income per month
+        // when intertemporal optimisation is disabled, pension income is assumed to be zero,
+        // code below ensures any inherited values from initial populations are not persisted, irrelevant of person's activity status
+        double pensionIncLevel = 0.;
+        ypnoab = Parameters.asinh(pensionIncLevel);
+
+        // ypncp: inverse hyperbolic sine of capital income per month
         // yptciihs_dv: inverse hyperbolic sine of capital and pension income per month
         // variables updated with labour supply when enableIntertemporalOptimisations (as retirement can affect wealth and pension income)
         if (dag >= Parameters.MIN_AGE_TO_HAVE_INCOME) {
@@ -1621,10 +1627,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 ypncp = Parameters.asinh(capinclevel); //Capital income amount, asinh
             } else ypncp = 0.; //If no capital income, set amount to 0
 
-            if (Les_c4.Retired.equals(les_c4)) {
-                double pensionIncLevel = 0.;
-                ypnoab = Parameters.asinh(pensionIncLevel);
-            }
+//            if (Les_c4.Retired.equals(les_c4)) {
+//                double pensionIncLevel = 0.;
+//                ypnoab = Parameters.asinh(pensionIncLevel);
+//            }
         }
 
         double capital_income_multiplier = model.getSavingRate()/Parameters.SAVINGS_RATE;
@@ -4334,6 +4340,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public void setYpnbihs_dv(Double val) {
         ypnbihs_dv = val;
+    }
+
+    public Double getYdispPersInitial() {
+        return ydispPersInitial;
     }
 
     public Double getYpnbihs_dv_lag1() {

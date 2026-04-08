@@ -235,8 +235,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
     private double scalingFactor;
 
-    private Map<Long, Double> initialHoursWorkedWeekly;
-
     private LabourMarket labourMarket;
 
     public int tmpPeopleAssigned = 0;
@@ -2181,15 +2179,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 }
             }
 
-            initialHoursWorkedWeekly = new LinkedHashMap<Long, Double>();
-
-            //Add hours from initial population which is now different than donor
-            String query2 = "SELECT ID, " + Parameters.HOURS_WORKED_WEEKLY + " FROM PERSON";
-            ResultSet rs2 = stat.executeQuery(query2);
-            while (rs2.next()) {
-                initialHoursWorkedWeekly.put(rs2.getLong("ID"), rs2.getDouble(Parameters.HOURS_WORKED_WEEKLY));
-            }
-
             //If start year is higher than the last available population, calculate the uprating factor and apply it to the monetary values in the database:
             if (uprateInitialPopulation & isFirstRun) {
                 double upratingFactor =
@@ -2410,7 +2399,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // finalise
         System.out.println("Number of simulated individuals (persons.size()) is " + persons.size() + " living in " + benefitUnits.size() + " simulated benefitUnits.");
-        initialHoursWorkedWeekly = null;
         System.gc();
     }
 
@@ -2783,10 +2771,6 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 //	public void setAgeNonWorkPeopleRetire(Integer ageNonWorkPeopleRetire) {
 //		this.ageNonWorkPeopleRetire = ageNonWorkPeopleRetire;
 //	}
-
-    public Map<Long, Double> getInitialHoursWorkedWeekly() {
-        return initialHoursWorkedWeekly;
-    }
 
 //	public boolean isRefreshInputDatabase() {
 //		return refreshInputDatabase;

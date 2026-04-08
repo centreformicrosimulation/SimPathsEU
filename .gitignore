@@ -202,6 +202,7 @@ input/input.mv.db
 input/input.mv.db.new
 input/input.mv.db.old
 input/input.mv.db.original
+input/options.txt
 dependency-reduced-pom.xml
 .idea/vcs.xml
 input/EUROMODoutput/augmented1/

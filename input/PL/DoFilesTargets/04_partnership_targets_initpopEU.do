@@ -1,145 +1,162 @@
-version 17.0
+/*******************************************************************************
+* PROJECT:        SimPaths EU
+* SECTION:        ALIGNMENT PROCEDURES
+*
+* AUTHORS:        Mariia Vartuzova (MV)
+* LAST UPDATE:    11/03/2026
+* COUNTRY:        EU
+*
+* DATA:           Initial populations
+*
+* DESCRIPTION:    This do-file constructs partnership targets using initial
+*                population data. It:
+*                  - Imports initial population CSV files by year
+*                  - Infers partnership from BU co-residency logic
+*                    (not idpartner field), consistent with SimPaths
+*                    getPartner() — a person is partnered if at least one
+*                    other adult (dag >= 18) shares their benefit unit and
+*                    is neither their mother nor their father
+*                  - Computes the weighted share of partnered adults aged 18+
+*                  - Exports the results to Excel
+*
+* NOTE:           This EU version uses legacy variable names from the initial
+*                populations (e.g., idperson, idbenefitunit, idmother,
+*                idfather, dwt).
+*
+* SET-UP:         1. Update the working directory path (global dir_w)
+*                 2. Copy the relevant input data into the /input_data folder
+*                    under the country-specific subdirectory
+*
+*******************************************************************************/
+
 clear all
-set more off
 
-* Paths (edit if needed)
-local work_dir "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
-local country "PL"
-local input_dir  "`work_dir'/`country'/input_data"
 
-* ============================================================
-* 1) Load and append all initial population files 2011-2023
-* ============================================================
-tempfile appended
+* --- DEFINE GLOBALS -------------------------------------------------------- *
+
+* Working directory (project root)
+//global dir_w "/Users/pineapple/Library/CloudStorage/OneDrive-UniversityofEssex/WorkCEMPA/SimPathsEU/SimPathsTargets"
+global dir_w "/Users/pineapple/IdeaProjects/SimPathsEU_APR"
+
+* Country code and time span for which targets are produced
+global country = "PL"
+global min_year 2011
+global max_year 2023
+
+* Directory structure
+global dir_input_data   "$dir_w/input/${country}/InitialPopulations"
+global dir_working_data "$dir_w/input/${country}/DoFilesTargets/working_data"
+global dir_output       "$dir_w/input/${country}/DoFilesTargets"
+
+
+* Initialise file that will store partnered shares for all years
 clear
-save `appended', emptyok replace
+save "${dir_working_data}/partnered_shares_${country}_initpopdata.dta", emptyok replace
 
-forval yr = 2011/2023 {
-    capture import delimited using "`input_dir'/population_initial_`country'_`yr'.csv", ///
-        clear varnames(1) bindquote(strict)
-    if _rc != 0 {
-        di as error "WARNING: could not load population_initial_`country'_`yr'.csv — skipping"
-        continue
-    }
-    destring dag idperson idbenefitunit idmother idfather dwt, replace force
-    gen int file_year = `yr'
-    append using `appended'
-    save `appended', replace
+* ========================================================================== *
+
+// Loop over all years in the requested range
+foreach y of numlist $min_year/$max_year {
+
+	* Build file name for the given year and import initial population data
+	local file = subinstr("population_initial_${country}_YYYY.csv","YYYY","`y'",.)
+	import delimited using "${dir_input_data}/`file'", clear
+
+	bys idperson: keep if _n == 1 // keep one obs per idperson
+
+	* Ensure ID variables are numeric (needed for joinby and merge)
+	destring idperson idbenefitunit idmother idfather, replace force
+
+	* Keep only adults eligible for partnership and required variables
+	keep if dag >= 18
+	keep idbenefitunit idperson idmother idfather dwt
+
+	* Save full eligible population for later merge
+	tempfile eligible_pop
+	save `eligible_pop', replace
+
+	* --- Step A: build list of BU adult members for self-join ---
+	keep idbenefitunit idperson
+	rename idperson other_idperson
+	tempfile bu_adults
+	save `bu_adults', replace
+
+	* --- Step B: self-join on idbenefitunit ---
+	* Each person is expanded against all adults in their BU
+	use `eligible_pop', clear
+	joinby idbenefitunit using `bu_adults'
+
+	* Remove self-matches
+	drop if other_idperson == idperson
+
+	* Remove cases where the co-resident is this person's parent
+	drop if other_idperson == idmother | other_idperson == idfather
+
+	* Each remaining row means a qualifying co-resident exists
+	gen byte has_partner = 1
+
+	* Reduce to one row per person: partnered = 1 if any qualifying row
+	collapse (max) partnered = has_partner, by(idbenefitunit idperson)
+
+	* --- Step C: merge partnered flags back into full eligible population ---
+	* joinby silently drops persons with no qualifying co-resident, so we
+	* restore them from the saved eligible population and assign partnered = 0
+	tempfile partnered_flags
+	save `partnered_flags', replace
+
+	use `eligible_pop', clear
+	merge 1:1 idbenefitunit idperson using `partnered_flags', keep(master match) nogen
+	replace partnered = 0 if missing(partnered)
+
+	* Alignment target: weighted share of partnered adults
+	collapse (mean) partnered_share = partnered [pw = dwt]
+	gen year = `y'
+
+	* Append to cumulative file for all years
+	append using "${dir_working_data}/partnered_shares_${country}_initpopdata.dta"
+	duplicates drop
+	save "${dir_working_data}/partnered_shares_${country}_initpopdata.dta", replace
+
 }
 
-use `appended', clear
+* -------------------------------------------------------------------------- *
+* POST-PROCESSING: export aggregated results to Excel
+* -------------------------------------------------------------------------- *
 
-* ============================================================
-* 2) Define partnered share — BU membership logic
-*
-*  Eligible  : dag >= 18
-*  Partnered : there exists at least one OTHER adult (age >= 18)
-*              in the same benefit unit (file_year x idbenefitunit)
-*              who is NOT this person's mother or father
-*
-*  idpartner is NOT used — partnership is inferred purely from
-*  BU co-residency, consistent with getPartner() logic.
-* ============================================================
-keep if dag >= 18
+use "${dir_working_data}/partnered_shares_${country}_initpopdata.dta", clear
 
-* Keep only the variables needed for the join
-keep file_year idbenefitunit idperson idmother idfather dag dwt
+* Sort by year for neat export
+sort year
 
-* --- Step A: build list of BU adult members to self-join against ---
-preserve
-    keep file_year idbenefitunit idperson
-    rename idperson other_idperson
-    tempfile bu_adults
-    save `bu_adults', replace
-restore
+* Create/overwrite Excel file that will hold all sheets
+putexcel set "${dir_output}/alignment_targets_partnered_share.xlsx", replace
 
-* --- Step B: self-join on (file_year, idbenefitunit) ---
-* Each person is expanded against all adults in their BU
-joinby file_year idbenefitunit using `bu_adults'
+* Build separate matrices for year and share (written with explicit Excel formats)
+mkmat year,            matrix(Yr)
+mkmat partnered_share, matrix(Sh)
 
-* Remove self-matches
-drop if other_idperson == idperson
+* Point putexcel at the output file and the sheet
+putexcel set "${dir_output}/alignment_targets_partnered_share.xlsx", sheet("partnered") modify
 
-* Remove cases where the co-resident is this person's parent
-drop if other_idperson == idmother | other_idperson == idfather
+* Write headers
+putexcel A1=("year") B1=("partnered_share")
 
-* Each remaining row means a qualifying co-resident exists
-gen byte has_partner = 1
+* Write data: years as integers, shares with 7 decimal places
+putexcel A2=matrix(Yr), nformat("0")
+putexcel B2=matrix(Sh), nformat("0.000000")
 
-* Reduce to one row per person: partnered = 1 if any qualifying row
-collapse (max) partnered = has_partner, by(file_year idbenefitunit idperson)
-
-* --- Step C: save partnered flags, then merge into full eligible pop ---
-* joinby silently drops persons with NO qualifying co-resident, so we
-* must restore them from the full dataset and assign partnered = 0.
-
-tempfile partnered_flags
-save `partnered_flags', replace
-
-* Reload full eligible population as master
-use `appended', clear
-destring dag idperson idbenefitunit idmother idfather dwt, replace force
-keep if dag >= 18
-keep file_year idbenefitunit idperson dwt
-
-* Merge partnered flags in as using — unmatched master = no partner
-merge 1:1 file_year idbenefitunit idperson using `partnered_flags', ///
-    keep(master match) nogen
-replace partnered = 0 if missing(partnered)
-
-* ============================================================
-* 3) Collapse to annual weighted share
-* ============================================================
-collapse (mean) partnered_share = partnered ///
-         (sum)  n_eligible = partnered      ///   raw count only for reference
-         [pw = dwt], by(file_year)
-
-* n_eligible above is sum of weights — replace with unweighted count if preferred
-* For unweighted N alongside weighted share, use a two-step approach:
-* Step 1: save weighted share
-tempfile weighted_share
-save `weighted_share', replace
-
-* Step 2: unweighted counts
-use `appended', clear
-destring dag idperson idbenefitunit dwt, replace force
-keep if dag >= 18
-keep file_year idbenefitunit idperson
-
-merge 1:1 file_year idbenefitunit idperson using `partnered_flags', ///
-    keep(master match) nogen
-replace partnered = 0 if missing(partnered)
-
-collapse (count) n_eligible = idperson ///
-         (sum)   n_partnered = partnered, by(file_year)
-
-merge 1:1 file_year using `weighted_share', nogen
-
-rename file_year year
-
-format partnered_share %12.7f
-
-label var n_eligible      "Eligible persons (age >= 18, unweighted N)"
-label var n_partnered     "Partnered persons (unweighted N)"
-label var partnered_share "Partnered share (weighted by dwt)"
-
-order year n_eligible n_partnered partnered_share
-
-* ============================================================
-* 4) Full comparison table
-* ============================================================
-//export excel using "`work_dir'/partnered_share_initialPop_BUlogic.xlsx", ///
-//    firstrow(variables) replace
-
-* ============================================================
-* 5) Slim target-format file: year + partnered_share only
-* ============================================================
-
-preserve
-    keep year partnered_share
-    format partnered_share %12.7f
-    export excel using "`work_dir'/`country'/partnered_share_targets_BUlogic.xlsx", ///
-        firstrow(variables) replace
-restore
-
-list, sep(0)
+* --- INFO SHEET ------------------------------------------------------------ *
+local today "`c(current_date)'"
+putexcel set "${dir_output}/alignment_targets_partnered_share.xlsx", sheet("info") modify
+putexcel A1=("Field")       B1=("Value")
+putexcel A2=("Target")      B2=("Share of partnered persons among adults aged 18+")
+putexcel A3=("Population")  B3=("All persons aged 18+ in the initial population")
+putexcel A4=("Definition")  B4=("Partnered = at least one non-parent adult co-resident in the same benefit unit (BU co-residency logic, not idpartner field)")
+putexcel A5=("Age filter")  B5=("dag >= 18")
+putexcel A6=("Weighting")   B6=("Person-level population weights (dwt)")
+putexcel A7=("Note")        B7=("Partnership inferred from BU co-residency consistent with SimPaths getPartner() logic; idpartner is not used")
+putexcel A8=("Source")      B8=("EU-SILC-based SimPaths initial populations")
+putexcel A9=("Country")     B9=("${country}")
+putexcel A10=("Years")      B10=("${min_year}-${max_year}")
+putexcel A11=("Do-file")    B11=("04_partnership_targets_initpopEU.do")
+putexcel A12=("Produced")   B12=("`today'")

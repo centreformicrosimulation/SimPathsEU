@@ -374,6 +374,38 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         }
         if (region == null)
             throw new RuntimeException("problem identifying region of new benefit unit");
+
+        if (model.getYear() == model.getStartYear()) {
+            initialiseIncomeVariablesFromInitialPopulation();
+        }
+    }
+
+    private void initialiseIncomeVariablesFromInitialPopulation() {
+        double grossIncome = 0.0;
+        double disposableIncome = 0.0;
+        boolean hasDisposableIncome = false;
+
+        for (Person member : members) {
+            if (member.getDag() < Parameters.AGE_TO_BECOME_RESPONSIBLE) {
+                continue;
+            }
+
+            Double grossPersonalIncome = member.getYpnbihs_dv();
+            if (grossPersonalIncome != null) {
+                grossIncome += Math.sinh(grossPersonalIncome);
+            }
+
+            Double personalDisposableIncome = member.getYdispPersInitial();
+            if (personalDisposableIncome != null) {
+                disposableIncome += personalDisposableIncome;
+                hasDisposableIncome = true;
+            }
+        }
+
+        grossIncomeMonthly = grossIncome;
+        if (hasDisposableIncome) {
+            disposableIncomeMonthly = disposableIncome;
+        }
     }
 
     protected void updateAttributes() {
