@@ -30,7 +30,7 @@ program define _write_sheet
         if !_rc {
             tempname M
             mata: st_matrix("`M'", st_data(., "`v'"))
-            putexcel `L'2 = matrix(`M'), nformat("0.000000")
+            putexcel `L'2 = matrix(`M')
         }
         else {
             forvalues i = 1/`=_N' {
