@@ -519,10 +519,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (originalPerson.fullTimeHourlyEarningsPotential > Parameters.MIN_HOURLY_WAGE_RATE) {
             fullTimeHourlyEarningsPotential = Math.min(Parameters.MAX_HOURLY_WAGE_RATE, Math.max(Parameters.MIN_HOURLY_WAGE_RATE, originalPerson.fullTimeHourlyEarningsPotential));
         } else {
-            if (Les_c4.EmployedOrSelfEmployed.equals(les_c4)) {
-                les_c4 = Les_c4.NotEmployed;
-            }
-            les_c4_lag1 = les_c4;
             fullTimeHourlyEarningsPotential = -9.0;
         }
         if (originalPerson.L1_fullTimeHourlyEarningsPotential!=null && originalPerson.L1_fullTimeHourlyEarningsPotential>Parameters.MIN_HOURLY_WAGE_RATE) {
@@ -1484,6 +1480,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     protected void initialisePotentialHourlyEarnings() {
 
+        if (dag < Parameters.MIN_AGE_TO_HAVE_INCOME || dag > Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
+            return;
+        }
+
         double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovations.getDoubleDraw(15));
         double logPotentialHourlyEarnings, score, rmse;
         if (dgn.equals(Gender.Male)) {
@@ -1501,6 +1501,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
 
     protected void updateFullTimeHourlyEarnings() {
+
+        if (dag < Parameters.MIN_AGE_TO_HAVE_INCOME || dag > Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
+            return;
+        }
 
         double rmse, wagesInnov = innovations.getDoubleDraw(16);
         if (Les_c4.EmployedOrSelfEmployed.equals(les_c4_lag1)) {
@@ -3607,7 +3611,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return 0.;
             }
             case RealWageGrowth -> { // Note: the values provided to the wage regression must be rebased to 2015, the default BASE_PRICE_YEAR.
-                return Parameters.getTimeSeriesIndex(getYear(), UpratingCase.Earnings);
+                return 100*Parameters.getTimeSeriesIndex(getYear(), UpratingCase.Earnings); //wage estimates use WageGrowth upscaled to 100 base
             }
             case RealGDPGrowth -> {
                 return Parameters.getTimeSeriesIndex(getYear(), UpratingCase.Capital);
@@ -3715,6 +3719,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     public Les_c4 getLes_c4_lag1() {
         return les_c4_lag1;
+    }
+
+    public int getEmployed_Lag1() {
+        return (Les_c4.EmployedOrSelfEmployed.equals(les_c4_lag1)) ? 1 : 0;
     }
 
     public Les_c7_covid getLes_c7_covid_lag1() { return les_c7_covid_lag1; }

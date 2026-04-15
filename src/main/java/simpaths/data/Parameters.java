@@ -156,7 +156,7 @@ public class Parameters {
     public static String COUNTRY_STRING = "";
 
     public static int MIN_AGE_TO_HAVE_INCOME = 16; //Minimum age to have non-employment non-benefit income
-    public static int MAX_LABOUR_HOURS_IN_WEEK = 70;
+    public static int MAX_LABOUR_HOURS_IN_WEEK = 60;
     public static int HOURS_IN_WEEK = 24*7; //168 = 24*7 is ola parameter; This is used to calculate leisure in labour supply
     public static boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
 
@@ -177,13 +177,13 @@ public class Parameters {
 
     public static int MIN_HOURS_FULL_TIME_EMPLOYED = 25;    // used to distinguish full-time from part-time employment (needs to be consistent with Labour enum)
     public static double MIN_HOURLY_WAGE_RATE = 0.0;
-    public static double MAX_HOURLY_WAGE_RATE = 150.0;
+    public static double MAX_HOURLY_WAGE_RATE = 75.0;
     public static double MAX_HOURS_WEEKLY_FORMAL_CARE = 150.0;
     public static double MAX_HOURS_WEEKLY_INFORMAL_CARE = 16 * 7;
     public static double CHILDCARE_COST_EARNINGS_CAP = 0.5;  // maximum share of earnings payable as childcare (for benefit units with some earnings)
 
-    public static double KEY_FUNCTION_HU2_HI_INCOME = 339.0; // 67th percentile observed in the EM data for 2018
-    public static double KEY_FUNCTION_HU2_LO_INCOME = 154.0; // 33rd percentile observed in the EM data for 2018
+    public static double KEY_FUNCTION_HU2_HI_INCOME = 287.0; // 67th percentile observed in the EM data for 2018
+    public static double KEY_FUNCTION_HU2_LO_INCOME = 140.0; // 33rd percentile observed in the EM data for 2018
     public static int KEY_FUNCTION_HU2_MID_AGE = 45;
     public static int KEY_FUNCTION_HU2_INCOME_REF_YEAR = 2018;
     // Country-specific parameters which are handled without using excel input
@@ -222,6 +222,10 @@ public class Parameters {
     public static final double EMPLOYMENT_ALIGNMENT_BOUND = 10.0;
     public static final double PARTNERSHIP_ALIGNMENT_BOUND = 4.0;
     public static final double FERTILITY_ALIGNMENT_BOUND = 10.0;
+
+    // Determine probability of yearly labour supply matches persisting from previous year
+    public static double labour_innovation_employment_persistence_probability = 0.00;
+    public static double labour_innovation_notinemployment_persistence_probability = 0.00;
 
     // Set to true to print root-search diagnostics (iteration tables, summaries) to console
     public static final boolean LOG_ALIGNMENT_DETAILS = true;
@@ -388,7 +392,7 @@ public class Parameters {
             utilityTimeAdjustmentCouples, utilityTimeAdjustmentACMales, utilityTimeAdjustmentACFemales, utilityTimeAdjustmentMaleWithDep, utilityTimeAdjustmentFemaleWithDep, upratingIndexMapRealWageGrowth, priceMapRealSavingReturns, priceMapRealDebtCostLow, priceMapRealDebtCostHigh,
             wageRateFormalSocialCare, socialCarePolicy, partneredShare, retiredShare, disabledShare, studentShare, employedShare, employedShareSingleMales, employedShareACMales, employedShareSingleFemales, employedShareACFemales, employedShareCouples, employedShareMaleWithDep, employedShareFemaleWithDep;
     public static Map<Integer, Double> partnershipAlignAdjustment, fertilityAlignAdjustment, retirementAlignAdjustment, studentsAlignAdjustment, disabilityAlignAdjustment;
-    // Snapshot of initial utility adjustment values loaded from time_series_factor.xlsx,
+    // Snapshot of initial utility adjustment values loaded from alignment_adjustment_factors.xlsx,
     // preserved so that activity alignment can cold-start from xlsx values each year
     // instead of warm-starting from the previous year's (potentially overshooting) result.
     private static final java.util.Map<TimeSeriesVariable, java.util.Map<Integer, Double>> initialUtilityAdjustments = new java.util.EnumMap<>(TimeSeriesVariable.class);
@@ -2001,19 +2005,19 @@ public class Parameters {
         upratingIndexMapRealGDP = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "gdp", 1);
         upratingIndexMapInflation = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "inflation", 1);
         upratingIndexMapRealWageGrowth = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "wage_growth", 1);
-        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "cohabitation_adjustment", 1);
-        retirementTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "retirement_adjustment", 1);
-        disabilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "disability_adjustment", 1);
-        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "students_adjustment", 1);
-        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "fertility_adjustment", 1);
-        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_smales", 1);
-        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acmales", 1);
-        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_acfemales", 1);
-        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_sfemales", 1);
-        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_couples", 1);
-        utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_malewdep", 1);
-        utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_femalewdep", 1);
-        utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "time_series_factor.xlsx"), "utility_adj_all", 1);
+        partnershipTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "cohabitation_adjustment", 1);
+        retirementTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "retirement_adjustment", 1);
+        disabilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "disability_adjustment", 1);
+        studentsTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "students_adjustment", 1);
+        fertilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "fertility_adjustment", 1);
+        utilityTimeAdjustmentSingleMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_smales", 1);
+        utilityTimeAdjustmentACMales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_acmales", 1);
+        utilityTimeAdjustmentACFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_acfemales", 1);
+        utilityTimeAdjustmentSingleFemales = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_sfemales", 1);
+        utilityTimeAdjustmentCouples = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_couples", 1);
+        utilityTimeAdjustmentMaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_malewdep", 1);
+        utilityTimeAdjustmentFemaleWithDep = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_femalewdep", 1);
+        utilityTimeAdjustment = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_adjustment_factors.xlsx"), "utility_adj_all", 1);
 
         // Snapshot initial utility adjustment values from xlsx before alignment can overwrite them.
         // Activity alignment uses these as cold-start values each year to avoid whiplash oscillation.
@@ -2025,7 +2029,7 @@ public class Parameters {
         rebaseIndexMap(TimeSeriesVariable.WageGrowth);
 
         // load year-specific fiscal policy parameters
-        socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "policy parameters.xlsx"), "social care", 1);
+        socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "social_care_parameters.xlsx"), "social care", 1);
         partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_partnered_share.xlsx"), "partnered", 1);
         retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_retirement.xlsx"), "retirement", 1);
         disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_disability.xlsx"), "disability", 1);
@@ -2231,7 +2235,7 @@ public class Parameters {
     }
 
     /**
-     * Returns the initial utility adjustment value loaded from time_series_factor.xlsx,
+     * Returns the initial utility adjustment value loaded from alignment_adjustment_factors.xlsx,
      * ignoring any overwrites made by alignment during the simulation.
      * Falls back to 0.0 if no initial value was recorded for the given year/variable.
      */

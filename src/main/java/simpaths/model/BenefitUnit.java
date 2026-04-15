@@ -102,6 +102,9 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     @Transient private Integer labourHoursWeekly1Local;
     @Transient private Integer labourHoursWeekly2Local;
 
+    private Double labPersistValueLabourInnov;
+    private Integer lastYear;
+
     // ================= At Risk of Work cache to avoid unnecessary atRiskOfWork() calls =================
     @Transient private Boolean cachedMaleAtRiskOfWork = null;
     @Transient private Boolean cachedFemaleAtRiskOfWork = null;
@@ -1447,7 +1450,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                     } else if (!model.isAlignEmployment()) throw new IllegalArgumentException("None of the partners are at risk of work! HHID " + getKey().getId());
                     if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) {
                     //    throw new RuntimeException("problem evaluating exponential regression score in labour supply module (1)");
-                          regressionScore = 0;
+                          regressionScore = -700.0;
                     }
 
                     disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
@@ -1479,7 +1482,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                         }
                         if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) {
                         //     throw new RuntimeException("problem evaluating exponential regression score in labour supply module (2)");
-                            regressionScore = 0;
+                            regressionScore = -700.0;
                         }
 
                         disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
@@ -1508,7 +1511,7 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
                         }
                         if (Double.isNaN(regressionScore) || Double.isInfinite(regressionScore)) {
                         //    throw new RuntimeException("problem evaluating exponential regression score in labour supply module (3)");
-                            regressionScore = 0;
+                            regressionScore = -700.0;
                         }
                         disposableIncomeMonthlyByLabourPairs.put(labourKey, getDisposableIncomeMonthly());
                         benefitsReceivedMonthlyByLabourPairs.put(labourKey, getBenefitsReceivedPerMonth());
@@ -1532,7 +1535,21 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
 
             //Sample labour supply from possible labour (pairs of) values
-            double labourInnov = innovations.getDoubleDraw(5);
+            //If both persistence probabilities are set to 0.0, the helper becomes effectively the same as innovations.getDoubleDraw(5) for outcomes.
+            //If set to 1.0, the same labour innovation is carried forward every year after the first.
+            //double labourInnov = innovations.getDoubleDraw(5);
+            double labourInnov;
+            if (Occupancy.Single_Male.equals(occupancy) && male.atRiskOfWork() && male.getEmployed_Lag1() == 1) {
+                labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
+            } else if (Occupancy.Single_Female.equals(occupancy) && female.atRiskOfWork() && female.getEmployed_Lag1() == 1) {
+                labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
+            } else if (Occupancy.Couple.equals(occupancy) &&
+                    ((male.atRiskOfWork() && male.getEmployed_Lag1() == 1) ||
+                            (!male.atRiskOfWork() && female.atRiskOfWork() && female.getEmployed_Lag1() == 1))) {
+                labourInnov = getLabourInnovation(Parameters.labour_innovation_employment_persistence_probability);
+            } else {
+                labourInnov = getLabourInnovation(Parameters.labour_innovation_notinemployment_persistence_probability);
+            }
             try {
                 MultiKeyMap<Labour, Double> labourSupplyUtilityRegressionProbabilitiesByLabourPairs = convertRegressionScoresToProbabilities(labourSupplyUtilityRegressionScoresByLabourPairs);
                 labourSupplyChoice = ManagerRegressions.multiEvent(labourSupplyUtilityRegressionProbabilitiesByLabourPairs, labourInnov);
@@ -3866,11 +3883,11 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     private double calculateYearlyChangeInLogEquivalisedDisposableIncome() {
         double yearlyChangeInLogEquivalisedDisposableIncome = 0.;
         if (equivalisedDisposableIncomeYearly != null && equivalisedDisposableIncomeYearly_lag1 != null && equivalisedDisposableIncomeYearly >= 0. && equivalisedDisposableIncomeYearly_lag1 >= 0.) {
-            // Note that income is uprated to the base price year, as specified in parameters class, as the estimated change uses real income change
+            // Equivalised disposable income is already stored in BASE_PRICE_YEAR prices.
             // +1 added as log(0) is not defined
             yearlyChangeInLogEquivalisedDisposableIncome =
-                    Math.log(equivalisedDisposableIncomeYearly / Parameters.getTimeSeriesValue(model.getYear(), TimeSeriesVariable.Inflation) + 1)
-                            - Math.log(equivalisedDisposableIncomeYearly_lag1 / Parameters.getTimeSeriesValue(model.getYear()-1, TimeSeriesVariable.Inflation) + 1);
+                    Math.log(equivalisedDisposableIncomeYearly + 1)
+                            - Math.log(equivalisedDisposableIncomeYearly_lag1 + 1);
         }
         yearlyChangeInLogEDI = yearlyChangeInLogEquivalisedDisposableIncome;
         if (yearlyChangeInLogEDI==null)
@@ -4238,13 +4255,15 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
         return covid19MonthlyStateAndGrossIncomeAndWorkHoursTripleMale;
     }
 
-    // Uprate disposable income from level of prices in any given year to 2017, as utility function was estimated on 2017 data
+    // Disposable income is already stored in BASE_PRICE_YEAR prices when populated from
+    // the initial population or from tax imputation, so utility regressors must not
+    // apply a second inflation adjustment here.
     public double getDisposableIncomeMonthlyUpratedToBasePriceYear() {
-        return disposableIncomeMonthly / Parameters.getTimeSeriesValue(model.getYear(), TimeSeriesVariable.Inflation);
+        return disposableIncomeMonthly;
     }
 
     public double getAdjustedDisposableIncomeMonthlyUpratedToBasePriceYear() {
-        return disposableIncomeMonthly / Parameters.getTimeSeriesValue(model.getYear(), TimeSeriesVariable.Inflation);
+        return disposableIncomeMonthly;
     }
 
     public double getNonDiscretionaryExpenditureMonthlyUpratedToBasePriceYear() {
@@ -4802,4 +4821,28 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
     }
 
     public static void setBenefitUnitIdCounter(long id) {benefitUnitIdCounter = id;}
+
+    private double getLabourInnovation(double persistenceProbability) {
+        double newLabourInnovation = innovations.getDoubleDraw(5);
+        double persistenceRandomDraw = innovations.getDoubleDraw(6);
+        int currentYear = model.getYear();
+
+        if (labPersistValueLabourInnov == null || lastYear == null) {
+            labPersistValueLabourInnov = newLabourInnovation;
+            lastYear = currentYear;
+            return newLabourInnovation;
+        }
+
+        double labourInnov;
+        if (persistenceRandomDraw < persistenceProbability) {
+            labourInnov = labPersistValueLabourInnov;
+        } else {
+            labourInnov = newLabourInnovation;
+        }
+
+        labPersistValueLabourInnov = labourInnov;
+        lastYear = currentYear;
+        return labourInnov;
+    }
+
 }

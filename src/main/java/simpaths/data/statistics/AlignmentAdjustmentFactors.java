@@ -390,7 +390,7 @@ public class AlignmentAdjustmentFactors {
         setInSchoolShareSimulated(val);
         setInSchoolShareTarget(Parameters.getTargetShare(processedYear, TargetShares.Students));
 
-        // utility — maps may be null if time_series_factor.xlsx sheets are absent
+        // utility — maps may be null if alignment_adjustment_factors.xlsx sheets are absent
         setUtilityAdjustmentFactorSmales(safeGetTimeSeriesValue(processedYear, TimeSeriesVariable.UtilityAdjustmentSingleMales));
         setUtilityAdjustmentFactorSfemales(safeGetTimeSeriesValue(processedYear, TimeSeriesVariable.UtilityAdjustmentSingleFemales));
         setUtilityAdjustmentFactorCouples(safeGetTimeSeriesValue(processedYear, TimeSeriesVariable.UtilityAdjustmentCouples));
@@ -461,7 +461,7 @@ public class AlignmentAdjustmentFactors {
 
     /**
      * Safely reads a time series value, returning 0.0 if the underlying map is null
-     * (e.g. when the corresponding sheet is absent from time_series_factor.xlsx).
+     * (e.g. when the corresponding sheet is absent from alignment_adjustment_factors.xlsx).
      */
     private static final java.util.Set<TimeSeriesVariable> reportedMissing = java.util.EnumSet.noneOf(TimeSeriesVariable.class);
 
@@ -471,7 +471,7 @@ public class AlignmentAdjustmentFactors {
         } catch (NullPointerException e) {
             if (reportedMissing.add(variable)) {
                 System.out.println("WARNING: time series map for " + variable + " is null — "
-                        + "corresponding sheet is missing from time_series_factor.xlsx. Defaulting to 0.0.");
+                        + "corresponding sheet is missing from alignment_adjustment_factors.xlsx. Defaulting to 0.0.");
             }
             return 0.0;
         }

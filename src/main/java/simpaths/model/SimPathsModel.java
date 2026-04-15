@@ -1563,7 +1563,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             OccupancyExtended occupancy, // benefit unit occupancy extended to allow all types used in labour supply module
             String occupancyLabel // displays the type of benefit unit to which adjustment is applied
     ) {
-        // Use the initial value from time_series_factor.xlsx as the cold start each year,
+        // Use the initial value from alignment_adjustment_factors.xlsx as the cold start each year,
         // rather than the previous year's alignment result, to prevent whiplash oscillation
         // where overshooting in one year causes overcorrection in the next.
         double utilityAdjustment = Parameters.getInitialUtilityAdjustment(getYear(), adjustmentMap);
