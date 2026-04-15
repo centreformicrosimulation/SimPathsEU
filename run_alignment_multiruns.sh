@@ -22,9 +22,10 @@ JVM_HEAP="${JVM_HEAP:-12g}"
 CONFIGS=(
   "alignment_00_populationOFF.yml"
   "alignment_01_population.yml"
-  "alignment_02_population_fertility.yml"
+  "alignment_02a_population_fertility.yml"
+  "alignment_02b_population_cohabitation.yml"
   "alignment_03_population_fertility_cohabitation.yml"
-  "alignment_04_population_fertility_cohabitation_inschool.yml"
+  "alignment_04_population_fertility_cohabitation_employment.yml"
   "alignment_05_population_fertility_cohabitation_inschool_employment.yml"
 )
 

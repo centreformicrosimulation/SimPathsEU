@@ -1480,10 +1480,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     protected void initialisePotentialHourlyEarnings() {
 
-        if (dag < Parameters.MIN_AGE_TO_HAVE_INCOME || dag > Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
-            return;
-        }
-
         double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovations.getDoubleDraw(15));
         double logPotentialHourlyEarnings, score, rmse;
         if (dgn.equals(Gender.Male)) {
@@ -1501,10 +1497,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
 
     protected void updateFullTimeHourlyEarnings() {
-
-        if (dag < Parameters.MIN_AGE_TO_HAVE_INCOME || dag > Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
-            return;
-        }
 
         double rmse, wagesInnov = innovations.getDoubleDraw(16);
         if (Les_c4.EmployedOrSelfEmployed.equals(les_c4_lag1)) {
