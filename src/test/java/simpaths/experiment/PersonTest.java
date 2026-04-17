@@ -6,6 +6,7 @@ import simpaths.data.RegressionName;
 import simpaths.model.BenefitUnit;
 import simpaths.model.Person;
 import simpaths.model.SimPathsModel;
+import simpaths.model.enums.Dcpst;
 import simpaths.model.enums.Education;
 import simpaths.model.enums.EducationLevel;
 import simpaths.model.enums.Indicator;
@@ -192,6 +193,27 @@ public class PersonTest {
 
             assertEquals(0.0, testPerson.getDoubleValue(Person.DoublesVariables.D_Children));
             assertEquals(0.0, testPerson.getDoubleValue(Person.DoublesVariables.D_Children_L1));
+        }
+
+        @Test
+        @DisplayName("New_rel_L1 returns zero when lagged partnership status is missing")
+        public void newRelLagHandlesMissingPartnershipStatus() throws Exception {
+            setPrivateField(testPerson, "benefitUnit", null);
+            testPerson.setDcpstLocal(Dcpst.Partnered);
+            testPerson.setDcpst_lag1(null);
+
+            assertDoesNotThrow(() -> testPerson.getDoubleValue(Person.DoublesVariables.New_rel_L1));
+            assertEquals(0.0, testPerson.getDoubleValue(Person.DoublesVariables.New_rel_L1));
+        }
+
+        @Test
+        @DisplayName("New_rel_L1 returns one for a newly partnered person")
+        public void newRelLagFlagsNewPartnership() throws Exception {
+            setPrivateField(testPerson, "benefitUnit", null);
+            testPerson.setDcpstLocal(Dcpst.Partnered);
+            testPerson.setDcpst_lag1(Dcpst.Single);
+
+            assertEquals(1.0, testPerson.getDoubleValue(Person.DoublesVariables.New_rel_L1));
         }
     }
 

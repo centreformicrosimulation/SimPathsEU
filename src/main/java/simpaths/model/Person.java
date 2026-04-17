@@ -3315,7 +3315,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return yptciihs_dv_lag3;
             }
             case New_rel_L1 -> {
-                return (getDcpst().equals(Dcpst.Partnered) && !dcpst_lag1.equals(Dcpst.Partnered))? 1. : 0.;
+                return (Dcpst.Partnered.equals(getDcpst()) &&
+                        dcpst_lag1 != null &&
+                        !Dcpst.Partnered.equals(dcpst_lag1)) ? 1. : 0.;
             }
             case Ypncp_L1 -> {
                 return ypncp_lag1;
@@ -4054,6 +4056,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (labourSupplyWeekly==null)
             throw new RuntimeException("request for labourSupplyWeekly before it has been initialised");
         return labourSupplyWeekly;
+    }
+
+    public Labour getLabourSupplyWeekly_L1() {
+        return labourSupplyWeekly_L1;
     }
 
     public int getL1LabourSupplyHoursWeekly() {
