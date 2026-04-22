@@ -241,3 +241,8 @@ input/tax_donor_population_HU.csv
 input/tax_donor_population_PL.csv
 input/tax_donor_population_IT.csv
 input/tax_donor_population_EL.csv
+
+# Integration-test golden CSVs — generated locally until a shared training
+# data set exists for EU. Do not commit. See expected/README.md for details.
+src/test/java/simpaths/integrationtest/expected/*.csv
+

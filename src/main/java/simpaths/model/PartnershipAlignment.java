@@ -20,9 +20,9 @@ import java.util.Set;
  */
 public class PartnershipAlignment implements IEvaluation {
 
-    private double targetAggregateShareOfPartneredPersons;
-    private Set<Person> persons;
-    private SimPathsModel model;
+    private final double targetAggregateShareOfPartneredPersons;
+    private final Set<Person> persons;
+    private final SimPathsModel model;
 
 
     // CONSTRUCTOR
@@ -49,9 +49,7 @@ public class PartnershipAlignment implements IEvaluation {
     public double evaluate(double[] args) {
 
         model.clearPersonsToMatch();
-        persons.parallelStream()
-                .filter(person -> person.getDag() >= Parameters.MIN_AGE_COHABITATION)
-                .forEach(person -> person.cohabitation(args[0]));
+        runCohabitationSequentially(args[0]);
 
         // "Fake" union matching (not modifying household structure) here
         model.unionMatching(true);
@@ -85,5 +83,15 @@ public class PartnershipAlignment implements IEvaluation {
 
         return numPersonsWhoCanHavePartner > 0 ?
                 (double) numPersonsPartnered / numPersonsWhoCanHavePartner : 0.0;
+    }
+
+    private void runCohabitationSequentially(double probitAdjustment) {
+        // Cohabitation populates shared matching pools in SimPathsModel, so evaluate
+        // candidates in a stable order instead of mutating those sets in parallel.
+        for (Person person : persons) {
+            if (person.getDag() >= Parameters.MIN_AGE_COHABITATION) {
+                person.cohabitation(probitAdjustment);
+            }
+        }
     }
 }

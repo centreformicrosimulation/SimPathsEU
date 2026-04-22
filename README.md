@@ -80,6 +80,25 @@ $ java -jar multirun.jar -r 100 -p 50000 -n 20 -s 2017 -e 2020 -g false -f
 
 Run `java -jar singlerun.jar -h` or `java -jar multirun.jar -h` to show these help messages.
 
+### Batch scenario scripts
+
+Helper Bash scripts in `scripts/` run `multirun.jar` across multiple alignment configs in sequence and move each scenario's CSV output into `output/<scenario-name>/`:
+
+- `run_alignment_multiruns.sh` — full set of alignment scenarios
+- `run_multiruns-alignPopOFF.sh` — single `alignment_00_populationOFF` scenario
+- `run_multiruns-alignPopOFF_QUICK.sh` — quick smoke-test variant
+- `run_TEST_multiruns.sh` — subset used while testing new alignments
+
+Run from the project root (the scripts resolve paths relative to it):
+```
+$ ./scripts/run_alignment_multiruns.sh
+```
+
+Defaults (start/end year, population size, runs per scenario, JVM heap, random seed) are set at the top of each script and can be overridden via environment variables, e.g.:
+```
+$ POP_SIZE=10000 RUNS_PER_SCENARIO=2 ./scripts/run_alignment_multiruns.sh
+```
+
 ### Contributing
 
 1. Create a new branch for your contributions. This will likely be based on either the `main` branch of this repository (if you seek to modify the stable version of the model) or `develop` (if you seek to modify the most recent version of the model).  Please see branch naming convention below.

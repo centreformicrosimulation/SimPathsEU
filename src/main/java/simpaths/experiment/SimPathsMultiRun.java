@@ -4,11 +4,13 @@ package simpaths.experiment;
 // import Java packages
 import microsim.data.db.DatabaseUtils;
 import microsim.data.db.Experiment;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
 import org.apache.commons.cli.*;
 import org.yaml.snakeyaml.Yaml;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Map;
 
@@ -46,10 +48,17 @@ public class SimPathsMultiRun extends MultiRun {
 	private static boolean labourSupplyElasticityInnov = false;
 	private static boolean flagDatabaseSetup = false;
 
+	// integration-test flag: when true, redirects simulation output into a fixed
+	// INTEGRATION_TESTS folder so regression tests can locate and diff the results.
+	// Intentionally does NOT flip the training-data flag (unlike the UK port) —
+	// EU runs the integration test against real input data until a training set exists.
+	private static boolean integrationTest = false;
+
 	// passing args for config file
 	private static Map<String, Object> modelArgs;
 	private static Map<String, Object> innovationArgs;
 	private static Map<String, Object> collectorArgs;
+	private static Map<String, Object> parameterArgs;
 	public static String configFile = "default.yml";
 
 	// other working variables
@@ -94,6 +103,8 @@ public class SimPathsMultiRun extends MultiRun {
 		}
 		if (innovationArgs!=null)
 			updateLocalParameters(innovationArgs);
+		if (parameterArgs != null)
+			updateParameters(parameterArgs);
 
 		// Parse command line arguments to override defaults
 		if (!parseCommandLineArgs(args)) {
@@ -101,6 +112,13 @@ public class SimPathsMultiRun extends MultiRun {
 			return;
 		}
 		country = Country.getCountryFromNameString(countryString);
+
+		// Propagate the resolved country into the static Parameters.COUNTRY_STRING used by
+		// country-specific lookups (e.g. Parameters.getStatePensionAge). SimPathsStart does
+		// this implicitly via runGUIlessSetup(), but SimPathsMultiRun jumps straight into
+		// Parameters.databaseSetup on -DBSetup and into model construction otherwise, so
+		// without this call the DBSetup branch crashes with "No PSA rules for country=".
+		Parameters.defineCountryString(country);
 
         /*comment these lines if input folder needs to be saved in output*/
         // Disable copying input folders into output
@@ -121,6 +139,25 @@ public class SimPathsMultiRun extends MultiRun {
 			SimPathsMultiRun experimentBuilder = new SimPathsMultiRun();
 			engine.setExperimentBuilder(experimentBuilder);
 			engine.setup();		//This is needed to update model attributes (from model_args in config file)
+
+			if (integrationTest) {
+				// Redirect all output into a fixed, well-known folder so the
+				// integration test can locate results deterministically.
+				String integrationOutputFolder = "." + File.separator + "output" + File.separator + "INTEGRATION_TESTS";
+				Experiment.testOutputFolder = integrationOutputFolder;
+
+				try {
+					File folder = new File(integrationOutputFolder);
+					if (FileUtils.isDirectory(folder)) {
+						FileUtils.deleteDirectory(folder);
+					}
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+				// NB: deliberately not calling Parameters.setTrainingFlag(true) here.
+				// EU has no training-data set; the integration test runs against
+				// the real EUROMOD inputs via trainingFlag=false in YAML.
+			}
 
 			if (executeWithGui)
 				new MultiRunFrame(experimentBuilder, "SimPaths MultiRun", maxNumberOfRuns);
@@ -287,6 +324,11 @@ public class SimPathsMultiRun extends MultiRun {
 					continue;
 				}
 
+				if ("parameter_args".equals(key)) {
+					parameterArgs = (Map<String, Object>) value;
+					continue;
+				}
+
 				// Use reflection to dynamically set the field based on the key
 				updateLocalParameters(key, value);
 			}
@@ -326,6 +368,34 @@ public class SimPathsMultiRun extends MultiRun {
 
 		for (Map.Entry<String, Object> entry : args.entrySet()) {
 			updateLocalParameters(entry.getKey(), entry.getValue());
+		}
+	}
+
+	/**
+	 * Update static fields on {@link simpaths.data.Parameters} from a YAML
+	 * {@code parameter_args:} block. Mirrors UK's mechanism but without UK's
+	 * directory-shuffling special cases (those setters don't all exist in EU).
+	 * Unknown keys produce a NoSuchFieldException stacktrace — same failure
+	 * mode as the other {@code updateLocalParameters} overloads.
+	 */
+	public static void updateParameters(Map<String, Object> parameter_args) {
+
+		for (Map.Entry<String, Object> entry : parameter_args.entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+
+			try {
+				Field field = Parameters.class.getDeclaredField(key);
+				field.setAccessible(true);
+
+				Class<?> fieldType = field.getType();
+				Object convertedValue = convertToType(value, fieldType);
+
+				field.set(null, convertedValue);
+				field.setAccessible(false);
+			} catch (NoSuchFieldException | IllegalAccessException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
