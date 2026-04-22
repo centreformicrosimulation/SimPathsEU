@@ -2,14 +2,14 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 JAR_PATH="${JAR_PATH:-multirun.jar}"
 START_YEAR="${START_YEAR:-2011}"
 END_YEAR="${END_YEAR:-2023}"
-POP_SIZE="${POP_SIZE:-30000}"
-RUNS_PER_SCENARIO="${RUNS_PER_SCENARIO:-3}"
+POP_SIZE="${POP_SIZE:-50000}"
+RUNS_PER_SCENARIO="${RUNS_PER_SCENARIO:-5}"
 SHOW_GUI="${SHOW_GUI:-false}"
 RANDOM_SEED="${RANDOM_SEED:-1821}"
 
@@ -20,7 +20,10 @@ RANDOM_SEED="${RANDOM_SEED:-1821}"
 JVM_HEAP="${JVM_HEAP:-12g}"
 
 CONFIGS=(
-  "alignment_00_populationOFF.yml"
+
+  "alignment_02c_population_disability.yml"
+  "alignment_02d_population_inschool.yml"
+  "alignment_02e_population_retirement.yml"
 )
 
 if [[ ! -f "$JAR_PATH" ]]; then

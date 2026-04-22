@@ -157,7 +157,7 @@ public class Parameters {
 
     public static int MIN_AGE_TO_HAVE_INCOME = 16; //Minimum age to have non-employment non-benefit income
     public static int MAX_LABOUR_HOURS_IN_WEEK = 60;
-    public static int HOURS_IN_WEEK = 24*7; //168 = 24*7 is ola parameter; This is used to calculate leisure in labour supply
+    public static int HOURS_IN_WEEK = 24*7; // currently, 24 hours per day is used to calculate leisure in labour supply
     public static boolean USE_CONTINUOUS_LABOUR_SUPPLY_HOURS = true; // If true, a random number of hours of weekly labour supply within each bracket will be generated. Otherwise, each discrete choice of labour supply corresponds to a fixed number of hours of labour supply, which is the same for all persons
 
     public static int AGE_TO_BECOME_RESPONSIBLE = 18;            // Age become reference person of own benefit unit
@@ -228,7 +228,7 @@ public class Parameters {
     public static double labour_innovation_notinemployment_persistence_probability = 0.00;
 
     // Set to true to print root-search diagnostics (iteration tables, summaries) to console
-    public static final boolean LOG_ALIGNMENT_DETAILS = true;
+    public static final boolean LOG_ALIGNMENT_DETAILS = false;
 
     //Alignment parameters — end years
     public static final int EMPLOYMENT_ALIGNMENT_END_YEAR = 2023;
