@@ -171,10 +171,10 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
     @GUIparameter(description = "tick to project mortality based on gender, age, and year specific probabilities")
     private boolean projectMortality = true;
 
-    private boolean alignPopulation = false; //TODO: routine fails to replicate results for minor variations between simulations
+    private boolean alignPopulation = true; // routine fails to replicate results for minor variations between simulations
 
     private boolean alignFertility = false; // Align births to fertility targets.
-    private boolean alignCohabitation = false; // Align couple/cohabitation shares.
+    private boolean alignCohabitation = true; // Align couple/cohabitation shares.
     private boolean alignInSchool = false; // Align student shares within the 16-29 age group.
     private boolean alignEmployment = false; // Align employment prevalence to target employment shares.
 
@@ -498,11 +498,11 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
         // EDUCATION MODULE
         // Documentation: diagram "SimPathsEU education module - MR2"
+        // In School alignment — runs before InSchool decisions so the adjustment applies in the same year
+        yearlySchedule.addEvent(this, Processes.InSchoolAlignment);
+
         // Check In School - check whether still in education, and if leaving school, reset Education Level
         yearlySchedule.addCollectionEvent(persons, Person.Processes.InSchool);
-
-        // In School alignment
-        yearlySchedule.addEvent(this, Processes.InSchoolAlignment);
         yearlySchedule.addCollectionEvent(persons, Person.Processes.LeavingSchool);
 
         // Align the level of education if required
@@ -1487,7 +1487,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         } else {
             retirementAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.RetirementAdjustment);
         }
-        RootSearch search = getRootSearch(retirementAdjustment, retirementAlignment, 1.0E-2, 1.0E-2, Parameters.RETIREMENT_ALIGNMENT_BOUND);
+        RootSearch search = getRootSearch(retirementAdjustment, retirementAlignment, 1.0E-6, 1.0E-6, Parameters.RETIREMENT_ALIGNMENT_BOUND);
 
         // update and exit
         Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.RetirementAdjustment);
@@ -1511,7 +1511,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             disabilityAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.DisabilityAdjustment);
         }
 
-        RootSearch search = getRootSearch(disabilityAdjustment, disabilityAlignment, 5.0E-3, 5.0E-3, Parameters.DISABILITY_ALIGNMENT_BOUND);
+        RootSearch search = getRootSearch(disabilityAdjustment, disabilityAlignment, 1.0E-6, 1.0E-6, Parameters.DISABILITY_ALIGNMENT_BOUND);
 
         // update and exit
         Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.DisabilityAdjustment);
@@ -1799,7 +1799,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         } else {
             inSchoolAdjustment = Parameters.getTimeSeriesValue(getYear(), TimeSeriesVariable.InSchoolAdjustment);
         }
-        RootSearch search = getRootSearch(inSchoolAdjustment, inSchoolAlignment, 1.0E-2, 1.0E-2, Parameters.IN_SCHOOL_ALIGNMENT_BOUND);
+        RootSearch search = getRootSearch(inSchoolAdjustment, inSchoolAlignment, 1.0E-6, 1.0E-6, Parameters.IN_SCHOOL_ALIGNMENT_BOUND);
 
         // update and exit
         Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.InSchoolAdjustment);
@@ -2087,7 +2087,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         double maxVal = Math.min(Parameters.FERTILITY_ALIGNMENT_BOUND, - fertilityAdjustment + Parameters.FERTILITY_ALIGNMENT_BOUND);
 
         // run search
-        RootSearch search = getRootSearch(fertilityAdjustment, minVal, maxVal, fertilityAlignment, 5.0E-3, 5.0E-3); // epsOrdinates and epsFunction determine the stopping condition for the search. For partnershipAlignment error term is the difference between target and observed share of partnered individuals.
+        RootSearch search = getRootSearch(fertilityAdjustment, minVal, maxVal, fertilityAlignment, 1.0E-6, 1.0E-6);
 
         // update and exit
         Parameters.putTimeSeriesValue(getYear(), search.getTarget()[0], TimeSeriesVariable.FertilityAdjustment);

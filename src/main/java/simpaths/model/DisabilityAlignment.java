@@ -3,6 +3,7 @@ package simpaths.model;
 import microsim.engine.SimulationEngine;
 import simpaths.data.IEvaluation;
 import simpaths.data.Parameters;
+import simpaths.model.decisions.DecisionParams;
 import simpaths.model.enums.Indicator;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.enums.TargetShares;
@@ -25,6 +26,9 @@ public class DisabilityAlignment implements IEvaluation {
     private double targetDisabledShare;
     private Set<Person> persons;
     private SimPathsModel model;
+    private long numWithDlltsd;
+    private long numIneligibleDisabled;
+    private boolean probitActive;
 
 
     // CONSTRUCTOR
@@ -32,48 +36,54 @@ public class DisabilityAlignment implements IEvaluation {
         this.model = (SimPathsModel) SimulationEngine.getInstance().getManager(SimPathsModel.class.getCanonicalName());
         this.persons = persons;
         targetDisabledShare = Parameters.getTargetShare(model.getYear(), TargetShares.Disability);
+        probitActive = !Parameters.enableIntertemporalOptimisations || DecisionParams.flagDisability;
+
+        numWithDlltsd = persons.stream()
+                .filter(person -> person.getDlltsd() != null)
+                .count();
+
+        // Persons not eligible for the disability probit keep their current dlltsd
+        numIneligibleDisabled = persons.stream()
+                .filter(person -> person.getDlltsd() != null
+                        && (person.getDag() < Parameters.AGE_TO_BECOME_SEMI_RESPONSIBLE
+                            || Les_c4.Retired.equals(person.getLes_c4())
+                            || Les_c4.Student.equals(person.getLes_c4()))
+                        && Indicator.True.equals(person.getDlltsd()))
+                .count();
     }
 
 
     /**
-     * Evaluates the discrepancy between the simulated and target total retired share and adjusts probabilities if necessary.
+     * Evaluates the discrepancy between the expected (smooth) disabled share at a candidate adjustment
+     * and the target share. Uses sum of probit probabilities rather than stochastic realisations,
+     * yielding a smooth, deterministic objective for the root search.
      *
-     * This method focuses on the influence of the adjustment parameter 'args[0]' on the difference between the target and
-     * simulated retired share (error).
-     *
-     * The error value is returned and serves as the stopping condition in root search routines.
-     *
-     * @param args An array of parameters, where args[0] represents the adjustment parameter.
-     * @return The error in the target aggregate share of retired persons after potential adjustments.
+     * @param args An array of parameters, where args[0] represents the probit intercept adjustment.
+     * @return target disabled share minus expected disabled share at the given adjustment.
      */
     @Override
     public double evaluate(double[] args) {
 
-        persons.parallelStream()
-                .forEach(person -> person.disability(args[0]));
+        if (numWithDlltsd == 0) return targetDisabledShare;
 
-        return targetDisabledShare - evalDisabledShare();
-    }
+        double expectedDisabled;
+        if (probitActive) {
+            expectedDisabled = persons.parallelStream()
+                    .filter(person -> person.getDlltsd() != null
+                            && person.getDag() >= Parameters.AGE_TO_BECOME_SEMI_RESPONSIBLE
+                            && !Les_c4.Retired.equals(person.getLes_c4())
+                            && !Les_c4.Student.equals(person.getLes_c4()))
+                    .mapToDouble(person -> {
+                        double score = Parameters.getRegHealthH2().getScore(person, Person.DoublesVariables.class);
+                        return Parameters.getRegHealthH2().getProbability(score + args[0]);
+                    })
+                    .sum();
+        } else {
+            // Intertemporal path with flagDisability off: all eligible become non-disabled
+            expectedDisabled = 0;
+        }
 
-
-    /**
-     * Evaluates the aggregate share of persons with partners assigned in a test run of union matching among those eligible for partnership.
-     *
-     * This method uses Java streams to count the number of persons who meet the age criteria for cohabitation
-     * and the number of persons who currently have a test partner. The aggregate share is calculated as the
-     * ratio of successfully partnered persons to those eligible for partnership, with consideration for potential division by zero.
-     *
-     * @return The aggregate share of partnered persons among those eligible, or 0.0 if no eligible persons are found.
-     */
-    private double evalDisabledShare() {
-
-        long numDisabledPersons = model.getPersons().stream()
-                .filter(person -> (Indicator.True.equals(person.getDlltsd())))
-                .count();
-        long numPeople = model.getPersons().stream()
-                .filter(person -> person.getDlltsd() != null)
-                .count();
-
-        return (numDisabledPersons > 0) ? (double) numDisabledPersons / numPeople : 0.0;
+        double expectedDisabledShare = (expectedDisabled + numIneligibleDisabled) / numWithDlltsd;
+        return targetDisabledShare - expectedDisabledShare;
     }
 }

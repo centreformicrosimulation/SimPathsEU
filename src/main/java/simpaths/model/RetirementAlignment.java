@@ -3,7 +3,8 @@ package simpaths.model;
 import microsim.engine.SimulationEngine;
 import simpaths.data.IEvaluation;
 import simpaths.data.Parameters;
-import simpaths.data.filters.FertileFilter;
+import simpaths.model.decisions.DecisionParams;
+import simpaths.model.enums.Labour;
 import simpaths.model.enums.Les_c4;
 import simpaths.model.enums.TargetShares;
 
@@ -25,6 +26,10 @@ public class RetirementAlignment implements IEvaluation {
     private double targetRetiredShare;
     private Set<Person> persons;
     private SimPathsModel model;
+    private long numWithLes;
+    private long numAlreadyRetired;
+    private long numDeterministicRetire;
+    private boolean intertemporalPath;
 
 
     // CONSTRUCTOR
@@ -32,48 +37,63 @@ public class RetirementAlignment implements IEvaluation {
         this.model = (SimPathsModel) SimulationEngine.getInstance().getManager(SimPathsModel.class.getCanonicalName());
         this.persons = persons;
         targetRetiredShare = Parameters.getTargetShare(model.getYear(), TargetShares.Retirement);
+        intertemporalPath = Parameters.enableIntertemporalOptimisations && DecisionParams.flagRetirement;
+
+        numWithLes = persons.stream()
+                .filter(person -> person.getLes_c4() != null)
+                .count();
+        numAlreadyRetired = persons.stream()
+                .filter(person -> Les_c4.Retired.equals(person.getLes_c4()))
+                .count();
+        if (intertemporalPath) {
+            numDeterministicRetire = persons.stream()
+                    .filter(person -> person.getDag() >= Parameters.MIN_AGE_TO_RETIRE
+                            && !Les_c4.Retired.equals(person.getLes_c4())
+                            && !Les_c4.Retired.equals(person.getLes_c4_lag1())
+                            && Labour.ZERO.equals(person.getLabourSupplyWeekly_L1()))
+                    .count();
+        } else {
+            numDeterministicRetire = 0;
+        }
     }
 
 
     /**
-     * Evaluates the discrepancy between the simulated and target total retired share and adjusts probabilities if necessary.
+     * Evaluates the discrepancy between the expected (smooth) retired share at a candidate adjustment
+     * and the target share. Uses sum of probit probabilities rather than stochastic realisations,
+     * yielding a smooth, deterministic objective for the root search.
      *
-     * This method focuses on the influence of the adjustment parameter 'args[0]' on the difference between the target and
-     * simulated retired share (error).
-     *
-     * The error value is returned and serves as the stopping condition in root search routines.
-     *
-     * @param args An array of parameters, where args[0] represents the adjustment parameter.
-     * @return The error in the target aggregate share of retired persons after potential adjustments.
+     * @param args An array of parameters, where args[0] represents the probit intercept adjustment.
+     * @return target retired share minus expected retired share at the given adjustment.
      */
     @Override
     public double evaluate(double[] args) {
 
-        persons.parallelStream()
-                .forEach(person -> person.considerRetirement(args[0]));
+        if (numWithLes == 0) return targetRetiredShare;
 
-        return targetRetiredShare - evalRetiredShare();
-    }
+        double expectedRetiring;
+        if (intertemporalPath) {
+            expectedRetiring = numDeterministicRetire;
+        } else {
+            expectedRetiring = persons.parallelStream()
+                    .filter(person -> person.getLes_c4() != null
+                            && person.getDag() >= Parameters.MIN_AGE_TO_RETIRE
+                            && !Les_c4.Retired.equals(person.getLes_c4())
+                            && !Les_c4.Retired.equals(person.getLes_c4_lag1()))
+                    .mapToDouble(person -> {
+                        double score;
+                        if (person.getPartner() != null) {
+                            score = Parameters.getRegRetirementR1b().getScore(person, Person.DoublesVariables.class);
+                            return Parameters.getRegRetirementR1b().getProbability(score + args[0]);
+                        } else {
+                            score = Parameters.getRegRetirementR1a().getScore(person, Person.DoublesVariables.class);
+                            return Parameters.getRegRetirementR1a().getProbability(score + args[0]);
+                        }
+                    })
+                    .sum();
+        }
 
-
-    /**
-     * Evaluates the aggregate share of persons with partners assigned in a test run of union matching among those eligible for partnership.
-     *
-     * This method uses Java streams to count the number of persons who meet the age criteria for cohabitation
-     * and the number of persons who currently have a test partner. The aggregate share is calculated as the
-     * ratio of successfully partnered persons to those eligible for partnership, with consideration for potential division by zero.
-     *
-     * @return The aggregate share of partnered persons among those eligible, or 0.0 if no eligible persons are found.
-     */
-    private double evalRetiredShare() {
-
-        long numRetiredPersons = model.getPersons().stream()
-                .filter(person -> (person.getToRetire().equals(true) || Les_c4.Retired.equals(person.getLes_c4())))
-                .count();
-        long numPeople = model.getPersons().stream()
-                .filter(person -> person.getLes_c4() != null)
-                .count();
-
-        return (numRetiredPersons > 0) ? (double) numRetiredPersons / numPeople : 0.0;
+        double expectedRetiredShare = (numAlreadyRetired + expectedRetiring) / numWithLes;
+        return targetRetiredShare - expectedRetiredShare;
     }
 }

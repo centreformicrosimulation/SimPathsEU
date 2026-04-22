@@ -1480,10 +1480,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
     protected void initialisePotentialHourlyEarnings() {
 
-        if (dag < Parameters.MIN_AGE_TO_HAVE_INCOME || dag > Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
-            return;
-        }
-
         double gauss = Parameters.getStandardNormalDistribution().inverseCumulativeProbability(innovations.getDoubleDraw(15));
         double logPotentialHourlyEarnings, score, rmse;
         if (dgn.equals(Gender.Male)) {
@@ -1501,10 +1497,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
 
 
     protected void updateFullTimeHourlyEarnings() {
-
-        if (dag < Parameters.MIN_AGE_TO_HAVE_INCOME || dag > Parameters.MAX_AGE_FLEXIBLE_LABOUR_SUPPLY) {
-            return;
-        }
 
         double rmse, wagesInnov = innovations.getDoubleDraw(16);
         if (Les_c4.EmployedOrSelfEmployed.equals(les_c4_lag1)) {
@@ -3323,7 +3315,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
                 return yptciihs_dv_lag3;
             }
             case New_rel_L1 -> {
-                return (getDcpst().equals(Dcpst.Partnered) && !dcpst_lag1.equals(Dcpst.Partnered))? 1. : 0.;
+                return (Dcpst.Partnered.equals(getDcpst()) &&
+                        dcpst_lag1 != null &&
+                        !Dcpst.Partnered.equals(dcpst_lag1)) ? 1. : 0.;
             }
             case Ypncp_L1 -> {
                 return ypncp_lag1;
@@ -4062,6 +4056,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         if (labourSupplyWeekly==null)
             throw new RuntimeException("request for labourSupplyWeekly before it has been initialised");
         return labourSupplyWeekly;
+    }
+
+    public Labour getLabourSupplyWeekly_L1() {
+        return labourSupplyWeekly_L1;
     }
 
     public int getL1LabourSupplyHoursWeekly() {
