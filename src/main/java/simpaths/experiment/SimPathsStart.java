@@ -56,6 +56,9 @@ public class SimPathsStart implements ExperimentBuilder {
 
 	private static boolean rewritePolicySchedule = false;
 
+	private static boolean reuseExistingDatabase = true;
+	private static final boolean defaultReuseExistingDatabase = reuseExistingDatabase;
+
 
 	/**
 	 *
@@ -171,6 +174,8 @@ public class SimPathsStart implements ExperimentBuilder {
 	}
 
 	private static boolean parseCommandLineArgs(String[] args) {
+		resetCommandLineState();
+
 		Options options = new Options();
 
 		Option countryOption = new Option("c", "country", true, "Country (by country code CC, e.g. 'UK'/'IT')");
@@ -194,6 +199,18 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		Option rewritePolicyScheduleOption = new Option("r", "rewrite-policy-schedule",false, "Re-write policy schedule from detected policy files");
 		options.addOption(rewritePolicyScheduleOption);
+
+		Option reuseExistingDatabaseOption = Option.builder()
+				.longOpt("reuse-existing-db")
+				.desc("Reuse input/input.mv.db instead of rebuilding it when running headless")
+				.build();
+		options.addOption(reuseExistingDatabaseOption);
+
+		Option rebuildDatabaseOption = Option.builder()
+				.longOpt("rebuild-db")
+				.desc("Force a rebuild of input/input.mv.db instead of reusing it when running headless")
+				.build();
+		options.addOption(rebuildDatabaseOption);
 
 		Option guiOption = new Option("g", "showGui", true, "Show GUI");
 		guiOption.setArgName("true/false");
@@ -245,6 +262,18 @@ public class SimPathsStart implements ExperimentBuilder {
 			if (cmd.hasOption("r")) {
 				rewritePolicySchedule = true;
 			}
+
+			if (cmd.hasOption("reuse-existing-db")) {
+				reuseExistingDatabase = true;
+			}
+
+			if (cmd.hasOption("rebuild-db")) {
+				reuseExistingDatabase = false;
+			}
+
+			if (setupOnly) {
+				reuseExistingDatabase = false;
+			}
 		} catch (ParseException | IllegalArgumentException e) {
 			System.err.println("Error parsing command line arguments: " + e.getMessage());
 			formatter.printHelp("SimPathsStart", options);
@@ -261,6 +290,17 @@ public class SimPathsStart implements ExperimentBuilder {
 				"It takes the following options:";
 		String footer = "When running with no display, `-g` must be set to `false`.";
 		formatter.printHelp("SimPathsStart", header, options, footer, true);
+	}
+
+	private static void resetCommandLineState() {
+		country = Country.PL;
+		startYear = Parameters.getMaxStartYear();
+		endYear = 2013;
+		popSize = 30000;
+		showGui = true;
+		setupOnly = false;
+		rewritePolicySchedule = false;
+		reuseExistingDatabase = defaultReuseExistingDatabase;
 	}
 
 
@@ -297,6 +337,17 @@ public class SimPathsStart implements ExperimentBuilder {
 		if (testList.size()==0)
 			Parameters.setTrainingFlag(true);
 
+		writeSelectedCountryAndYear();
+
+		if (reuseExistingDatabase) {
+			File inputDatabase = new File("input" + File.separator + "input.mv.db");
+			if (inputDatabase.exists()) {
+				Parameters.defineCountryString(country);
+				return;
+			}
+			System.out.println("Input database '" + inputDatabase.getPath() + "' not found. Rebuilding it.");
+		}
+
 		// Build path for the country-specific input folder
 		String countryInputPath = "input" + File.separator + country.toString();
 
@@ -315,26 +366,6 @@ public class SimPathsStart implements ExperimentBuilder {
 			writePolicyScheduleExcelFile();
 		}
 
-		// Save the last selected country and year to Excel to use in the model if GUI launched straight away
-		String[] columnNames = {"Country", "Year"};
-		Object[][] data = new Object[1][columnNames.length];
-		data[0][0] = country.toString();
-		data[0][1] = startYear;
-
-		// Save into the shared input folder (used later on startup)
-		String rootInputPath = "input";
-		File rootFolder = new File(rootInputPath);
-		if (!rootFolder.exists()) {
-			rootFolder.mkdirs();
-		}
-		XLSXfileWriter.createXLSX(
-				rootInputPath,
-				Parameters.DatabaseCountryYearFilename,
-				"Data",
-				columnNames,
-				data
-		);
-
 		// load uprating factors
 		Parameters.loadTimeSeriesFactorMaps(country);
 		Parameters.instantiateAlignmentMaps();
@@ -343,6 +374,27 @@ public class SimPathsStart implements ExperimentBuilder {
         Parameters.defineCountryString(country);
 		// set-up database
 		Parameters.databaseSetup(country, showGui, startYear);
+	}
+
+	private static void writeSelectedCountryAndYear() {
+		String rootInputPath = "input";
+		File rootFolder = new File(rootInputPath);
+		if (!rootFolder.exists()) {
+			rootFolder.mkdirs();
+		}
+
+		String[] columnNames = {"Country", "Year"};
+		Object[][] data = new Object[1][columnNames.length];
+		data[0][0] = country.toString();
+		data[0][1] = startYear;
+
+		XLSXfileWriter.createXLSX(
+				rootInputPath,
+				Parameters.DatabaseCountryYearFilename,
+				"Data",
+				columnNames,
+				data
+		);
 	}
 
 	public static void writePolicyScheduleExcelFile() {
@@ -559,28 +611,7 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		country = cbCountry.getCountryEnum();
 		startYear = cbStartYear.getYear();
-
-		// Save the last selected country and year to Excel in the input folder
-		String countryInputPath = "input";
-
-		// Ensure the folder exists
-		File countryFolder = new File(countryInputPath);
-		if (!countryFolder.exists()) {
-			countryFolder.mkdirs();
-		}
-
-		String[] columnNames = {"Country", "Year"};
-		Object[][] data = new Object[1][columnNames.length];
-		data[0][0] = country.toString();
-		data[0][1] = startYear;
-
-		XLSXfileWriter.createXLSX(
-				countryInputPath,
-				Parameters.DatabaseCountryYearFilename,
-				"Data",
-				columnNames,
-				data
-		);
+		writeSelectedCountryAndYear();
 
 	}
 }
