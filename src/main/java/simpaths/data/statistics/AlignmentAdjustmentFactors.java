@@ -26,296 +26,296 @@ public class AlignmentAdjustmentFactors {
     private PanelEntityKey key = new PanelEntityKey(1L);
 
     @Column(name = "partnership_adj_factor")
-    private double partnershipAdjustmentFactor;
+    private double alignPartnerAdj;
 
     @Column(name = "share_cohabiting_sim")
-    private double shareCohabitingSimulated;
+    private double alignPartnerSimShare;
 
     @Column(name = "share_cohabiting_tgt")
-    private double shareCohabitingTarget;
+    private double alignPartnerTargetShare;
 
     @Column(name = "fertility_adj_factor")
-    private double fertilityAdjustmentFactor;
+    private double alignFertAdj;
 
     @Column(name = "fertiilty_rate_sim")
-    private double fertilityRateSimulated;
+    private double alignFertRateSim;
 
     @Column(name = "fertiilty_rate_tgt")
-    private double fertilityRateTarget;
+    private double alignFertRateTarget;
 
     @Column(name = "retirement_adj_factor")
-    private double retirementAdjustmentFactor;
+    private double alignRtrdAdj;
 
     @Column(name = "disability_adj_factor")
-    private double disabilityAdjustmentFactor;
+    private double alignDsblAdj;
 
     @Column(name = "retirement_share_sim")
-    private double retirementShareSimulated;
+    private double alignRtrdSimShare;
 
     @Column(name = "retirement_share_tgt")
-    private double retirementShareTarget;
+    private double alignRtrdTgtShare;
 
     @Column(name = "disability_share_sim")
-    private double disabilityShareSimulated;
+    private double alignDsblSimShare;
 
     @Column(name = "disability_share_tgt")
-    private double disabilityShareTarget;
+    private double alignDsblTgtShare;
 
     @Column(name = "in_school_adj_factor")
-    private double inSchoolAdjustmentFactor;
+    private double alignInSchoolAdj;
 
     @Column(name = "in_school_share_sim")
-    private double inSchoolShareSimulated;
+    private double alignInSchoolSimShare;
 
     @Column(name = "in_school_share_tgt")
-    private double inSchoolShareTarget;
+    private double alignInSchoolTgtShare;
 
     @Column(name = "utility_adj_factor_smales")
-    private double utilityAdjustmentFactorSmales;
+    private double alignUtilAdjSingleM;
 
     @Column(name = "utility_adj_factor_sfemales")
-    private double utilityAdjustmentFactorSfemales;
+    private double alignUtilAdjSingleF;
 
     @Column(name = "utility_adj_factor_couples")
-    private double utilityAdjustmentFactorCouples;
+    private double alignUtilAdjCouple;
 
     @Column(name = "utility_adj_factor_ac_male")
-    private double utilityAdjustmentFactorACMale;
+    private double alignUtilAdjACM;
 
     @Column(name = "utility_adj_factor_ac_female")
-    private double utilityAdjustmentFactorACFemale;
+    private double alignUtilAdjACF;
 
     @Column(name = "utility_adj_factor_male_with_dep")
-    private double utilityAdjustmentFactorMaleWithDep;
+    private double alignUtilAdjMWithDep;
 
     @Column(name = "utility_adj_factor_female_with_dep")
-    private double utilityAdjustmentFactorFemaleWithDep;
+    private double alignUtilAdjFWithDep;
 
     @Column(name = "employed_share_sim_smales")
-    private double employedShareSimSingleMales;
+    private double alignEmpSimSingleMShare;
 
     @Column(name = "employed_share_tgt_smales")
-    private double employedShareTgtSingleMales;
+    private double alignEmpTgtSingleMShare;
 
     @Column(name = "employed_share_sim_sfemales")
-    private double employedShareSimSingleFemales;
+    private double alignEmpSimSingleFShare;
 
     @Column(name = "employed_share_tgt_sfemales")
-    private double employedShareTgtSingleFemales;
+    private double alignEmpTgtSingleFShare;
 
     @Column(name = "employed_share_sim_couples")
-    private double employedShareSimCouples;
+    private double alignEmpSimCouplesShare;
 
     @Column(name = "employed_share_tgt_couples")
-    private double employedShareTgtCouples;
+    private double alignEmpTgtCouplesShare;
 
     @Column(name = "employed_share_sim_ac_male")
-    private double employedShareSimACMale;
+    private double alignEmpSimACMShare;
 
     @Column(name = "employed_share_tgt_ac_male")
-    private double employedShareTgtACMale;
+    private double alignEmpTgtACMShare;
 
     @Column(name = "employed_share_sim_ac_female")
-    private double employedShareSimACFemale;
+    private double alignEmpSimACFShare;
 
     @Column(name = "employed_share_tgt_ac_female")
-    private double employedShareTgtACFemale;
+    private double alignEmpTgtACFShare;
 
     @Column(name = "employed_share_sim_male_with_dep")
-    private double employedShareSimMaleWithDep;
+    private double alignEmpSimMWithDepShare;
 
     @Column(name = "employed_share_tgt_male_with_dep")
-    private double employedShareTgtMaleWithDep;
+    private double alignEmpTgtMWithDepShare;
 
     @Column(name = "employed_share_sim_female_with_dep")
-    private double employedShareSimFemaleWithDep;
+    private double alignEmpSimFWithDepShare;
 
     @Column(name = "employed_share_tgt_female_with_dep")
-    private double employedShareTgtFemaleWithDep;
+    private double alignEmpTgtFWithDepShare;
 
     public double getPartnershipAdjustmentFactor() {
-        return partnershipAdjustmentFactor;
+        return alignPartnerAdj;
     }
 
-    public void setPartnershipAdjustmentFactor(double partnershipAdjustmentFactor) {
-        this.partnershipAdjustmentFactor = partnershipAdjustmentFactor;
+    public void setPartnershipAdjustmentFactor(double alignPartnerAdj) {
+        this.alignPartnerAdj = alignPartnerAdj;
     }
 
     public double getFertilityAdjustmentFactor() {
-        return fertilityAdjustmentFactor;
+        return alignFertAdj;
     }
 
     public void setFertilityAdjustmentFactor(double factor) {
-        this.fertilityAdjustmentFactor = factor;
+        this.alignFertAdj = factor;
     }
 
     public double getRetirementAdjustmentFactor() {
-        return retirementAdjustmentFactor;
+        return alignRtrdAdj;
     }
 
-    public void setRetirementAdjustmentFactor(double retirementAdjustmentFactor) {
-        this.retirementAdjustmentFactor = retirementAdjustmentFactor;
+    public void setRetirementAdjustmentFactor(double alignRtrdAdj) {
+        this.alignRtrdAdj = alignRtrdAdj;
     }
 
     public double getDisabilityAdjustmentFactor() {
-        return disabilityAdjustmentFactor;
+        return alignDsblAdj;
     }
 
-    public void setDisabilityAdjustmentFactor(double disabilityAdjustmentFactor) {
-        this.disabilityAdjustmentFactor = disabilityAdjustmentFactor;
+    public void setDisabilityAdjustmentFactor(double alignDsblAdj) {
+        this.alignDsblAdj = alignDsblAdj;
     }
 
     public double getInSchoolAdjustmentFactor() {
-        return inSchoolAdjustmentFactor;
+        return alignInSchoolAdj;
     }
 
-    public void setInSchoolAdjustmentFactor(double inSchoolAdjustmentFactor) {
-        this.inSchoolAdjustmentFactor = inSchoolAdjustmentFactor;
+    public void setInSchoolAdjustmentFactor(double alignInSchoolAdj) {
+        this.alignInSchoolAdj = alignInSchoolAdj;
     }
 
-    public double getRetirementShareSimulated() { return retirementShareSimulated; }
+    public double getRetirementShareSimulated() { return alignRtrdSimShare; }
 
-    public void setRetirementShareSimulated(double retirementShareSimulated) { this.retirementShareSimulated = retirementShareSimulated; }
+    public void setRetirementShareSimulated(double alignRtrdSimShare) { this.alignRtrdSimShare = alignRtrdSimShare; }
 
-    public double getRetirementShareTarget() { return retirementShareTarget; }
+    public double getRetirementShareTarget() { return alignRtrdTgtShare; }
 
-    public void setRetirementShareTarget(double retirementShareTarget) { this.retirementShareTarget = retirementShareTarget; }
+    public void setRetirementShareTarget(double alignRtrdTgtShare) { this.alignRtrdTgtShare = alignRtrdTgtShare; }
 
-    public double getDisabilityShareSimulated() { return disabilityShareSimulated; }
+    public double getDisabilityShareSimulated() { return alignDsblSimShare; }
 
-    public void setDisabilityShareSimulated(double disabilityShareSimulated) { this.disabilityShareSimulated = disabilityShareSimulated; }
+    public void setDisabilityShareSimulated(double alignDsblSimShare) { this.alignDsblSimShare = alignDsblSimShare; }
 
-    public double getDisabilityShareTarget() { return disabilityShareTarget; }
+    public double getDisabilityShareTarget() { return alignDsblTgtShare; }
 
-    public void setDisabilityShareTarget(double disabilityShareTarget) { this.disabilityShareTarget = disabilityShareTarget; }
+    public void setDisabilityShareTarget(double alignDsblTgtShare) { this.alignDsblTgtShare = alignDsblTgtShare; }
 
-    public double getInSchoolShareSimulated() { return inSchoolShareSimulated; }
+    public double getInSchoolShareSimulated() { return alignInSchoolSimShare; }
 
-    public void setInSchoolShareSimulated(double inSchoolShareSimulated) { this.inSchoolShareSimulated = inSchoolShareSimulated; }
+    public void setInSchoolShareSimulated(double alignInSchoolSimShare) { this.alignInSchoolSimShare = alignInSchoolSimShare; }
 
-    public double getInSchoolShareTarget() { return inSchoolShareTarget; }
+    public double getInSchoolShareTarget() { return alignInSchoolTgtShare; }
 
-    public void setInSchoolShareTarget(double inSchoolShareTarget) { this.inSchoolShareTarget = inSchoolShareTarget; }
+    public void setInSchoolShareTarget(double alignInSchoolTgtShare) { this.alignInSchoolTgtShare = alignInSchoolTgtShare; }
 
     public double getUtilityAdjustmentFactorSmales() {
-        return utilityAdjustmentFactorSmales;
+        return alignUtilAdjSingleM;
     }
 
-    public void setUtilityAdjustmentFactorSmales(double utilityAdjustmentFactorSmales) {
-        this.utilityAdjustmentFactorSmales = utilityAdjustmentFactorSmales;
+    public void setUtilityAdjustmentFactorSmales(double alignUtilAdjSingleM) {
+        this.alignUtilAdjSingleM = alignUtilAdjSingleM;
     }
 
     public double getUtilityAdjustmentFactorSfemales() {
-        return utilityAdjustmentFactorSfemales;
+        return alignUtilAdjSingleF;
     }
 
-    public void setUtilityAdjustmentFactorSfemales(double utilityAdjustmentFactorSfemales) {
-        this.utilityAdjustmentFactorSfemales = utilityAdjustmentFactorSfemales;
+    public void setUtilityAdjustmentFactorSfemales(double alignUtilAdjSingleF) {
+        this.alignUtilAdjSingleF = alignUtilAdjSingleF;
     }
 
     public double getUtilityAdjustmentFactorCouples() {
-        return utilityAdjustmentFactorCouples;
+        return alignUtilAdjCouple;
     }
 
     public double getUtilityAdjustmentFactorACMale() {
-        return utilityAdjustmentFactorACMale;
+        return alignUtilAdjACM;
     }
 
     public double getUtilityAdjustmentFactorACFemale() {
-        return utilityAdjustmentFactorACFemale;
+        return alignUtilAdjACF;
     }
 
     public double getUtilityAdjustmentFactorMaleWithDep() {
-        return utilityAdjustmentFactorMaleWithDep;
+        return alignUtilAdjMWithDep;
     }
 
     public double getUtilityAdjustmentFactorFemaleWithDep() {
-        return utilityAdjustmentFactorFemaleWithDep;
+        return alignUtilAdjFWithDep;
     }
 
-    public void setUtilityAdjustmentFactorCouples(double utilityAdjustmentFactorCouples) {
-        this.utilityAdjustmentFactorCouples = utilityAdjustmentFactorCouples;
+    public void setUtilityAdjustmentFactorCouples(double alignUtilAdjCouple) {
+        this.alignUtilAdjCouple = alignUtilAdjCouple;
     }
 
-    public void setUtilityAdjustmentFactorACMale(double utilityAdjustmentFactorACMale) {
-        this.utilityAdjustmentFactorACMale = utilityAdjustmentFactorACMale;
+    public void setUtilityAdjustmentFactorACMale(double alignUtilAdjACM) {
+        this.alignUtilAdjACM = alignUtilAdjACM;
     }
 
-    public void setUtilityAdjustmentFactorACFemale(double utilityAdjustmentFactorACFemale) {
-        this.utilityAdjustmentFactorACFemale = utilityAdjustmentFactorACFemale;
+    public void setUtilityAdjustmentFactorACFemale(double alignUtilAdjACF) {
+        this.alignUtilAdjACF = alignUtilAdjACF;
     }
 
-    public void setUtilityAdjustmentFactorMaleWithDep(double utilityAdjustmentFactorMaleWithDep) {
-        this.utilityAdjustmentFactorMaleWithDep = utilityAdjustmentFactorMaleWithDep;
+    public void setUtilityAdjustmentFactorMaleWithDep(double alignUtilAdjMWithDep) {
+        this.alignUtilAdjMWithDep = alignUtilAdjMWithDep;
     }
 
-    public void setUtilityAdjustmentFactorFemaleWithDep(double utilityAdjustmentFactorFemaleWithDep) {
-        this.utilityAdjustmentFactorFemaleWithDep = utilityAdjustmentFactorFemaleWithDep;
+    public void setUtilityAdjustmentFactorFemaleWithDep(double alignUtilAdjFWithDep) {
+        this.alignUtilAdjFWithDep = alignUtilAdjFWithDep;
     }
 
-    public double getShareCohabitingSimulated() {return shareCohabitingSimulated;}
+    public double getShareCohabitingSimulated() {return alignPartnerSimShare;}
 
-    public void setShareCohabitingSimulated(double shareCohabitingSimulated) { this.shareCohabitingSimulated = shareCohabitingSimulated; }
+    public void setShareCohabitingSimulated(double alignPartnerSimShare) { this.alignPartnerSimShare = alignPartnerSimShare; }
 
     public double getFertilityRateSimulated() {
-        return fertilityRateSimulated;
+        return alignFertRateSim;
     }
 
-    public void setFertilityRateSimulated(double fertilityRateSimulated) {
-        this.fertilityRateSimulated = fertilityRateSimulated;
+    public void setFertilityRateSimulated(double alignFertRateSim) {
+        this.alignFertRateSim = alignFertRateSim;
     }
 
     public double getFertilityRateTarget() {
-        return fertilityRateTarget;
+        return alignFertRateTarget;
     }
 
-    public void setFertilityRateTarget(double fertilityRateTarget) {
-        this.fertilityRateTarget = fertilityRateTarget;
+    public void setFertilityRateTarget(double alignFertRateTarget) {
+        this.alignFertRateTarget = alignFertRateTarget;
     }
 
     public double getShareCohabitingTarget() {
-        return shareCohabitingTarget;
+        return alignPartnerTargetShare;
     }
 
-    public void setShareCohabitingTarget(double shareCohabitingTarget) {
-        this.shareCohabitingTarget = shareCohabitingTarget;
+    public void setShareCohabitingTarget(double alignPartnerTargetShare) {
+        this.alignPartnerTargetShare = alignPartnerTargetShare;
     }
 
     // employed share getters/setters
-    public double getEmployedShareSimSingleMales() { return employedShareSimSingleMales; }
-    public void setEmployedShareSimSingleMales(double v) { this.employedShareSimSingleMales = v; }
-    public double getEmployedShareTgtSingleMales() { return employedShareTgtSingleMales; }
-    public void setEmployedShareTgtSingleMales(double v) { this.employedShareTgtSingleMales = v; }
+    public double getEmployedShareSimSingleMales() { return alignEmpSimSingleMShare; }
+    public void setEmployedShareSimSingleMales(double v) { this.alignEmpSimSingleMShare = v; }
+    public double getEmployedShareTgtSingleMales() { return alignEmpTgtSingleMShare; }
+    public void setEmployedShareTgtSingleMales(double v) { this.alignEmpTgtSingleMShare = v; }
 
-    public double getEmployedShareSimSingleFemales() { return employedShareSimSingleFemales; }
-    public void setEmployedShareSimSingleFemales(double v) { this.employedShareSimSingleFemales = v; }
-    public double getEmployedShareTgtSingleFemales() { return employedShareTgtSingleFemales; }
-    public void setEmployedShareTgtSingleFemales(double v) { this.employedShareTgtSingleFemales = v; }
+    public double getEmployedShareSimSingleFemales() { return alignEmpSimSingleFShare; }
+    public void setEmployedShareSimSingleFemales(double v) { this.alignEmpSimSingleFShare = v; }
+    public double getEmployedShareTgtSingleFemales() { return alignEmpTgtSingleFShare; }
+    public void setEmployedShareTgtSingleFemales(double v) { this.alignEmpTgtSingleFShare = v; }
 
-    public double getEmployedShareSimCouples() { return employedShareSimCouples; }
-    public void setEmployedShareSimCouples(double v) { this.employedShareSimCouples = v; }
-    public double getEmployedShareTgtCouples() { return employedShareTgtCouples; }
-    public void setEmployedShareTgtCouples(double v) { this.employedShareTgtCouples = v; }
+    public double getEmployedShareSimCouples() { return alignEmpSimCouplesShare; }
+    public void setEmployedShareSimCouples(double v) { this.alignEmpSimCouplesShare = v; }
+    public double getEmployedShareTgtCouples() { return alignEmpTgtCouplesShare; }
+    public void setEmployedShareTgtCouples(double v) { this.alignEmpTgtCouplesShare = v; }
 
-    public double getEmployedShareSimACMale() { return employedShareSimACMale; }
-    public void setEmployedShareSimACMale(double v) { this.employedShareSimACMale = v; }
-    public double getEmployedShareTgtACMale() { return employedShareTgtACMale; }
-    public void setEmployedShareTgtACMale(double v) { this.employedShareTgtACMale = v; }
+    public double getEmployedShareSimACMale() { return alignEmpSimACMShare; }
+    public void setEmployedShareSimACMale(double v) { this.alignEmpSimACMShare = v; }
+    public double getEmployedShareTgtACMale() { return alignEmpTgtACMShare; }
+    public void setEmployedShareTgtACMale(double v) { this.alignEmpTgtACMShare = v; }
 
-    public double getEmployedShareSimACFemale() { return employedShareSimACFemale; }
-    public void setEmployedShareSimACFemale(double v) { this.employedShareSimACFemale = v; }
-    public double getEmployedShareTgtACFemale() { return employedShareTgtACFemale; }
-    public void setEmployedShareTgtACFemale(double v) { this.employedShareTgtACFemale = v; }
+    public double getEmployedShareSimACFemale() { return alignEmpSimACFShare; }
+    public void setEmployedShareSimACFemale(double v) { this.alignEmpSimACFShare = v; }
+    public double getEmployedShareTgtACFemale() { return alignEmpTgtACFShare; }
+    public void setEmployedShareTgtACFemale(double v) { this.alignEmpTgtACFShare = v; }
 
-    public double getEmployedShareSimMaleWithDep() { return employedShareSimMaleWithDep; }
-    public void setEmployedShareSimMaleWithDep(double v) { this.employedShareSimMaleWithDep = v; }
-    public double getEmployedShareTgtMaleWithDep() { return employedShareTgtMaleWithDep; }
-    public void setEmployedShareTgtMaleWithDep(double v) { this.employedShareTgtMaleWithDep = v; }
+    public double getEmployedShareSimMaleWithDep() { return alignEmpSimMWithDepShare; }
+    public void setEmployedShareSimMaleWithDep(double v) { this.alignEmpSimMWithDepShare = v; }
+    public double getEmployedShareTgtMaleWithDep() { return alignEmpTgtMWithDepShare; }
+    public void setEmployedShareTgtMaleWithDep(double v) { this.alignEmpTgtMWithDepShare = v; }
 
-    public double getEmployedShareSimFemaleWithDep() { return employedShareSimFemaleWithDep; }
-    public void setEmployedShareSimFemaleWithDep(double v) { this.employedShareSimFemaleWithDep = v; }
-    public double getEmployedShareTgtFemaleWithDep() { return employedShareTgtFemaleWithDep; }
-    public void setEmployedShareTgtFemaleWithDep(double v) { this.employedShareTgtFemaleWithDep = v; }
+    public double getEmployedShareSimFemaleWithDep() { return alignEmpSimFWithDepShare; }
+    public void setEmployedShareSimFemaleWithDep(double v) { this.alignEmpSimFWithDepShare = v; }
+    public double getEmployedShareTgtFemaleWithDep() { return alignEmpTgtFWithDepShare; }
+    public void setEmployedShareTgtFemaleWithDep(double v) { this.alignEmpTgtFWithDepShare = v; }
 
     public void update(SimPathsModel model) {
 
