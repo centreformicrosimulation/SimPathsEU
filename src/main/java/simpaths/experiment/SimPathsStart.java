@@ -24,7 +24,9 @@ import simpaths.model.SimPathsModel;
 import org.apache.commons.io.FileUtils;
 
 // import JAS-mine packages
+import microsim.data.ExperimentManager;
 import microsim.data.MultiKeyCoefficientMap;
+import microsim.data.db.DatabaseUtils;
 import microsim.data.excel.ExcelAssistant;
 import microsim.engine.ExperimentBuilder;
 import microsim.engine.SimulationEngine;
@@ -35,6 +37,7 @@ import microsim.gui.shell.MicrosimShell;
 import simpaths.model.enums.Country;
 import simpaths.data.*;
 import simpaths.model.taxes.database.TaxDonorDataParser;
+import simpaths.model.taxes.database.TaxDonorParserTraining;
 
 
 /**
@@ -58,6 +61,11 @@ public class SimPathsStart implements ExperimentBuilder {
 
 	private static boolean reuseExistingDatabase = true;
 	private static final boolean defaultReuseExistingDatabase = reuseExistingDatabase;
+
+	// Tracks whether -t/--training was given on the command line. When false, the
+	// auto-detect (empty InitialPopulations folder → flip to training) is allowed
+	// to run; when true, the explicit CLI value wins and auto-detect is skipped.
+	private static boolean trainingFlagExplicit = false;
 
 
 	/**
@@ -125,6 +133,12 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		// From here on, use countryInputPath for all future file reads/writes
 		// e.g., EUROMODpolicySchedule.xlsx: countryInputPath + File.separator + Parameters.EUROMODpolicyScheduleFilename + ".xlsx"
+
+		if (!showGui) {
+			// Keep headless single-run aligned with the database created during setup.
+			ExperimentManager.getInstance().copyInputFolderStructure = false;
+			DatabaseUtils.databaseInputUrl = "input" + File.separator + "input";
+		}
 
 		// start the JAS-mine simulation engine
 		final SimulationEngine engine = SimulationEngine.getInstance();
@@ -216,6 +230,10 @@ public class SimPathsStart implements ExperimentBuilder {
 		guiOption.setArgName("true/false");
 		options.addOption(guiOption);
 
+		Option trainingOption = new Option("t", "training", true, "Use training data subset (InitialPopulations/training, EUROMODoutput/training, TaxDonorParserTraining)");
+		trainingOption.setArgName("true/false");
+		options.addOption(trainingOption);
+
 		Option helpOption = new Option("h", "help", false, "Print help message");
 		options.addOption(helpOption);
 
@@ -233,6 +251,13 @@ public class SimPathsStart implements ExperimentBuilder {
 
 			if (cmd.hasOption("g")) {
 				showGui = Boolean.parseBoolean(cmd.getOptionValue("g"));
+			}
+
+			if (cmd.hasOption("t")) {
+				boolean trainingValue = Boolean.parseBoolean(cmd.getOptionValue("t"));
+				Parameters.setTrainingFlag(trainingValue);
+				trainingFlagExplicit = true;
+				System.out.println("Training-data flag set explicitly via CLI: -t " + trainingValue);
 			}
 
 			if (cmd.hasOption("c")) {
@@ -301,6 +326,7 @@ public class SimPathsStart implements ExperimentBuilder {
 		setupOnly = false;
 		rewritePolicySchedule = false;
 		reuseExistingDatabase = defaultReuseExistingDatabase;
+		trainingFlagExplicit = false;
 	}
 
 
@@ -332,10 +358,16 @@ public class SimPathsStart implements ExperimentBuilder {
 
 	private static void runGUIlessSetup(int option) throws FileNotFoundException {
 
-		// Detect if data available; set to testing data if not
-		Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations(country)), new String[]{"csv"}, false);
-		if (testList.size()==0)
-			Parameters.setTrainingFlag(true);
+		// Auto-detect training mode only when -t/--training was NOT passed on the command line.
+		// If actual InitialPopulations/<country>/*.csv is empty, fall back to training data.
+		if (!trainingFlagExplicit) {
+			Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations(country)), new String[]{"csv"}, false);
+			if (testList.size() == 0) {
+				Parameters.setTrainingFlag(true);
+				System.out.println("No CSV files found under " + Parameters.getInputDirectoryInitialPopulations(country)
+						+ " — auto-switching to training data (Parameters.trainingFlag = true).");
+			}
+		}
 
 		writeSelectedCountryAndYear();
 
@@ -485,9 +517,14 @@ public class SimPathsStart implements ExperimentBuilder {
 
 		if (choices[0]) {
 			// choose the country and the simulation start year
-			Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations(country)), new String[]{"csv"}, false);
-			if (testList.size() == 0)
-				Parameters.setTrainingFlag(true);
+			if (!trainingFlagExplicit) {
+				Collection<File> testList = FileUtils.listFiles(new File(Parameters.getInputDirectoryInitialPopulations(country)), new String[]{"csv"}, false);
+				if (testList.size() == 0) {
+					Parameters.setTrainingFlag(true);
+					System.out.println("No CSV files found under " + Parameters.getInputDirectoryInitialPopulations(country)
+							+ " — auto-switching to training data (Parameters.trainingFlag = true).");
+				}
+			}
 			chooseCountryAndStartYear();
 		}
 
@@ -569,7 +606,11 @@ public class SimPathsStart implements ExperimentBuilder {
 
 			if (choices[0] || choices[2] || choices[3] || choices[4]) {
 				TaxDonorDataParser.constructAggregateTaxDonorPopulationCSVfile(country, showGui);
-				TaxDonorDataParser.databaseFromCSV(country, startYear, true);
+				if (Parameters.trainingFlag) {
+					TaxDonorParserTraining.databaseFromCSV(country, startYear, true);
+				} else {
+					TaxDonorDataParser.databaseFromCSV(country, startYear, true);
+				}
 				Parameters.loadTimeSeriesFactorForTaxDonor(country);
                 Parameters.defineCountryString(country);
 				TaxDonorDataParser.populateDonorTaxUnitTables(country, showGui);

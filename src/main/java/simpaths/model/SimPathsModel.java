@@ -2126,7 +2126,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
             if (isFirstRun) {
 
                 Class.forName("org.h2.Driver");
-                conn = DriverManager.getConnection("jdbc:h2:file:./input" + File.separator + "input;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE", "sa", "");
+                conn = DriverManager.getConnection(TaxDonorDataParser.getInputDatabaseJdbcUrl(), "sa", "");
                 TaxDonorDataParser.updateDefaultDonorTables(conn, country);
             }
         }
@@ -3036,7 +3036,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
 
                 // access database and obtain donor pool
                 Map propertyMap = new HashMap();
-                propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + DatabaseUtils.databaseInputUrl);
+                propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + TaxDonorDataParser.getInputDatabasePath());
                 EntityManager em = Persistence.createEntityManagerFactory("tax-database", propertyMap).createEntityManager();
                 txn = em.getTransaction();
                 txn.begin();
@@ -3129,7 +3129,7 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
                 if (txn != null && txn.isActive()) {
                     txn.rollback();
                 }
-                e.printStackTrace();
+                throw new RuntimeException("Problem populating donor database indices from " + TaxDonorDataParser.getInputDatabasePath(), e);
             }
         }
     }

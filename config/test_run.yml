@@ -19,7 +19,8 @@ popSize: 20000
 integrationTest: true
 
 parameter_args:
-  trainingFlag: false
+  trainingFlag: true    # → INTEGRATION_TESTS_TRAINING/ + expected_training/
+  # trainingFlag: false  # → INTEGRATION_TESTS/         + expected/
 
 collector_args:
     persistStatistics: true

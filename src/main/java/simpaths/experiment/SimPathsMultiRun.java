@@ -142,8 +142,15 @@ public class SimPathsMultiRun extends MultiRun {
 
 			if (integrationTest) {
 				// Redirect all output into a fixed, well-known folder so the
-				// integration test can locate results deterministically.
-				String integrationOutputFolder = "." + File.separator + "output" + File.separator + "INTEGRATION_TESTS";
+				// integration test can locate results deterministically. The folder
+				// name depends on Parameters.trainingFlag (set from parameter_args
+				// in YAML before this block runs) so the real-data and training-data
+				// baselines never collide.
+				String integrationSubFolder = Parameters.trainingFlag
+						? "INTEGRATION_TESTS_TRAINING"
+						: "INTEGRATION_TESTS";
+				String integrationOutputFolder = "." + File.separator + "output"
+						+ File.separator + integrationSubFolder;
 				Experiment.testOutputFolder = integrationOutputFolder;
 
 				try {
@@ -154,9 +161,6 @@ public class SimPathsMultiRun extends MultiRun {
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
-				// NB: deliberately not calling Parameters.setTrainingFlag(true) here.
-				// EU has no training-data set; the integration test runs against
-				// the real EUROMOD inputs via trainingFlag=false in YAML.
 			}
 
 			if (executeWithGui)
@@ -204,6 +208,10 @@ public class SimPathsMultiRun extends MultiRun {
 		Option fileOption = new Option("f", "Output to file");
 		options.addOption(fileOption);
 
+		Option trainingOption = new Option("t", "training", true, "Use training data subset (InitialPopulations/training, EUROMODoutput/training, TaxDonorParserTraining). Overrides parameter_args.trainingFlag from YAML.");
+		trainingOption.setArgName("true/false");
+		options.addOption(trainingOption);
+
 		Option helpOption = new Option("h", "help", false, "Print this help message");
 		options.addOption(helpOption);
 
@@ -240,6 +248,12 @@ public class SimPathsMultiRun extends MultiRun {
 
 			if (cmd.hasOption("DBSetup")) {
 				flagDatabaseSetup = true;
+			}
+
+			if (cmd.hasOption("t")) {
+				boolean trainingValue = Boolean.parseBoolean(cmd.getOptionValue("t"));
+				Parameters.setTrainingFlag(trainingValue);
+				System.out.println("Training-data flag set explicitly via CLI: -t " + trainingValue + " (overrides parameter_args.trainingFlag from YAML)");
 			}
 
 			if (cmd.hasOption("p")) {

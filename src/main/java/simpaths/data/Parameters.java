@@ -22,6 +22,7 @@ import simpaths.model.enums.*;
 import simpaths.model.taxes.DonorTaxUnit;
 import simpaths.model.taxes.MatchFeature;
 import simpaths.model.taxes.database.TaxDonorDataParser;
+import simpaths.model.taxes.database.TaxDonorParserTraining;
 
 import java.io.File;
 import java.io.IOException;
@@ -300,8 +301,8 @@ public class Parameters {
     private static int MAX_START_YEAR = 2020; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int startYear;
     public static int endYear;
-    private static int MIN_START_YEAR_TRAINING = 2019;
-    private static int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    private static int MIN_START_YEAR_TRAINING = 2011;
+    private static int MAX_START_YEAR_TRAINING = 2023; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int MIN_AGE_MATERNITY = 18;            // Min age a person can give birth
     public static int MAX_AGE_MATERNITY = 49;            // Max age a person can give birth
     public static final boolean FLAG_SINGLE_MOTHERS = true;
@@ -3044,7 +3045,11 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
         Parameters.setTaxDonorInputFileName(taxDonorInputFilename);
         Parameters.loadTimeSeriesFactorForTaxDonor(country);
         TaxDonorDataParser.constructAggregateTaxDonorPopulationCSVfile(country, executeWithGui);
-        TaxDonorDataParser.databaseFromCSV(country, startYear, executeWithGui); // Donor database tables from csv data
+        if (trainingFlag) {
+            TaxDonorParserTraining.databaseFromCSV(country, startYear, executeWithGui); // Training-data variant: drops deh/drgn1/lcs, uses idhh as tuid
+        } else {
+            TaxDonorDataParser.databaseFromCSV(country, startYear, executeWithGui); // Donor database tables from csv data
+        }
         TaxDonorDataParser.populateDonorTaxUnitTables(country, executeWithGui); // Populate tax unit donor tables from person data
     }
     private static void safeDelete(String filePath) {
