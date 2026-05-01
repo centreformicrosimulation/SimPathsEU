@@ -12,6 +12,3 @@ randomSeed: 606
 startYear: 2019
 endYear: 2030
 popSize: 30000
-
-parameter_args:
-  trainingFlag: true

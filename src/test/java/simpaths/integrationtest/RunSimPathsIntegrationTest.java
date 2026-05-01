@@ -69,7 +69,8 @@ public class RunSimPathsIntegrationTest {
     @Order(1)
     void testRunSetup() {
         runCommand(
-                "java", "-jar", "multirun.jar", "-DBSetup", "-config", "test_create_database.yml"
+                "java", "-jar", "multirun.jar", "-DBSetup", "-config", "test_create_database.yml",
+                "-t", String.valueOf(TRAINING_FLAG)
         );
     }
 
@@ -87,7 +88,8 @@ public class RunSimPathsIntegrationTest {
     @Order(3)
     void testRunSimulation() {
         runCommand(
-                "java", "-jar", "multirun.jar", "-config", "test_run.yml"
+                "java", "-jar", "multirun.jar", "-config", "test_run.yml",
+                "-t", String.valueOf(TRAINING_FLAG)
         );
     }
 
