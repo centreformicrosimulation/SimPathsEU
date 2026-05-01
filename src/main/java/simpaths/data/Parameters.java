@@ -153,6 +153,9 @@ public class Parameters {
             //"ils_origy"			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
     };
 
+    // IMPORTANT: many of the default values declared in this class are overwritten at runtime
+    // from input/<COUNTRY>/parameters.xlsx. When changing defaults here, make sure the
+    // corresponding parameters.xlsx file is kept in sync, otherwise the Excel values will win.
     // Country-specific parameters which are then set by the Excel file
     public static String COUNTRY_STRING = "";
 
@@ -952,7 +955,8 @@ public class Parameters {
 
         /**
          * countrySpecificParameters map contains country-specific values of parameters declared in this Parameters class.
-         * setParametersFromMap method overrides the default values of these parameters set in this class with values read in from the Excel file.
+         * setParametersFromMap overrides many of the defaults declared above with values read from
+         * input/<COUNTRY>/parameters.xlsx, so keep that file updated when changing parameter defaults.
          */
 
         countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1);
