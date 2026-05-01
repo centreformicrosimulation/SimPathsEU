@@ -44,7 +44,7 @@ public class Household implements EventListener, IDoubleSource {
     })
     private Processed processed;
 
-    private Long idOriginalHH;
+    private Long idHhOriginal;
 
 
     /*
@@ -64,13 +64,13 @@ public class Household implements EventListener, IDoubleSource {
                 model = (SimPathsModel) SimulationEngine.getInstance().getManager(SimPathsModel.class.getCanonicalName());
                 collector = (SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName());
                 key  = new PanelEntityKey(originalHousehold.getId());
-                this.idOriginalHH = originalHousehold.getIdOriginalHH();
+                this.idHhOriginal = originalHousehold.getIdOriginalHH();
             }
             default -> {
                 model = (SimPathsModel) SimulationEngine.getInstance().getManager(SimPathsModel.class.getCanonicalName());
                 collector = (SimPathsCollector) SimulationEngine.getInstance().getManager(SimPathsCollector.class.getCanonicalName());
                 key  = new PanelEntityKey(householdIdCounter++);
-                idOriginalHH = originalHousehold.key.getId();
+                idHhOriginal = originalHousehold.key.getId();
             }
         }
     }
@@ -84,7 +84,7 @@ public class Household implements EventListener, IDoubleSource {
     /*
     METHODS
      */
-    public Long getIdOriginalHH() {return idOriginalHH;}
+    public Long getIdOriginalHH() {return idHhOriginal;}
 
     public void resetWeights(double newWeight) {
 

@@ -22,6 +22,7 @@ import simpaths.model.enums.*;
 import simpaths.model.taxes.DonorTaxUnit;
 import simpaths.model.taxes.MatchFeature;
 import simpaths.model.taxes.database.TaxDonorDataParser;
+import simpaths.model.taxes.database.TaxDonorParserTraining;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,23 +67,23 @@ public class Parameters {
     // met when it loads in data.
     public static final String[] DONOR_STATIC_VARIABLES = new String[]{
             "idhh",                    //id of household
-            "idperson",            //id of person
-            "idfather",            //id of father
-            "idmother",            //id of mother
-            "idpartner",            //id of partner
-            "dag",                    //age
-            "dct",                    //country
-            "deh",                    //highest education level
-            "dgn",                    //gender
-            "drgn1",                //region (NUTS1)
-            "dwt",                    //household weight
-            "les",                    //labour employment status + health status
-            "lcs",                    //labour civil servant dummy indicator
+            "idperson",                //id of person
+            "idfather",                //id of father
+            "idmother",                //id of mother
+            "idpartner",               //id of partner
+            "dag",                     //age
+            "dct",                     //country
+            "deh",                     //highest education level
+            "dgn",                     //gender
+            "drgn1",                   //region (NUTS1)
+            "dwt",                     //household weight
+            "les",                     //labour employment status + health status
+            "lcs",                     //labour civil servant dummy indicator
             //    "lcr01",                //carer status for benefits (0 no 1 yes)
-            "lhw",                    //hours worked per week
-            "ddi",                    //disability status
-            "yem",                    //employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
-            "yse",                    //self-employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
+            "lhw",                     //hours worked per week
+            "ddi",                     //disability status
+            "yem",                     //employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
+            "yse",                     //self-employment income - used to construct work sector *NOT VALID FOR POLICY ANALYSIS*
     };
 
     public static final String[] DONOR_POLICY_VARIABLES = new String[]{
@@ -95,55 +96,55 @@ public class Parameters {
     };
 
     public static final String[] HOUSEHOLD_VARIABLES_INITIAL = new String[]{
-            "idhh",                //id of household (can contain multiple benefit units)
+            "idHh",                //id of household (can contain multiple benefit units)
     };
 
     public static final String[] BENEFIT_UNIT_VARIABLES_INITIAL = new String[]{
-            "idhh",                //id of household (can contain multiple benefit units)
-            "idbenefitunit",    //id of a benefit unit
-            "drgn1",            //region (NUTS1)
-            "ydses_c5",            //household income quantile
-            "dhh_owned",        //flag indicating if benefit unit owns a house
+            "idHh",                //id of household (can contain multiple benefit units)
+            "idBu",    //id of a benefit unit
+            "demRgn",            //region (NUTS1)
+            "yHhQuintilesMonthC5",            //household income quantile
+            "wealthPrptyFlag",        //flag indicating if benefit unit owns a house
     };
 
     public static final String[] PERSON_VARIABLES_INITIAL = new String[]{
-            "idhh",                    //id of household (can contain multiple benefit units)
-            "idbenefitunit",        //id of a benefit unit
-            "idperson",            //id of person
-            "dwt",                    //household weight
-            "idfather",            //id of father
-            "idmother",            //id of mother
-            "dag",                    //age
-            "deh_c4",                //highest education level
-            "dehm_c4",                //highest education level of mother
-            "dehf_c4",                //highest education level of father
-            "ded",                    //in education dummy
-            "der",                    //return to education dummy
-            "dhe",                    //health status
-            "dcpyy",                //years in partnership
-            "dcpagdf",                //partners age difference
-            "dnc02",                //number children aged 0-2
-            "dnc",                    //number children
-            "ypnbihs_dv",            //gross personal non-benefit income
-            "yptciihs_dv",            //gross personal non-employment non-benefit income
-            "ypncp",                //gross personal capital income
-            "ypnoab",                //gross personal pension (public / occupational) income
-            "yplgrs_dv",            //gross personal employment income
-            "ynbcpdf_dv",            //difference partner income
-            "dlltsd",                //long-term sick or disabled
-            "sedex",                //year left education
-            "stm",                    //system variable - year
-            "swv",                    //system variable - wave
-            "dgn",                    //gender
-            "les_c4",                //labour employment status
-            "l1_les_c4",            //lag(1) of labour employment status
-            "lhw",                    //hours worked per week
-            "adultchildflag",        //flag indicating adult child living at home in the data
-            "dhh_owned",            //flag indicating if individual is a homeowner
-            "obs_earnings_hourly", //initial value of hourly earnings from the data
-            "l1_obs_earnings_hourly", //lag(1) of initial value of hourly earnings from the data
-            "liwwh",                    // number of years in employment
-            "ydisp",                    //real personal monthly disposable income
+            "idHh",                    //id of household (can contain multiple benefit units)
+            "idBu",        //id of a benefit unit
+            "idPers",            //id of person
+            "wgtCrossMainSurvey",                    //household weight
+            "idFather",            //id of father
+            "idMother",            //id of mother
+            "demAge",                    //age
+            "eduHighestC4",                //highest education level
+            "eduHighestMotherC4",                //highest education level of mother
+            "eduHighestFatherC4",                //highest education level of father
+            "eduSpellFlag",                    //in education dummy
+            "eduReturnFlag",                    //return to education dummy
+            "healthSelfRated",                    //health status
+            "demPartnerNYear",                //years in partnership
+            "demAgePartnerDiff",                //partners age difference
+            "demNChild0to2",                //number children aged 0-2
+            "demNChild",                    //number children
+            "yNonBenPersGrossMonth",            //gross personal non-benefit income
+            "yMiscPersGrossMonth",            //gross personal non-employment non-benefit income
+            "yCapitalPersMonth",                //gross personal capital income
+            "yPensPersGrossMonth",                //gross personal pension (public / occupational) income
+            "yEmpPersGrossMonth",            //gross personal employment income
+            "yPersAndPartnerGrossDiffMonth",            //difference partner income
+            "healthDsblLongtermFlag",                //long-term sick or disabled
+            "eduExitSampleFlag",                //year left education
+            "statInterviewYear",                    //system variable - year
+            "statCollectionWave",                    //system variable - wave
+            "demMaleFlag",                    //gender
+            "labC4",                //labour employment status
+            "labC4L1",            //lag(1) of labour employment status
+            "labHrsWorkWeek",                    //hours worked per week
+            "demAdultChildFlag",        //flag indicating adult child living at home in the data
+            "wealthPrptyFlag",            //flag indicating if individual is a homeowner
+            "labWageHrly", //initial value of hourly earnings from the data
+            "labWageHrlyL1", //lag(1) of initial value of hourly earnings from the data
+            "labEmpNyear",                    // number of years in employment
+            "yPersDispMonth",                    //real personal monthly disposable income
             //"yem", 					//employment income
             //"yse", 					//self-employment income
 
@@ -152,6 +153,9 @@ public class Parameters {
             //"ils_origy"			//EUROMOD output variable:- all gross income from labour, private pensions, investment income, property income, private transfers etc.
     };
 
+    // IMPORTANT: many of the default values declared in this class are overwritten at runtime
+    // from input/<COUNTRY>/parameters.xlsx. When changing defaults here, make sure the
+    // corresponding parameters.xlsx file is kept in sync, otherwise the Excel values will win.
     // Country-specific parameters which are then set by the Excel file
     public static String COUNTRY_STRING = "";
 
@@ -300,8 +304,8 @@ public class Parameters {
     private static int MAX_START_YEAR = 2020; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int startYear;
     public static int endYear;
-    private static int MIN_START_YEAR_TRAINING = 2019;
-    private static int MAX_START_YEAR_TRAINING = 2019; //Maximum allowed starting point. Should correspond to the most recent initial population.
+    private static int MIN_START_YEAR_TRAINING = 2011;
+    private static int MAX_START_YEAR_TRAINING = 2023; //Maximum allowed starting point. Should correspond to the most recent initial population.
     public static int MIN_AGE_MATERNITY = 18;            // Min age a person can give birth
     public static int MAX_AGE_MATERNITY = 49;            // Max age a person can give birth
     public static final boolean FLAG_SINGLE_MOTHERS = true;
@@ -951,7 +955,8 @@ public class Parameters {
 
         /**
          * countrySpecificParameters map contains country-specific values of parameters declared in this Parameters class.
-         * setParametersFromMap method overrides the default values of these parameters set in this class with values read in from the Excel file.
+         * setParametersFromMap overrides many of the defaults declared above with values read from
+         * input/<COUNTRY>/parameters.xlsx, so keep that file updated when changing parameter defaults.
          */
 
         countrySpecificParameters = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "parameters.xlsx"), "Parameters", 1);
@@ -2790,19 +2795,19 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
         }
     }
 
-    public static int getStatePensionAge(int year, Gender dgn) {
+    public static int getStatePensionAge(int year, Gender demMaleFlag) {
 
         int spa = -9;
 
         switch (COUNTRY_STRING) {
 
             case "PL":                                      // Poland
-                if (dgn == Gender.Male) {
+                if (demMaleFlag == Gender.Male) {
                     // Men: 65 (<2016), 66 (2016-2017), 65 (2018+)
                     if      (year >= 2005 && year < 2016)   spa = 65;
                     else if (year >= 2016 && year < 2018)   spa = 66;
                     else if (year >= 2018 )                 spa = 65;
-                } else if (dgn == Gender.Female){
+                } else if (demMaleFlag == Gender.Female){
                     // Women: 60 (<2016), 61 (2016-2017), 60 (2018+)
                     if      (year >= 2005 && year < 2016)   spa = 60;
                     else if (year >= 2016 && year < 2018)   spa = 61;
@@ -2811,11 +2816,11 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
                 break;
 
             case "EL":                                      // Greece
-                if (dgn == Gender.Male) {
+                if (demMaleFlag == Gender.Male) {
                     // Men: 65 (<2013), 67 (2013+)
                     if      (year >= 2005 && year < 2013)   spa = 65;
                     else if (year >= 2013  )                spa = 67;
-                } else if (dgn == Gender.Female){
+                } else if (demMaleFlag == Gender.Female){
                     // Women: 60 (<2009), 61 (2010), 63 (2011), 65 (2012), 67 (2013+)
                     if      (year >= 2005 && year < 2010)   spa = 60;
                     else if (year == 2010)                  spa = 61;
@@ -2826,12 +2831,12 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
                 break;
 
             case "IT":                                      // Italy
-                if (dgn == Gender.Male) {
+                if (demMaleFlag == Gender.Male) {
                     // Men: 65 (<2012), 66 (2012–2018), 67 (2019+)
                     if      (year >= 2005 && year < 2012)   spa = 65;
                     else if (year >= 2012 && year < 2019)   spa = 66;
                     else if (year >= 2019 )                 spa = 67;
-                } else if (dgn == Gender.Female) {
+                } else if (demMaleFlag == Gender.Female) {
                     // Women: 60 (<2012), 62 (2012), 63 (2013–2014), 65 (2015–2017), 66 (2018), 67 (2019+)
                     if      (year >= 2005 && year < 2012)   spa = 60;
                     else if (year == 2012)                  spa = 62;
@@ -2843,13 +2848,13 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
                 break;
 
             case "HU":                                      // Hungary
-                if (dgn == Gender.Male) {
+                if (demMaleFlag == Gender.Male) {
                     // Men: 62 (<2014), 63 (2014–2016), 64 (2017–2020), 65 (2021+)
                     if      (year >= 2005 && year < 2014)   spa = 62;
                     else if (year >= 2014 && year < 2017)   spa = 63;
                     else if (year >= 2017 && year < 2021)   spa = 64;
                     else if (year >= 2021 )                 spa = 65;
-                } else if (dgn == Gender.Female) {
+                } else if (demMaleFlag == Gender.Female) {
                     // Women: 60 (<2010), 62 (2010–2013), 63 (2014–2016), 64 (2017–2020), 65 (2021+)
                 if          (year >= 2005 && year < 2010)   spa = 60;
                     else if (year >= 2010 && year < 2014)   spa = 62;
@@ -2866,7 +2871,7 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
         // Throw if nothing matched
         if (spa == -9) {
             throw new IllegalStateException(
-                "Could not determine state pension age for: " + "country=" + COUNTRY_STRING + ", gender=" + dgn + ", year=" + year);
+                "Could not determine state pension age for: " + "country=" + COUNTRY_STRING + ", gender=" + demMaleFlag + ", year=" + year);
         }
 
 
@@ -3044,7 +3049,11 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
         Parameters.setTaxDonorInputFileName(taxDonorInputFilename);
         Parameters.loadTimeSeriesFactorForTaxDonor(country);
         TaxDonorDataParser.constructAggregateTaxDonorPopulationCSVfile(country, executeWithGui);
-        TaxDonorDataParser.databaseFromCSV(country, startYear, executeWithGui); // Donor database tables from csv data
+        if (trainingFlag) {
+            TaxDonorParserTraining.databaseFromCSV(country, startYear, executeWithGui); // Training-data variant: drops deh/drgn1/lcs, uses idhh as tuid
+        } else {
+            TaxDonorDataParser.databaseFromCSV(country, startYear, executeWithGui); // Donor database tables from csv data
+        }
         TaxDonorDataParser.populateDonorTaxUnitTables(country, executeWithGui); // Populate tax unit donor tables from person data
     }
     private static void safeDelete(String filePath) {

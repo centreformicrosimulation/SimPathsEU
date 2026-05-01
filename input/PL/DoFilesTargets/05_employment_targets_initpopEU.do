@@ -17,8 +17,12 @@
 *                  - Aggregates to employment shares by group and year
 *                  - Exports the results to Excel (one sheet per group)
 *
-* NOTE:           This EU version uses legacy variable names from the initial
-*                populations (e.g., idperson, les_c4, dwt).
+* NOTE:           This EU version uses refactored variable names from the
+*                initial populations (e.g., idPers, labC4, wgtCrossMainSurvey).
+*
+* STATA REQ:      Stata 13+. `import delimited` uses `case(preserve)` to
+*                retain the camelCase column names of the refactored
+*                initial-population CSVs.
 *
 * SET-UP:         1. Update the working directory path (global dir_w)
 *                 2. Copy the relevant input data into the /input_data folder
@@ -41,7 +45,7 @@ global min_year 2011
 global max_year 2023
 
 * Directory structure
-global dir_input_data   "$dir_w/input/${country}/InitialPopulations"
+global dir_input_data   "$dir_w/input/${country}/InitialPopulationsACTUAL"
 global dir_working_data "$dir_w/input/${country}/DoFilesTargets/working_data"
 global dir_output       "$dir_w/input/${country}/DoFilesTargets"
 
@@ -57,27 +61,27 @@ foreach y of numlist $min_year/$max_year {
 
 	* Build file name for the given year and import initial population data
 	local file = subinstr("population_initial_${country}_YYYY.csv","YYYY","`y'",.)
-	import delimited using "${dir_input_data}/`file'", clear
+	import delimited using "${dir_input_data}/`file'", clear case(preserve)
 
-	bys idperson: keep if _n == 1 // keep one obs per idperson
+	bys idPers: keep if _n == 1 // keep one obs per idPers
 
 	* Identify responsible males/females (18+)
-	gen byte is_resp_male   = (dag >= 18 & dgn == 1)
-	gen byte is_resp_female = (dag >= 18 & dgn == 0)
+	gen byte is_resp_male   = (demAge >= 18 & demMaleFlag == 1)
+	gen byte is_resp_female = (demAge >= 18 & demMaleFlag == 0)
 
 	* Adult–child flag by sex for adults only
 	gen male_adultchildflag   = 0
 	gen female_adultchildflag = 0
-	replace male_adultchildflag   = adultchildflag if (dgn == 1 & dag >= 18)
-	replace female_adultchildflag = adultchildflag if (dgn == 0 & dag >= 18)
+	replace male_adultchildflag   = demAdultChildFlag if (demMaleFlag == 1 & demAge >= 18)
+	replace female_adultchildflag = demAdultChildFlag if (demMaleFlag == 0 & demAge >= 18)
 
 	* BU-level (benefit-unit) aggregates of adult–child flags
-	bys idbenefitunit: egen byte bu_male_AC   = max(male_adultchildflag)
-	bys idbenefitunit: egen byte bu_female_AC = max(female_adultchildflag)
+	bys idBu: egen byte bu_male_AC   = max(male_adultchildflag)
+	bys idBu: egen byte bu_female_AC = max(female_adultchildflag)
 
 	* BU-level indicators of whether there is a responsible male/female
-	bys idbenefitunit: egen byte has_resp_male   = max(is_resp_male)
-	bys idbenefitunit: egen byte has_resp_female = max(is_resp_female)
+	bys idBu: egen byte has_resp_male   = max(is_resp_male)
+	bys idBu: egen byte has_resp_female = max(is_resp_female)
 
 	* Benefit-unit occupancy type (couples vs single male/female)
 	gen str7 occcupancy = ""
@@ -86,12 +90,12 @@ foreach y of numlist $min_year/$max_year {
 	replace occcupancy = "Single_female" if (has_resp_female==1 & has_resp_male==0)
 
 	* Individual "at risk of employment" (working-age, not retired, not permanently disabled)
-	gen byte maleAtRisk   = ( (dgn == 1) & !(les_c4 == 2 | les_c4 == 4 | dlltsd == 1 | dag < 16 | dag > 75) )
-	gen byte femaleAtRisk = ( (dgn == 0) & !(les_c4 == 2 | les_c4 == 4 | dlltsd == 1 | dag < 16 | dag > 75) )
+	gen byte maleAtRisk   = ( (demMaleFlag == 1) & !(labC4 == 2 | labC4 == 4 | healthDsblLongtermFlag == 1 | demAge < 16 | demAge > 75) )
+	gen byte femaleAtRisk = ( (demMaleFlag == 0) & !(labC4 == 2 | labC4 == 4 | healthDsblLongtermFlag == 1 | demAge < 16 | demAge > 75) )
 
 	* BU-level indicators of whether there is at least one male/female at risk
-	bys idbenefitunit: egen byte bu_maleAtRisk   = max(maleAtRisk)
-	bys idbenefitunit: egen byte bu_femaleAtRisk = max(femaleAtRisk)
+	bys idBu: egen byte bu_maleAtRisk   = max(maleAtRisk)
+	bys idBu: egen byte bu_femaleAtRisk = max(femaleAtRisk)
 
 	* Group codes for benefit-units (by occupancy and dependency/AC status)
 	gen str6 group_code = ""
@@ -108,18 +112,18 @@ foreach y of numlist $min_year/$max_year {
 
 	* ---------- BU-LEVEL FRACTIONAL EMPLOYMENT ----------------------------- *
 	* Person-level employment indicator (1 if employed)
-	gen byte employed = (les_c4 == 1)
+	gen byte employed = (labC4 == 1)
 
 	* Restrict to the relevant BU groups
 	keep if inlist(group_code,"Couples","SingleDep_Males","SingleDep_Females","Single_male","Single_female","SingleAC_Males","SingleAC_Females")
 
 	* Employment of responsible male/female adults
-	gen byte male_emp   = employed if (dgn==1 & dag>=18)
-	gen byte female_emp = employed if (dgn==0 & dag>=18)
+	gen byte male_emp   = employed if (demMaleFlag==1 & demAge>=18)
+	gen byte female_emp = employed if (demMaleFlag==0 & demAge>=18)
 
 	* Collapse to BU: whether the responsible male/female (if present) is employed
-	bys idbenefitunit: egen byte bu_male_emp   = max(male_emp)
-	bys idbenefitunit: egen byte bu_female_emp = max(female_emp)
+	bys idBu: egen byte bu_male_emp   = max(male_emp)
+	bys idBu: egen byte bu_female_emp = max(female_emp)
 
 	* Replace missing BU employment with 0 (no employed responsible adult of that sex)
 	replace bu_male_emp   = 0 if missing(bu_male_emp)
@@ -138,10 +142,10 @@ foreach y of numlist $min_year/$max_year {
 
 
 	* BU-level weight: sum of person-level weights within each BU
-	bys idbenefitunit: egen double bu_w = total(dwt)
+	bys idBu: egen double bu_w = total(wgtCrossMainSurvey)
 
 	* Keep one record per BU (so employment shares are BU-level, not person-level)
-	bys idbenefitunit: gen byte bu_tag = _n == 1
+	bys idBu: gen byte bu_tag = _n == 1
 	keep if bu_tag
 
 	* Compute (weighted) mean employment share by group
@@ -199,11 +203,11 @@ local today "`c(current_date)'"
 putexcel set "${dir_output}/alignment_targets_employment.xlsx", sheet("info") modify
 putexcel A1=("Field")       B1=("Value")
 putexcel A2=("Target")      B2=("Mean fractional employment by benefit-unit (BU) type group")
-putexcel A3=("Population")  B3=("BUs with at least one responsible adult (dag >= 18) in a recognised group")
+putexcel A3=("Population")  B3=("BUs with at least one responsible adult (demAge >= 18) in a recognised group")
 putexcel A4=("Groups")      B4=("Couples, SingleDep_Males, SingleDep_Females, Single_male, Single_female, SingleAC_Males, SingleAC_Females")
-putexcel A5=("At-risk def") B5=("Age 16-75, not student (les_c4 != 2), not retired (les_c4 != 4), not disabled (dlltsd != 1)")
+putexcel A5=("At-risk def") B5=("Age 16-75, not student (labC4 != 2), not retired (labC4 != 4), not disabled (healthDsblLongtermFlag != 1)")
 putexcel A6=("Frac employ") B6=("(num employed responsible adults) / (num responsible adults) per BU; 0, 0.5, or 1 for couples")
-putexcel A7=("Weighting")   B7=("BU-level weight = sum of person weights (dwt) within the BU")
+putexcel A7=("Weighting")   B7=("BU-level weight = sum of person weights (wgtCrossMainSurvey) within the BU")
 putexcel A8=("Note")        B8=("Mirrors ActivityAlignmentV2 matchesSubgroup() and BenefitUnit.fracEmployed() logic in SimPaths")
 putexcel A9=("Source")      B9=("EU-SILC-based SimPaths initial populations")
 putexcel A10=("Country")    B10=("${country}")
