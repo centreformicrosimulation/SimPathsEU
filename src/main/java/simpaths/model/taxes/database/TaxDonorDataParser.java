@@ -18,6 +18,7 @@ import java.util.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
+import microsim.data.db.DatabaseUtils;
 import simpaths.data.FormattedDialogBox;
 import simpaths.data.Parameters;
 import simpaths.model.enums.Country;
@@ -35,6 +36,26 @@ import simpaths.model.taxes.*;
  *
  */
 public class TaxDonorDataParser {
+
+    public static String getInputDatabasePath() {
+
+        String databasePath = DatabaseUtils.databaseInputUrl;
+        if (databasePath == null || databasePath.isBlank()) {
+            databasePath = "." + File.separator + "input" + File.separator + "input";
+        }
+        return databasePath;
+    }
+
+    public static String getInputDatabaseJdbcUrl() {
+        return "jdbc:h2:file:" + getInputDatabasePath() + ";TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE";
+    }
+
+    private static EntityManager createTaxDatabaseEntityManager() {
+
+        Map<String, Object> propertyMap = new HashMap<>();
+        propertyMap.put("hibernate.connection.url", "jdbc:h2:file:" + getInputDatabasePath());
+        return Persistence.createEntityManagerFactory("tax-database", propertyMap).createEntityManager();
+    }
 
 
     /**
@@ -64,7 +85,7 @@ public class TaxDonorDataParser {
         Connection conn = null;
         try {
             Class.forName("org.h2.Driver");
-            conn = DriverManager.getConnection("jdbc:h2:file:./input" + File.separator + "input;TRACE_LEVEL_FILE=0;TRACE_LEVEL_SYSTEM_OUT=0;AUTO_SERVER=TRUE", "sa", "");
+            conn = DriverManager.getConnection(getInputDatabaseJdbcUrl(), "sa", "");
 
             createTaxDonorTables(conn, country, startYear);
             updateDefaultDonorTables(conn, country);
@@ -604,7 +625,7 @@ public class TaxDonorDataParser {
         EntityTransaction txn = null;
         try {
 
-            EntityManager em = Persistence.createEntityManagerFactory("tax-database").createEntityManager();
+            EntityManager em = createTaxDatabaseEntityManager();
             txn = em.getTransaction();
             txn.begin();
 

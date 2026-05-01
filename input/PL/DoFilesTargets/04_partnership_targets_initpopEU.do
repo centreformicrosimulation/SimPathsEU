@@ -12,16 +12,20 @@
 *                population data. It:
 *                  - Imports initial population CSV files by year
 *                  - Infers partnership from BU co-residency logic
-*                    (not idpartner field), consistent with SimPaths
+*                    (not idPartner field), consistent with SimPaths
 *                    getPartner() — a person is partnered if at least one
-*                    other adult (dag >= 18) shares their benefit unit and
+*                    other adult (demAge >= 18) shares their benefit unit and
 *                    is neither their mother nor their father
 *                  - Computes the weighted share of partnered adults aged 18+
 *                  - Exports the results to Excel
 *
-* NOTE:           This EU version uses legacy variable names from the initial
-*                populations (e.g., idperson, idbenefitunit, idmother,
-*                idfather, dwt).
+* NOTE:           This EU version uses refactored variable names from the
+*                initial populations (e.g., idPers, idBu, idMother, idFather,
+*                wgtCrossMainSurvey).
+*
+* STATA REQ:      Stata 13+. `import delimited` uses `case(preserve)` to
+*                retain the camelCase column names of the refactored
+*                initial-population CSVs.
 *
 * SET-UP:         1. Update the working directory path (global dir_w)
 *                 2. Copy the relevant input data into the /input_data folder
@@ -44,7 +48,7 @@ global min_year 2011
 global max_year 2023
 
 * Directory structure
-global dir_input_data   "$dir_w/input/${country}/InitialPopulations"
+global dir_input_data   "$dir_w/input/${country}/InitialPopulationsACTUAL"
 global dir_working_data "$dir_w/input/${country}/DoFilesTargets/working_data"
 global dir_output       "$dir_w/input/${country}/DoFilesTargets"
 
@@ -60,43 +64,43 @@ foreach y of numlist $min_year/$max_year {
 
 	* Build file name for the given year and import initial population data
 	local file = subinstr("population_initial_${country}_YYYY.csv","YYYY","`y'",.)
-	import delimited using "${dir_input_data}/`file'", clear
+	import delimited using "${dir_input_data}/`file'", clear case(preserve)
 
-	bys idperson: keep if _n == 1 // keep one obs per idperson
+	bys idPers: keep if _n == 1 // keep one obs per idPers
 
 	* Ensure ID variables are numeric (needed for joinby and merge)
-	destring idperson idbenefitunit idmother idfather, replace force
+	destring idPers idBu idMother idFather, replace force
 
 	* Keep only adults eligible for partnership and required variables
-	keep if dag >= 18
-	keep idbenefitunit idperson idmother idfather dwt
+	keep if demAge >= 18
+	keep idBu idPers idMother idFather wgtCrossMainSurvey
 
 	* Save full eligible population for later merge
 	tempfile eligible_pop
 	save `eligible_pop', replace
 
 	* --- Step A: build list of BU adult members for self-join ---
-	keep idbenefitunit idperson
-	rename idperson other_idperson
+	keep idBu idPers
+	rename idPers other_idPers
 	tempfile bu_adults
 	save `bu_adults', replace
 
-	* --- Step B: self-join on idbenefitunit ---
+	* --- Step B: self-join on idBu ---
 	* Each person is expanded against all adults in their BU
 	use `eligible_pop', clear
-	joinby idbenefitunit using `bu_adults'
+	joinby idBu using `bu_adults'
 
 	* Remove self-matches
-	drop if other_idperson == idperson
+	drop if other_idPers == idPers
 
 	* Remove cases where the co-resident is this person's parent
-	drop if other_idperson == idmother | other_idperson == idfather
+	drop if other_idPers == idMother | other_idPers == idFather
 
 	* Each remaining row means a qualifying co-resident exists
 	gen byte has_partner = 1
 
 	* Reduce to one row per person: partnered = 1 if any qualifying row
-	collapse (max) partnered = has_partner, by(idbenefitunit idperson)
+	collapse (max) partnered = has_partner, by(idBu idPers)
 
 	* --- Step C: merge partnered flags back into full eligible population ---
 	* joinby silently drops persons with no qualifying co-resident, so we
@@ -105,11 +109,11 @@ foreach y of numlist $min_year/$max_year {
 	save `partnered_flags', replace
 
 	use `eligible_pop', clear
-	merge 1:1 idbenefitunit idperson using `partnered_flags', keep(master match) nogen
+	merge 1:1 idBu idPers using `partnered_flags', keep(master match) nogen
 	replace partnered = 0 if missing(partnered)
 
 	* Alignment target: weighted share of partnered adults
-	collapse (mean) partnered_share = partnered [pw = dwt]
+	collapse (mean) partnered_share = partnered [pw = wgtCrossMainSurvey]
 	gen year = `y'
 
 	* Append to cumulative file for all years
@@ -151,10 +155,10 @@ putexcel set "${dir_output}/alignment_targets_partnered_share.xlsx", sheet("info
 putexcel A1=("Field")       B1=("Value")
 putexcel A2=("Target")      B2=("Share of partnered persons among adults aged 18+")
 putexcel A3=("Population")  B3=("All persons aged 18+ in the initial population")
-putexcel A4=("Definition")  B4=("Partnered = at least one non-parent adult co-resident in the same benefit unit (BU co-residency logic, not idpartner field)")
-putexcel A5=("Age filter")  B5=("dag >= 18")
-putexcel A6=("Weighting")   B6=("Person-level population weights (dwt)")
-putexcel A7=("Note")        B7=("Partnership inferred from BU co-residency consistent with SimPaths getPartner() logic; idpartner is not used")
+putexcel A4=("Definition")  B4=("Partnered = at least one non-parent adult co-resident in the same benefit unit (BU co-residency logic, not idPartner field)")
+putexcel A5=("Age filter")  B5=("demAge >= 18")
+putexcel A6=("Weighting")   B6=("Person-level population weights (wgtCrossMainSurvey)")
+putexcel A7=("Note")        B7=("Partnership inferred from BU co-residency consistent with SimPaths getPartner() logic; idPartner is not used")
 putexcel A8=("Source")      B8=("EU-SILC-based SimPaths initial populations")
 putexcel A9=("Country")     B9=("${country}")
 putexcel A10=("Years")      B10=("${min_year}-${max_year}")

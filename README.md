@@ -18,10 +18,6 @@ The data used by this project is not freely shareable. If you are interested in 
 
 However, please note that _training_ data is provided. It allows the simulation to be run and developed, but results obtained on the basis of the training dataset should not be interpreted, except for the purpose of training and development. 
 
-**How to Request Access to Data:**
-
-If you have a need for the data, please contact the repository maintainers through the [issue tracker](https://github.com/simpaths/SimPathsEU/issues).
-
 
 ### Forking the Repository
 
@@ -78,8 +74,11 @@ $ mvn verify -Dit.test=RunSimPathsIntegrationTest     # run just the integration
 - `-Setup` do setup phases (creating input populations database) only
 - `--rebuild-db` Force a rebuild of `input/input.mv.db` instead of reusing it (headless mode)
 - `--reuse-existing-db` Reuse `input/input.mv.db` if present, otherwise build it (headless mode)
+- `-t` [true/false] use training data subset. When `true`, reads from `input/<COUNTRY>/InitialPopulations/training/` and `input/<COUNTRY>/EUROMODoutput/training/`, and uses `TaxDonorParserTraining` (which drops `deh`/`drgn1`/`lcs` and uses `idhh` as the tax-unit identifier). When `false` (default), reads from `InitialPopulations/` and `EUROMODoutput/` directly and uses the standard `TaxDonorDataParser`. If `-t` is omitted, an auto-detect kicks in: if `InitialPopulations/<country>/*.csv` is empty, the simulator falls back to training data and prints a console message.
 
 **Important:** the country (`-c`) and start year (`-s`) must be specified when creating or rebuilding the input population database — the resulting `input/input.mv.db` is country- and year-specific.
+
+**Important — switching between training and actual data:** `reuseExistingDatabase = true` (the default for headless `singlerun`) reuses `input/input.mv.db` *without* checking which mode it was built in. If you switch the `-t` flag (e.g. from `false` to `true`), you **must** also pass `--rebuild-db` (or `-Setup`) — otherwise the simulation silently runs against a stale DB built from the other dataset.
 
 Typical workflows:
 ```
@@ -93,14 +92,23 @@ $ java -jar singlerun.jar -c PL -s 2011 -g false -Setup
 #
 #    Option 2 — rebuild the database and then run a single-run simulation
 #               straight after, using the freshly built DB.
-$ java -jar singlerun.jar -c PL -s 2011 -g false --rebuild-db
+$ java -jar singlerun.jar -c PL -s 2011 -g false -e 2013 -p 30000 --rebuild-db
 
 # 2. Run a single-run simulation on an existing input.mv.db (reuse as-is,
 #    or build it first if missing — no rebuild if it already exists)
-$ java -jar singlerun.jar -c PL -s 2011 -g false --reuse-existing-db
+$ java -jar singlerun.jar -c PL -s 2011 -g false -e 2013 -p 30000 --reuse-existing-db
 
-# 3. Run a simulation over a given year range on an existing database
-$ java -jar singlerun.jar -g false -s 2011 -e 2013 -p 30000
+# 3. Run a single-run simulation using the default DB-handling behaviour (no
+#    flag needed): reuses input.mv.db if present, builds it first if missing
+$ java -jar singlerun.jar -c PL -s 2011 -g false -e 2013 -p 30000
+
+# 4. Switch to training data — note that --rebuild-db (or -Setup) is REQUIRED
+#    when changing -t, otherwise input.mv.db from the previous mode is reused.
+$ java -jar singlerun.jar -c PL -s 2019 -g false -t true --rebuild-db
+$ java -jar singlerun.jar -c PL -s 2019 -g false -e 2022 -p 20000 -t true
+
+# 5. Switch back to actual data — again, rebuild the DB when toggling -t.
+$ java -jar singlerun.jar -c PL -s 2017 -g false -t false --rebuild-db
 ```
 
 #### Multi run
@@ -116,6 +124,7 @@ For multiple runs, `multirun.jar` takes the following options:
 - `-f` write console output and logs to file (in 'output/logs/run_[seed].txt')
 - `-config <file>` use a custom YAML config from `config/` instead of `default.yml`
 - `-DBSetup` build the input population database for the configured country/start year, then exit
+- `-t` [true/false] use training data subset (same semantics as for `singlerun`). Overrides `parameter_args.trainingFlag` from the YAML config. The same caveat applies: if you switch `-t`, also rebuild the DB with `-DBSetup` before running the multirun.
 
 **Note:** `multirun.jar` does **not** take a `-c` country flag — it resolves the country from `input/DatabaseCountryYear.xlsx`. Make sure that file reflects the country you intend to run.
 
@@ -130,6 +139,11 @@ $ java -jar multirun.jar -DBSetup -s 2011 -g false
 
 # 2. Run N simulations over a year range
 $ java -jar multirun.jar -g false -s 2011 -e 2013 -p 30000 -n 3
+
+# 3. Training data — rebuild DB and run with -t true.
+#    REQUIRED to rebuild when toggling -t (same caveat as singlerun).
+$ java -jar multirun.jar -DBSetup -s 2019 -g false -t true
+$ java -jar multirun.jar -s 2019 -e 2022 -p 20000 -n 2 -g false -t true
 ```
 
 Example with explicit seed and logging:
@@ -142,16 +156,8 @@ Run `java -jar singlerun.jar -h` or `java -jar multirun.jar -h` to show these he
 ### Batch scenario scripts
 
 Helper Bash scripts in `scripts/` run `multirun.jar` across multiple alignment configs in sequence and move each scenario's CSV output into `output/<scenario-name>/`:
-
 - `run_alignment_multiruns.sh` — full set of alignment scenarios
-- `run_multiruns-alignPopOFF.sh` — single `alignment_00_populationOFF` scenario
-- `run_multiruns-alignPopOFF_QUICK.sh` — quick smoke-test variant
-- `run_TEST_multiruns.sh` — subset used while testing new alignments
 
-Run from the project root (the scripts resolve paths relative to it):
-```
-$ ./scripts/run_alignment_multiruns.sh
-```
 
 Defaults (start/end year, population size, runs per scenario, JVM heap, random seed) are set at the top of each script and can be overridden via environment variables, e.g.:
 ```
@@ -165,25 +171,3 @@ $ POP_SIZE=10000 RUNS_PER_SCENARIO=2 ./scripts/run_alignment_multiruns.sh
 3. Commit your changes.
 4. Push your changes to your fork.
 5. Open a Pull Request (PR) on this repository from your fork. Be sure to provide a detailed description of your changes in the PR.
-
-### Branch Naming Conventions
-
-In our open-source project, we follow a clear and consistent branch naming convention to streamline the development process and maintain a structured repository. These conventions help our team of contributors collaborate effectively. Here are the primary branch naming patterns:
-
-1. **Main Branches:**
-    - `main`: Represents the stable version of our model.
-    - `develop`: Used for ongoing development and integration of new features.
-
-2. **Feature Branches:**
-    - `feature/your-feature-name`: Create feature branches for developing new features.
-
-3. **Bug Fix Branches:**
-    - `bugfix/issue-number-description`: Use bug fix branches for specific issue resolutions. For example, `bugfix/123-fix-health-process-issue`.
-
-4. **Experimental or Miscellaneous Branches:**
-    - `experimental/your-description`: For experimental or miscellaneous work not tied to specific features or bug fixes. For instance, `experimental/new-architecture`.
-
-5. **Documentation Branches:**
-    - `docs/documentation-topic`: Prefix documentation branches with `docs` for updating or creating documentation. For example, `docs/update-readme`.
-
-These branch naming conventions are designed to make it easy for our contributors to understand the purpose of each branch and maintain consistency within our repository. Please adhere to these conventions when creating branches for your contributions.

@@ -150,8 +150,8 @@ public class PersonTest {
                 setPrivateField(testPerson, "model", mockModel);
                 setPrivateField(testPerson, "innovations", mockInnovations);
                 setPrivateField(testPerson, "benefitUnit", mockBenefitUnit);
-                setPrivateField(testPerson, "leftEducation", Boolean.FALSE);
-                setPrivateField(testPerson, "toLeaveSchool", Boolean.FALSE);
+                setPrivateField(testPerson, "eduLeftEduFlag", Boolean.FALSE);
+                setPrivateField(testPerson, "eduLeaveSchoolFlag", Boolean.FALSE);
 
                 // Mock the critical dependency from BenefitUnit (Set<Person> is empty for simplicity)
                 Mockito.when(mockBenefitUnit.getChildren()).thenReturn(java.util.Collections.emptySet());
