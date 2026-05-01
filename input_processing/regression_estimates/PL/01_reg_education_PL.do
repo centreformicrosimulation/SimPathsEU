@@ -449,7 +449,7 @@ fre der if (dag >= 16 & l.les_c4 != 4 & l.les_c4 != 2)
 replace der = . if der == -9
 
 * Estimation 
-probit der i.Dgn Dag Dag_sq i.Dcpst_Partnered li.Deh_c4_High ///
+probit der i.Dgn Dag Dag_sq li.Dcpst_Partnered li.Deh_c4_High ///
 	 li.Deh_c4_Low li.Les_c3_NotEmployed li.Les_c3_Employed l.Dnc l.Dnc02 ///
 	 $regions Year_transformed Year_transformed_sq Y2021 if ///
 	 ${e1b_if_condition} [pw=dwt], vce(robust)

@@ -18,9 +18,9 @@
 ********************************************************************************
 
 
-******************************************************
-* U1a: Partnership formation, left initial edu spell *
-******************************************************
+*****************************
+* U1: Partnership formation *
+*****************************
 
 * Overall 
 use "$dir_data/U1_sample", clear 
@@ -274,6 +274,7 @@ graph export "$dir_internal_validation/partnership/int_validation_${country}_U1_
 graph drop _all 	
 	
 restore
+
 
 *******************************
 * U2: Partnership termination *

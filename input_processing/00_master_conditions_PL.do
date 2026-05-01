@@ -167,13 +167,13 @@ global r1a_if_condition "dcpst == 2 & dag >= ${age_can_retire} & flag_deceased !
 global r1b_if_condition "ssscp != 1 & dcpst == 1 & dag >= ${age_can_retire} & flag_deceased != 1"
 
 * Wages
-global W1fa_if_condition "dgn == 0 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & flag_deceased != 1"
+global W1fa_if_condition "dgn == 0 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & deh_c4 != 0 & flag_deceased != 1"
 
-global W1ma_if_condition "dgn == 1 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & flag_deceased != 1"
+global W1ma_if_condition "dgn == 1 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & deh_c4 != 0 & flag_deceased != 1"
 
-global W1fb_if_condition "dgn == 0 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & previouslyWorking == 1 & flag_deceased != 1"
+global W1fb_if_condition "dgn == 0 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & deh_c4 != 0 & previouslyWorking == 1 & flag_deceased != 1"
 
-global W1mb_if_condition "dgn == 1 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & previouslyWorking == 1 & flag_deceased != 1"
+global W1mb_if_condition "dgn == 1 & dag >= ${age_seek_employment} & dag <= ${age_force_retire} & deh_c4 != 0 & previouslyWorking == 1 & flag_deceased != 1"
 
 * Capital income 
 global i1a_if_condition "dag >= ${age_becomes_semi_responsible} & flag_deceased != 1" 

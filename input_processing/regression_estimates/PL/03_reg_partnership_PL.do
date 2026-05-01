@@ -240,9 +240,13 @@ gen L1_Dnc = l.Dnc
 gen L1_Dehsp_c3_Medium = l.Dehsp_c3_Medium
 
 * Generate interactions
-gen Les_c4_Student_Dgn = Dgn * Les_c4_Student
-gen Les_c4_NotEmployed_Dgn = Dgn * Les_c4_NotEmployed
-gen Les_c4_Retired_Dgn = Dgn * Les_c4_Retired
+gen Dgn_Les_c4_Student = Dgn * Les_c4_Student
+gen Dgn_Les_c4_NotEmployed = Dgn * Les_c4_NotEmployed
+gen Dgn_Les_c4_Retired = Dgn * Les_c4_Retired
+
+gen Dgn_Les_c4_Student_L1 = Dgn * l.Les_c4_Student
+gen Dgn_Les_c4_NotEmployed_L1 = Dgn * l.Les_c4_NotEmployed
+gen Dgn_Les_c4_Retired_L1 = Dgn * l.Les_c4_Retired
 
 gen Ded_Dag =  Ded * Dag 
 gen Ded_Dag_sq = Ded * Dag_sq 
@@ -285,8 +289,8 @@ probit dcpen c.Dag c.Dag_sq Dgn lc.Dnc lc.Dnc02 li.Ydses_c5_Q2 ///
 	Ded_Dgn Ded_Dnc_L1 Ded_Dnc02_L1 Ded_Ydses_c5_Q2_L1  Ded_Ydses_c5_Q3_L1 ///
 	Ded_Ydses_c5_Q4_L1 Ded_Ydses_c5_Q5_L1 i.Deh_c4_Na i.Deh_c4_High ///
 	i.Deh_c4_Low li.Les_c4_Student li.Les_c4_NotEmployed ///
-	li.Les_c4_Retired li.Les_c4_Student_Dgn li.Les_c4_NotEmployed_Dgn ///
-	li.Les_c4_Retired_Dgn i.Dhe_Fair i.Dhe_Good i.Dhe_VeryGood ///
+	li.Les_c4_Retired Dgn_Les_c4_Student_L1 Dgn_Les_c4_NotEmployed_L1 ///
+	Dgn_Les_c4_Retired_L1 i.Dhe_Fair i.Dhe_Good i.Dhe_VeryGood ///
 	i.Dhe_Excellent $regions Year_transformed if ///
 	${u1_if_condition} [pw=dwt], vce(robust)
 	
