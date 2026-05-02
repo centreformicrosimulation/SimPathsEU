@@ -6,6 +6,8 @@ by CeMPA (Centre for Microsimulation and Policy Analysis).
 
 The entire SimPaths documentation is available on its [website](https://simpaths.github.io/SimPaths/), which includes: a detailed description of its building blocks; instructions on how to set up and run the model; and information about contributing to the model's development.
 
+The `documentation/` directory contains supplementary documentation that complements this README and the [SimPaths website](https://simpaths.github.io/SimPaths/) (model notes, variable references, and other materials not maintained inline with the code).
+
 ## Introduction
 
 SimPaths is a family of models for individual and household life course events, all sharing common components. The framework is designed to project life histories through time, building up a detailed picture of career paths, family (inter)relations, health, and financial circumstances. The framework builds upon standardised assumptions and data sources, which facilitates adaptation to alternative countries. This repository, **SimPathsEU**, covers Greece (`EL`), Hungary (`HU`), Italy (`IT`), and Poland (`PL`), and integrates with EUROMOD for tax and benefit policy simulation. Careful attention is paid to model validation, and sensitivity of projections to key assumptions. The modular nature of the SimPaths framework is designed to facilitate analysis of alternative assumptions concerning the tax and benefit system, sensitivity to parameter estimates and alternative approaches for projecting labour/leisure and consumption/savings decisions. 
@@ -196,7 +198,6 @@ output/
 
 Batch scripts in `scripts/` move each scenario's outputs into `output/<scenario-name>/` after the runs finish.
 
-The `documentation/` directory contains supplementary documentation that complements this README and the [SimPaths website](https://simpaths.github.io/SimPaths/) (model notes, variable references, and other materials not maintained inline with the code).
 
 ### Batch scenario scripts
 
