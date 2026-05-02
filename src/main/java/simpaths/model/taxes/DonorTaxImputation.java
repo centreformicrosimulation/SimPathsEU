@@ -375,7 +375,7 @@ public class DonorTaxImputation {
     }
     private double[] getCandidateMeasVector(DonorTaxUnit candidate, boolean flagSecondIncome, boolean flagChildcareCost) {
 
-        int priceYear = Parameters.BASE_PRICE_YEAR;
+        int priceYear = getSystemYear(keys.getSimYear());
         double oiWeekly = candidate.getPolicyBySystemYear(priceYear).getOriginalIncomePerMonth() / Parameters.WEEKS_PER_MONTH;
         double siWeekly = 0.0;
         if (flagSecondIncome)

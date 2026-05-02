@@ -5,9 +5,9 @@ name: Build and run SimPaths
 
 on:
   push:
-    branches: [ "main", "develop", "main-MV-test-merge" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main", "develop", "main-MV-test-merge" ]
+    branches: [ "main", "develop" ]
 
 jobs:
   build:
