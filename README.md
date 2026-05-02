@@ -202,9 +202,6 @@ The `documentation/` directory contains supplementary documentation that complem
 
 Helper Bash scripts in `scripts/` run `multirun.jar` across multiple alignment configs in sequence and move each scenario's output into `output/<scenario-name>/`:
 - `run_alignment_multiruns.sh` — full set of alignment scenarios
-- `run_multiruns-alignPopOFF.sh` — same scenarios with population alignment disabled
-- `run_multiruns-alignPopOFF_QUICK.sh` — quick variant of the above for development
-- `run_TEST_multiruns.sh` — small smoke-test run used to validate the pipeline
 
 
 Defaults (start/end year, population size, runs per scenario, JVM heap, random seed) are set at the top of each script and can be overridden via environment variables, e.g.:
