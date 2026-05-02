@@ -51,9 +51,8 @@ if _rc {
     exit 601
 }
 
-local dir_doc "`dir_w'/documentation"
-local out_dta  "`dir_doc'/key_function_income_thresholds_clean2018.dta"
-local out_xlsx "`dir_doc'/key_function_income_thresholds_clean2018.xlsx"
+local dir_out "`dir_w'/input_processing"
+local out_xlsx "`dir_out'/key_function_income_thresholds_2018.xlsx"
 
 local ref_year 2018
 local weeks_per_month = 365.25 / (7 * 12)
@@ -248,7 +247,6 @@ sort country approach
 
 format lo_monthly hi_monthly lo_weekly hi_weekly %12.2f
 compress
-save "`out_dta'", replace
 
 export excel using "`out_xlsx'", sheet("results") firstrow(variables) sheetreplace
 
@@ -267,6 +265,5 @@ putexcel A11=("Output values")   B11=("Local currency per week, exact and rounde
 putexcel A12=("Do-file")         B12=("01_key_function_income_thresholds_from_EUROMOD_2018.do")
 
 di as txt "Saved results to:"
-di as txt "  `out_dta'"
 di as txt "  `out_xlsx'"
 list country approach bu_id lo_hi_weekly_exact lo_hi_weekly_round, noobs abbreviate(32)
