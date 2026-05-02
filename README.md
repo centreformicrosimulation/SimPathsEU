@@ -4,9 +4,7 @@ by CeMPA (Centre for Microsimulation and Policy Analysis).
 
 ## Documentation
 
-The entire SimPaths documentation is available on its [website](https://simpaths.github.io/SimPaths/), which includes: a detailed description of its building blocks; instructions on how to set up and run the model; and information about contributing to the model's development.
-
-The `documentation/` directory contains supplementary documentation that complements this README and the [SimPaths website](https://simpaths.github.io/SimPaths/) (model notes, variable references, and other materials not maintained inline with the code).
+The entire SimPaths documentation is available on its [website](https://simpaths.github.io/SimPaths/), which includes: a detailed description of its building blocks; instructions on how to set up and run the model; and information about contributing to the model's development. The `documentation/` directory contains supplementary materials that complements this README (model specifications, variable references, etc.).
 
 ## Introduction
 
