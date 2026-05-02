@@ -21,6 +21,9 @@
 * 
 * 					Update the winsorization process if alter data 
 * 					Update CPI if apply to a different country 
+*
+* TO DO: 			Explore using the centering adjustment when adding 
+* 					random draw: -e(sigma)^2/2
 *******************************************************************************/
 
 clear all
@@ -244,14 +247,14 @@ gen pred_hourly_wage = .
 
 /******************** WAGES: FEMALE, NO PREV WAGE OBSERVED ********************/
 
-global wage_eqn "lwage_hour dag dagsq i.deh_c3 i.deh_c3#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021"
-global seln_eqn "i.L1les_c3 dag dagsq i.deh_c3 i.deh_c3#c.dag i.mar i.child i.dhe i.drgn1 y2020 y2021" 
+global wage_eqn "lwage_hour dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021"
+global seln_eqn "i.L1les_c3 dag dagsq ib1.deh_c4 ib1.deh_c4#c.dag li.mar li.child i.dhe i.drgn1 y2020 y2021" 
 local filter = "${W1fa_if_condition} & previouslyWorking == 0"
 
 heckman $wage_eqn if ${W1fa_if_condition}, select($seln_eqn) twostep mills(lambda)
 
 
-* Save raw restults
+* Save raw results
 outreg2 stats(coef se pval) using "$dir_raw_results/wages/W1fa.doc", replace ///
 	title("Heckman-corrected wage equation estimated on the sample of women who were not in employment last year") ///
 	ctitle(Not working women) label side dec(2) noparen 	
@@ -357,8 +360,8 @@ restore
 * Labelling 
 putexcel set "$dir_work/reg_wages_${country}", sheet("W1fa") modify 
 
-local var_list Dag Dag_sq Deh_c3_Medium Deh_c3_Low Deh_c3_Medium_Dag ///
-	Deh_c3_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+local var_list Dag Dag_sq Deh_c4_Medium Deh_c4_Low Deh_c4_Medium_Dag ///
+	Deh_c4_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
 	PL4 PL5 PL6 PL10 Pt RealWageGrowth Y2020 Y2021 Constant InverseMillsRatio
 
 putexcel A1 = "REGRESSOR"
@@ -425,8 +428,8 @@ putexcel set "$dir_work/reg_employmentSelection_${country}", ///
 	sheet("W1fa-sel") modify 
 	
 local var_list Les_c3_Student_L1 Les_c3_NotEmployed_L1 Dag Dag_sq ///
-	Deh_c3_Medium Deh_c3_Low Deh_c3_Medium_Dag  Deh_c3_Low_Dag ///
-	Dcpst_Partnered D_Children Dhe_Fair Dhe_Good ///
+	Deh_c4_Medium Deh_c4_Low Deh_c4_Medium_Dag  Deh_c4_Low_Dag ///
+	Dcpst_Partnered_L1 D_Children_L1 Dhe_Fair Dhe_Good ///
 	Dhe_VeryGood Dhe_Excellent PL4 PL5 PL6 PL10 Y2020 Y2021 ///
 	Constant	
 
@@ -461,8 +464,8 @@ cap drop lambda
 
 /********************* WAGES: MALE, NO PREV WAGE OBSERVED *********************/
 
-global wage_eqn "lwage_hour dag dagsq i.deh_c3 i.deh_c3#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021" 
-global seln_eqn "i.L1les_c3 dag dagsq i.deh_c3 i.deh_c3#c.dag i.mar i.child i.dhe i.drgn1 y2020 y2021" 
+global wage_eqn "lwage_hour dag dagsq i.deh_c4 i.deh_c4#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021" 
+global seln_eqn "i.L1les_c3 dag dagsq i.deh_c4 i.deh_c4#c.dag li.mar li.child i.dhe i.drgn1 y2020 y2021" 
 local filter = "${W1ma_if_condition} & previouslyWorking == 0"
 
 heckman $wage_eqn if ${W1ma_if_condition}, select($seln_eqn) ///
@@ -478,7 +481,7 @@ gen in_sample_mnpw = e(sample)
 gen epsilon = rnormal()*e(sigma) 
 
 replace pred_hourly_wage = exp(lwage_hour_hat + epsilon) if `filter'  
- 
+  
 * Save sample for validation
 save "$dir_data/Male_NPW_sample", replace 
 cap drop pred epsilon
@@ -566,8 +569,8 @@ restore
 * Labelling 
 putexcel set "$dir_work/reg_wages_${country}", sheet("W1ma") modify 
 
-local var_list Dag Dag_sq Deh_c3_Medium Deh_c3_Low Deh_c3_Medium_Dag ///
-	Deh_c3_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
+local var_list Dag Dag_sq Deh_c4_Medium Deh_c4_Low Deh_c4_Medium_Dag ///
+	Deh_c4_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood Dhe_Excellent ///
 	PL4 PL5 PL6 PL10 Pt RealWageGrowth Y2020 Y2021 Constant InverseMillsRatio
 
 putexcel A1 = "REGRESSOR"
@@ -635,8 +638,8 @@ putexcel set "$dir_work/reg_employmentSelection_${country}", ///
 	sheet("W1ma-sel") modify 
 
 local var_list Les_c3_Student_L1 Les_c3_NotEmployed_L1 Dag Dag_sq ///
-	Deh_c3_Medium Deh_c3_Low Deh_c3_Medium_Dag  Deh_c3_Low_Dag ///
-	Dcpst_Partnered D_Children Dhe_Fair Dhe_Good ///
+	Deh_c4_Medium Deh_c4_Low Deh_c4_Medium_Dag Deh_c4_Low_Dag ///
+	Dcpst_Partnered_L1 D_Children_L1 Dhe_Fair Dhe_Good ///
 	Dhe_VeryGood Dhe_Excellent PL4 PL5 PL6 PL10 Y2020 Y2021 ///
 	Constant	
 
@@ -668,11 +671,11 @@ foreach var in `var_list' {
 
 cap drop lambda
 
-
+*/
 /********************** WAGES: FEMALE, PREV WAGE OBSERVED *********************/
 
-global wage_eqn "lwage_hour L1.lwage_hour dag dagsq i.deh_c3 i.deh_c3#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021" 
-global seln_eqn "dag dagsq i.deh_c3 i.deh_c3#c.dag i.mar i.child i.dhe i.drgn1 y2020 y2021" 
+global wage_eqn "lwage_hour L1.lwage_hour dag dagsq i.deh_c4 i.deh_c4#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021" 
+global seln_eqn "dag dagsq i.deh_c4 i.deh_c4#c.dag li.mar li.child i.dhe i.drgn1 y2020 y2021" 
 
 heckman $wage_eqn if ${W1fb_if_condition}, select($seln_eqn) twostep
 	
@@ -775,8 +778,8 @@ restore
 * Labelling 
 putexcel set "$dir_work/reg_wages_${country}", sheet("W1fb") modify 
 
-local var_list L1_log_hourly_wage Dag Dag_sq Deh_c3_Medium Deh_c3_Low ///
-	Deh_c3_Medium_Dag Deh_c3_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood ///
+local var_list L1_log_hourly_wage Dag Dag_sq Deh_c4_Medium Deh_c4_Low ///
+	Deh_c4_Medium_Dag Deh_c4_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood ///
 	Dhe_Excellent PL4 PL5 PL6 PL10 Pt RealWageGrowth Y2020 Y2021 Constant ///
 	InverseMillsRatio
 
@@ -809,13 +812,15 @@ foreach var in `var_list' {
 * Calculate RMSE 
 // Note: Sigma reported in the estimated regressions is the standard deviation
 //	 		of the residuals (=RMSE assuming residuals are normally distributed)
+
+preserve 
+
+keep if ${W1fb_if_condition}
+
 cap drop residuals squared_residuals  
 gen residuals = lwage_hour - lwage_hour_hat
 gen squared_residuals = residuals^2
 
-preserve 
-
-keep if `filter'
 sum squared_residuals 
 di "RMSE for Employed women: " sqrt(r(mean))
 
@@ -846,8 +851,8 @@ putexcel set "$dir_work/reg_employmentSelection_${country}", ///
 	sheet("W1fb-sel") modify 
 	
 local var_list Dag Dag_sq ///
-	Deh_c3_Medium Deh_c3_Low Deh_c3_Medium_Dag  Deh_c3_Low_Dag ///
-	Dcpst_Partnered D_Children Dhe_Fair Dhe_Good ///
+	Deh_c4_Medium Deh_c4_Low Deh_c4_Medium_Dag  Deh_c4_Low_Dag ///
+	Dcpst_Partnered_L1 D_Children_L1 Dhe_Fair Dhe_Good ///
 	Dhe_VeryGood Dhe_Excellent PL4 PL5 PL6 PL10 Y2020 Y2021 ///
 	Constant
 	
@@ -881,11 +886,26 @@ cap drop lambda
 
 
 /*********************** WAGES: MEN, PREV WAGE OBSERVED ***********************/
+/*
+NOTE: Explored using log age due to signs of age and age squared, but in 
+age validaition there is very little difference - main contrast among those 
+age > 65. 
+*/
 
-global wage_eqn "lwage_hour L1.lwage_hour dag dagsq i.deh_c3 i.deh_c3#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021"
-global seln_eqn "dag dagsq i.deh_c3 i.deh_c3#c.dag i.mar i.child i.dhe i.drgn1 y2020 y2021" 
+
+global wage_eqn "lwage_hour L1.lwage_hour dag dagsq i.deh_c4 i.deh_c4#c.dag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021"
+global seln_eqn "dag dagsq i.deh_c4 i.deh_c4#c.dag li.mar li.child i.dhe i.drgn1 y2020 y2021" 
+*/
+/*
+gen ldag = ln(dag)
+
+global wage_eqn "lwage_hour L1.lwage_hour ldag i.deh_c4 i.deh_c4#c.ldag i.dhe i.drgn1 i.pt real_wage_growth y2020 y2021"
+global seln_eqn "ldag i.deh_c4 i.deh_c4#c.ldag i.mar i.child i.dhe i.drgn1 y2020 y2021" 
+*/
+
 
 heckman $wage_eqn if ${W1mb_if_condition}, select($seln_eqn) twostep
+
 
 * Obtain predicted values (log wage) with selection correction
 predict pred if ${W1mb_if_condition}, ycond 
@@ -894,10 +914,14 @@ replace lwage_hour_hat = pred if ${W1mb_if_condition}
 
 gen in_sample_mpw = e(sample)	
 
+
 * Correct bias transforming from log to levels 
 gen epsilon = rnormal()*e(sigma) 
 
 replace pred_hourly_wage = exp(lwage_hour_hat + epsilon) if ${W1mb_if_condition} 	
+
+gen pred_level_noshock = exp(lwage_hour_hat) 
+
 	 
 * Save sample for validation
 save "$dir_data/Male_PW_sample", replace 
@@ -983,8 +1007,8 @@ restore
 * Labelling 
 putexcel set "$dir_work/reg_wages_${country}", sheet("W1mb") modify 
 
-local var_list L1_log_hourly_wage Dag Dag_sq Deh_c3_Medium Deh_c3_Low ///
-	Deh_c3_Medium_Dag Deh_c3_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood ///
+local var_list L1_log_hourly_wage Dag Dag_sq Deh_c4_Medium Deh_c4_Low ///
+	Deh_c4_Medium_Dag Deh_c4_Low_Dag Dhe_Fair Dhe_Good Dhe_VeryGood ///
 	Dhe_Excellent PL4 PL5 PL6 PL10 Pt RealWageGrowth Y2020 Y2021 Constant ///
 	InverseMillsRatio
 
@@ -1023,7 +1047,7 @@ gen squared_residuals = residuals^2
 
 preserve 
 
-keep if `filter'
+keep if ${W1mb_if_condition}
 sum squared_residuals 
 di "RMSE for Employed men: " sqrt(r(mean))
 
@@ -1054,8 +1078,8 @@ putexcel set "$dir_work/reg_employmentSelection_${country}", ///
 	sheet("W1mb-sel") modify 
 
 local var_list Dag Dag_sq ///
-	Deh_c3_Medium Deh_c3_Low Deh_c3_Medium_Dag  Deh_c3_Low_Dag ///
-	Dcpst_Partnered D_Children Dhe_Fair Dhe_Good ///
+	Deh_c4_Medium Deh_c4_Low Deh_c4_Medium_Dag Deh_c4_Low_Dag ///
+	Dcpst_Partnered_L1 D_Children_L1 Dhe_Fair Dhe_Good ///
 	Dhe_VeryGood Dhe_Excellent PL4 PL5 PL6 PL10 Y2020 Y2021 ///
 	Constant
 	
@@ -1123,7 +1147,7 @@ replace les_c3 = orig_les_c3
 drop orig_les_c3 
 */
 
-save "$dir_data/${country}-_pooled_ipop_wages.dta", replace
+save "$dir_data/${country}-_pooled_ipop2.dta", replace
 
 
 capture log close 

@@ -73,7 +73,7 @@ sort idperson swv
 
 //cf _all using "$dir_data/${country}_pooled_ipop.dta"
 
-save "$dir_data/${country}_pooled_ipop.dta", replace 
+save "$dir_data/${country}_pooled_ipop_pre.dta", replace 
 // panel dataset with missing values removed
 
 /*************************** GENERATE FREQUENCY WEIGHTS ***********************/
@@ -128,6 +128,7 @@ forvalues yy = $first_sim_year/$last_sim_year {
 	
 	* Load pooled data with missing values removed  
 	use "$dir_data/${country}_pooled_ipop.dta", clear
+	
 	rename *, l
 	
 	* Limit year
@@ -153,7 +154,7 @@ forvalues yy = $first_sim_year/$last_sim_year {
 
     * Check for number of adults 
     drop adult child adult_count adult_count2 //drop old vars 
-    gen child = dag < $age_becomes_responsible 
+    gen child = dag < ${age_becomes_responsible} 
     gen adult = 1 - child 
     bys stm idhh: egen adult_count = sum(adult)
     bys stm idbenefitunit: egen adult_count2 = sum(adult)
@@ -162,7 +163,7 @@ forvalues yy = $first_sim_year/$last_sim_year {
     
 	* Check for orphans 
     assert  (idfather > 0 | idmother > 0) if ///
-		(dag > 0 & dag < $age_becomes_responsible)
+		(dag > 0 & dag < ${age_becomes_responsible})
 
 	* Check weight is not zero and non-missing 
 	assert dwt > 0 & dwt < . 
@@ -170,38 +171,145 @@ forvalues yy = $first_sim_year/$last_sim_year {
 	cap gen one = 1
 	sum one [w = dwt]
 
-	*Limit saved variables
+	* Limit saved variables
 	keep idhh idbenefitunit idperson idpartner idmother idfather swv dgn dag ///
-	dcpst dnc02 dnc ded deh_c3 deh_c4 sedex les_c3 dlltsd dhe ydses_c5 ///
-	yplgrs_dv ypnbihs_dv yptciihs_dv dhhtp_c8 ssscp dcpen dcpyy dcpex ///
-	dcpagdf ynbcpdf_dv der sedag sprfm dagsp dehsp_c3 dehsp_c4 dhesp ///
-	lessp_c3 dehm_c3 dehf_c3 stm lesdf_c4 dhh_owned lhw drgn1 dct  ///
-	dwt_sampling les_c4 lessp_c4 adultchildflag dwt obs_earnings_hourly ///
-	l1_obs_earnings_hourly ypncp ypnoab l1_les_c3 l1_les_c4 liwwh 
+	dnc02 dnc ded deh_c3 deh_c4 sedex dlltsd dhe ydses_c5 yplgrs_dv ///
+	ypnbihs_dv yptciihs_dv dcpyy dcpagdf ynbcpdf_dv der dehm_c4 dehf_c4 stm ///
+	dhh_owned lhw drgn1 dct les_c4 adultchildflag dwt obs_earnings_hourly ///
+	l1_obs_earnings_hourly ypncp ypnoab ydisp l1_les_c4 liwwh 
 	
 	order idhh idbenefitunit idperson idpartner idmother idfather swv dgn ///
-	dag dcpst dnc02 dnc ded deh_c3 deh_c4 sedex les_c3 dlltsd dhe ydses_c5 ///
-	yplgrs_dv ypnbihs_dv yptciihs_dv dhhtp_c8 ssscp dcpen dcpyy dcpex ///
-	dcpagdf ynbcpdf_dv der sedag sprfm dagsp dehsp_c3 dehsp_c4 dhesp  ///
-	lessp_c3 dehm_c3 dehf_c3 stm lesdf_c4 dhh_owned lhw drgn1 dct ///
-	dwt_sampling les_c4 lessp_c4 adultchildflag dwt obs_earnings_hourly ///
-	l1_obs_earnings_hourly ypncp ypnoab l1_les_c3 l1_les_c4 liwwh 
+	dag dnc02 dnc ded deh_c3 deh_c4 sedex dlltsd dhe ydses_c5 yplgrs_dv ///
+	ypnbihs_dv yptciihs_dv dcpyy dcpagdf ynbcpdf_dv der dehm_c4 dehf_c4 stm ///
+	dhh_owned lhw drgn1 dct les_c4 adultchildflag dwt obs_earnings_hourly ///
+	l1_obs_earnings_hourly ypncp ypnoab ydisp l1_les_c4 liwwh 
 	
 	recode idhh idbenefitunit idperson idpartner idmother idfather swv dgn ///
-	dag dcpst dnc02 dnc ded deh_c3 deh_c4 sedex les_c3 dlltsd dhe ydses_c5 ///
-	yplgrs_dv ypnbihs_dv yptciihs_dv dhhtp_c8 ssscp dcpen dcpyy dcpex ///
-	dcpagdf ynbcpdf_dv der sedag sprfm dagsp dehsp_c3 dehsp_c4 dhesp ///
-	lessp_c3 dehm_c3 dehf_c3 stm lesdf_c4 dhh_owned lhw drgn1 dct ///
-	dwt_sampling les_c4 lessp_c4 adultchildflag dwt obs_earnings_hourly  ///
-	l1_obs_earnings_hourly ypncp ypnoab l1_les_c3 l1_les_c4 liwwh ///
-	(missing = -9)
+	dag dnc02 dnc ded deh_c3 deh_c4 sedex dlltsd dhe ydses_c5 ///
+	yplgrs_dv ypnbihs_dv yptciihs_dv dcpyy dcpagdf ynbcpdf_dv der ///
+	dehm_c4 dehf_c4 stm dhh_owned lhw drgn1 dct les_c4 adultchildflag dwt ///
+	obs_earnings_hourly l1_obs_earnings_hourly ypncp ypnoab ydisp l1_les_c4 ///
+	liwwh (missing = -9)
 	
-	gsort idhh idbenefitunit idperson
-	save "$dir_data/population_initial_${country}_${year}.dta", replace
+	* Rename Variables following new Codebook
 	
-	recode dgn (-9 = 0)
+	* Identifiers
+	rename idhh idHh
+	rename idbenefitunit idBu
+	rename idperson idPers
+	rename idpartner idPartner
+	rename idmother idMother
+	rename idfather idFather
+
+	* Time 
+	rename stm statInterviewYear
+	rename swv statCollectionWave
+
+	* Location 
+	rename drgn1 demRgn
+	rename dct demCountry
+	
+	* Weights 
+	rename dwt wgtCrossMainSurvey
+	
+	* Demographics 
+	rename dgn demMaleFlag
+	rename dag demAge
+	//rename dcpst demPartnerStatus
+	rename dnc02 demNChild0to2
+	rename dnc demNChild
+	//rename ssscp demPartnerSameSexFlag
+	//rename dcpen demEnterPartnerFlag
+	rename dcpyy demPartnerNYear
+	//rename dcpex demExitPartnerFlag
+	rename dcpagdf demAgePartnerDiff
+	//rename sedag demAgeEduRangeFlag
+	//rename sprfm demFertFlag
+	//rename dchpd demNChild0
+	//rename dagsp demAgePartner
+	rename adultchildflag demAdultChildFlag
+	//rename dhhtp_c4 demCompHhC4	
+	//rename dhhtp_c8 demCompHhC8
+	//rename multiplier demPopSurveyShare
+	//rename dot demEthnC4
+	//rename dot01 demEthnC6
+
+	* Education 
+	rename deh_c3 eduHighestC3
+	rename deh_c4 eduHighestC4	
+	//rename dehsp_c3 eduHighestPartnerC3
+	//rename dehsp_c4 eduHighestPartnerC4
+	rename ded eduSpellFlag
+	rename sedex eduExitSampleFlag
+	rename der eduReturnFlag	
+	rename dehm_c4 eduHighestMotherC4
+	rename dehf_c4 eduHighestFatherC4
+	
+	* Labour market 
+	//rename les_c3 labStatusC3	
+	rename les_c4 labC4
+	rename l1_les_c4 labC4L1
+	//rename lessp_c3 labStatusPartnerC3
+	//rename lessp_c4 labStatusPartnerC4
+	//rename lesdf_c4 labStatusPartnerAndOwnC4	
+	rename lhw labHrsWorkWeek
+	//rename l1_lhw labHrsWorkWeekL1	
+	
+	* Income, labour, wealth 
+	rename obs_earnings_hourly labWageHrly
+	rename l1_obs_earnings_hourly labWageHrlyL1
+
+	//rename liquid_wealth wealthLiq
+	//rename tot_pen wealthPensValue
+	//rename nvmhome wealthPrptyValue
+
+	//rename total_wealth wealthTotValue   
+	//rename mortgage_debt wealthMortgageDebtValue  
+	//rename housing_wealth wealthPrptyValue 
+	//rename total_pensions wealthPensValue 
+	
+	rename ydses_c5 yHhQuintilesMonthC5	
+	rename ynbcpdf_dv yPersAndPartnerGrossDiffMonth
+	rename dhh_owned wealthPrptyFlag
+	
+	//rename econ_benefits yBenReceivedFlag
+	//rename econ_benefits_nonuc yBenNonUCReceivedFlag
+	//rename econ_benefits_uc yBenUCReceivedFlag
+
+	rename ypncp yCapitalPersMonth
+	rename ypnoab yPensPersGrossMonth
+	rename yplgrs_dv yEmpPersGrossMonth
+	rename ypnbihs_dv yNonBenPersGrossMonth
+	rename yptciihs_dv yMiscPersGrossMonth
+	rename ydisp yPersDispMonth               
+
+	//rename unemp labUnempFlag
+	rename liwwh labEmpNyear
+
+	* Health & wellbeing 
+	rename dlltsd healthDsblLongtermFlag
+	rename dhe healthSelfRated
+	//rename dhesp healthPartnerSelfRated	
+	//rename dhm healthWbScore0to36
+	//rename dhm_ghq healthPsyDstrss0to12
+	//rename dhe_mcs healthMentalMcs
+	//rename dhe_pcs healthPhysicalPcs
+	//rename dhe_mcssp healthMentalPartnerMcs
+	//rename dhe_pcssp healthPhysicalPartnerPcs
+	//rename dls demLifeSatScore0to10
+	//rename financial_distress yFinDstrssFlag	
+	
+	gsort idHh idBu idPers
+	
+	save "$dir_data/refactored/population_initial_${country}_${year}.dta", ///
+		replace
+	
+	recode demMaleFlag (-9 = 0)
+	
 	export delimited using ///
-		"$dir_data/population_initial_${country}_${year}.csv", nolabel replace
+		"$dir_data/refactored/population_initial_${country}_${year}.csv", ///
+		nolabel replace
+
 }
 
 cap log close

@@ -16,7 +16,7 @@ set maxvar 30000
 
 
 * Call dataset with Heckman estimates 
-use "$dir_data/${country}-_pooled_ipop_wages.dta", clear 
+use "$dir_data/${country}-_pooled_ipop2.dta", clear 
 
 sort idperson stm  
 xtset idperson stm 
@@ -83,7 +83,7 @@ drop if missing(dagDifference) | missing(predictedWageDifference)
 
 sum dagDifference predictedWageDifference //Get sample mean and std dev
 
-putexcel set "$dir_work/scenario_parametricMatching_PL", replace
+putexcel set "$dir_work/scenario_parametricMatching_PL", sheet("Parameters") replace
 putexcel A1 = ("Parameter") 
 putexcel A2 = ("mean_dag_diff")
 putexcel A3 = ("mean_wage_diff")

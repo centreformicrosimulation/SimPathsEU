@@ -179,7 +179,7 @@ xtset idperson swv
 fre dlftphm if (ded == 0 & dag >= 18) 
 	
 * Estimation
-probit dlftphm i.Dgn Dag Dag_sq i.Deh_c3_Medium i.Deh_c3_Low ///
+probit dlftphm i.Dgn Dag Dag_sq li.Deh_c4_Medium li.Deh_c4_Low ///
 	li.Les_c3_Student li.Les_c3_NotEmployed li.Ydses_c5_Q2 li.Ydses_c5_Q3 ///
 	li.Ydses_c5_Q4 li.Ydses_c5_Q5 $regions Year_transformed ///
 	Year_transformed_sq i.Y2016 i.Y2018 if ${p1_if_condition} [pw=dwt], ///

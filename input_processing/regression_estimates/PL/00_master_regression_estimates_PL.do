@@ -5,8 +5,9 @@
 * 							SimPaths for Poland using EU-SILC.
 * COUNTRY:              Poland
 * DATA:         	    GESIS - EU SILC			
-* AUTHORS: 				Daria Popova, Justin van de Ven, Ashley Burdett
-* LAST UPDATE:          Jannuary 2026
+* AUTHORS: 				Daria Popova, Justin van de Ven, Ashley Burdett, 
+* 						Aleksandra Kolndrekaj 
+* LAST UPDATE:          March 2026 (AB)
 ********************************************************************************
 * NOTES: 				
 * 			
@@ -40,7 +41,7 @@ global dir_ind "/Users/ashleyburdett/Library/CloudStorage/Box-Box"
 //"/Users/ashleyburdett/Library/CloudStorage/Box-Box"
 
 * Working directory which contains sub-folders and will contain formatted output 
-global dir_work "$dir_ind/CeMPA shared area/_SimPaths/_SimpathsEU/regression_estimates/PL/with_time_trend"
+global dir_work "$dir_ind/CeMPA shared area/_SimPaths/_SimpathsEU/input_processing/regression_estimates/PL/with_time_trend"
 
 * Directory which contains do files
 global dir_do "$dir_work/do_files"
@@ -55,20 +56,17 @@ global dir_log "$dir_work/logs"
 global dir_raw_results "$dir_work/raw_results"
 
 * Directory which contains EU-SILC input dataset
-global dir_input_data "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/initial_populations/PL/data"
+global dir_input_data "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/input_processing/initial_populations/PL/data"
 
 * Directory containing external input data 
 global dir_external_data "$dir_ind/CeMPA shared area/projects - completed/ESPON - OVERLAP/_countries/PL/regression_estimates/external_data"
-
-* Directory containing internal validation output
-global dir_internal_validation "$dir_work/internal_validation/graphs"
 
 
 /*******************************************************************************
 * DEFINE PARAMETERS & PROCESS IF CONDITIONS 
 *******************************************************************************/
 
-do "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/00_master_conditions.do"
+do "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/input_processing/00_master_conditions.do"
 
 
 /*******************************************************************************

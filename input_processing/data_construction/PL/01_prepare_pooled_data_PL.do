@@ -1,5 +1,5 @@
 ********************************************************************************
-* PROJECT:              ESPON
+* PROJECT:              SImPaths EU 
 * DO-FILE NAME:         01_prepare_pooled_data.do
 * DESCRIPTION:          Compiles panel dataset from EU-SILC  
 ********************************************************************************
@@ -23,10 +23,42 @@ merge these chunks of data into one cumulative dataset (separately for the
 D-,H-,R- and P-data).
 */
 /*
-Initial populations: cross-sectional SILC for 2011-2023 (income 2010-2022), 
-2023 (income 2022)
-Estimation sample: longitudinal SILC with observations from 2011-2023 
-(income 2010-2022)
+STRUCTURE OF THIS FILE
+
+  The script builds a person-level panel dataset for a single country by
+  sequentially merging the four EU-SILC master files produced by the panel
+  construction scripts (01-04 in eu_silc_do_2025/).
+
+  Files are merged in the following order, with R as the base:
+
+    R (Personal Register) — loaded first as the base. Contains all persons
+      in the sample including children under 16. Key identifiers: upid
+      (unique person ID across releases), uhid (unique household ID), year.
+
+    P (Personal Data) — merged 1:1 on year+upid+uhid. Contains income and
+      personal variables for adults aged 16 and above only. After this merge:
+      - Adults (in both R and P): have full R and P variables
+      - Children (in R only, not P): retained with R variables only
+      - Records in P but not R: dropped (should not occur in clean data)
+
+    D (Household Register) — merged 1:m on year+uhid. D is household-level
+      so one D row maps to multiple persons. keep if _merge==3 retains only
+      persons whose household appears in D. A small number of households may
+      not merge — this is suspected to be an edge case from the cross-release
+      deduplication in 01_create_masterD.do but has not been fully investigated.
+
+    H (Household Data) — merged 1:m on year+uhid, same logic as D.
+
+  KEY IDENTIFIERS
+    upid  — unique personal ID across releases (country + rotation group +
+             dropout year + pid). Not the same as the raw pid in the source data
+    uhid  — unique household ID across releases (same construction logic).
+    year  — income reference year.
+
+  OUTPUT
+    ${country}-SILC_pooled_all_obs_01.dta — person-level panel for the target
+    country, containing all household members (adults and children) with
+    combined R, P, D, and H variables. Flag variables (*_f, *_i) are dropped.
 */
 
 ********************************************************************************
