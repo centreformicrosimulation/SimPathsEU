@@ -58,6 +58,7 @@ use "$dir_data/${country}-SILC_pooled_all_obs_01.dta", clear
 
 lab def dummy 1 "yes" 0 "no"
 
+
 /**************************** DATA COLLECTION WAVE ****************************/
 /* 
 swv >> used to set the panel. The variable 'year' is unique to this 
@@ -69,6 +70,7 @@ gen swv = year
 lab var swv "Data collection wave"
 
 fre swv
+
 
 /*********************** YEAR OF THE PERSONAL INTERVIEW ***********************/
 /* 
@@ -95,6 +97,7 @@ replace stm = hb060 if missing(stm)
 fre stm
 
 assert swv == stm 
+
 
 /******************************** INTERVIEW DATE ******************************/
 /* 
@@ -126,6 +129,7 @@ lab var Int_Date "Interview Date"
 
 fre Int_Date
 
+
 /**************************** HOUSEHOLD IDENTIFIER ****************************/
 /* 
 In the original EU-SILC longitudinal wave files, a household is identified 
@@ -142,6 +146,7 @@ format idhh %-18.0g
 
 bysort year: sum idhh 
 
+
 /********************************* INDIVIDUALS ID *****************************/ 
 /* 
 In the original EU-SILC longitudinal wave files, a person is identified with 
@@ -157,6 +162,7 @@ destring idperson, replace ignore($country)
 format idperson %-20.0g
 
 bysort year: sum idperson
+
 
 /******************************** SET PANEL ***********************************/
 duplicates report year idperson 
@@ -188,12 +194,14 @@ xtset idperson swv
 
 sort upid year 
 
+
 /***************************** DECEASED FLAG **********************************/
 
 gen flag_deceased = 0 
 replace flag_deceased = 1 if rb110 == 6 
 
 lab var flag_deceased "FLAG: Individual deied in the previous year"
+
 
 /********************************* GENDER *************************************/
 gen dgn = rb090
@@ -216,6 +224,7 @@ forvalues i = 1/6 {
 
 fre year dgn
 bysort year: sum dgn  
+
 
 /********************************* ID PARTNER *********************************/ 
 /* 
@@ -243,6 +252,7 @@ lab var idpartner "Unique cross wave identifier of partner"
 recode idpartner . = -9
 format idpartner %18.0g
 
+
 /**************** ID FATHER (includes natural/step/adoptive) ******************/
 tostring rb220, replace format(%18.0g)   
 gen idfather = (urtgrp + rb220)
@@ -253,6 +263,7 @@ replace idfather = . if rb220 == .
 lab var idfather "Father unique identifier"
 format idfather %18.0g
 recode idfather . = -9
+
 
 /******************* ID MOTHER (includes natural/step/adoptive) ***************/
 tostring rb230, replace format(%18.0f)  
@@ -266,6 +277,7 @@ recode idmother . = -9
 format idmother %18.0g
 
 sort idperson year 
+
 
 /******************************* AGE ******************************************/ 
 /* 
@@ -340,7 +352,7 @@ drop age_dif
 * Impose panel consistency to help overcome possible repeat ages due to 
 * interview timing
 gen dag_new = dag 
-replace dag_n = dag_n[_n-1] + 1 if idperson == idperson[_n-1] & ///
+replace dag_new = dag_new[_n-1] + 1 if idperson == idperson[_n-1] & ///
 	swv == swv[_n-1] + 1
 
 * Enforce top coding	
@@ -443,6 +455,7 @@ hist dag, discrete
 
 graph drop _all 
 
+
 /************************* REGION (NUTS 1) ************************************/ 
 /*
 ISSUE: The number of NUTS1 regions changes in Poland. 
@@ -488,9 +501,11 @@ fre drgn1
 tab drgn1 year, col
 bys swv: sum drgn1 if drgn1 > 0 
 
+
 /******************************** COUNTRY *************************************/
 gen dct = .
 lab var dct "Country code: $country"
+
 
 /******************************** UNION ***************************************/
 /* 
@@ -534,6 +549,7 @@ fre dun
 tab dun year, col 
 bys dun: sum idpartner if idpartner == -9 
 bys dun: sum idpartner if idpartner > 0 
+
 
 /**************************** PARTNER'S AGE ***********************************/ 
 /*
@@ -863,6 +879,7 @@ drop dag_sim dag_sim2 dag_sim_orig dagsp2 mean_gap sd_gap
 sum dagsq
 count if dun == 1 & dagsp == .
 
+
 /************************** PARTNERSHIP STATUS ********************************/
 /* 
 Construct a variable that only indicates whether the individual is single or 
@@ -913,6 +930,7 @@ tab dcpst widow
 
 replace widow = 0 if dcpst == 1		// let idpartner overall widow status 
 
+
 /***************************** PARTNER'S GENDER *******************************/
 /* 
 In the cumulative longitidutional dataset created by GESIS, a unique 
@@ -943,6 +961,7 @@ recode dgnsp (. = -9)
 
 fre dgnsp if idpartner > 0 
 tab dgnsp year, col 
+
 
 /******************************* HEALTH STATUS ********************************/
 fre ph010
@@ -1045,6 +1064,7 @@ fre dhe
 tab dhe year, col 
 bys swv: sum dhe 
 
+
 /************************** PARTNER'S HEALTH STATUS ***************************/
 preserve
 
@@ -1108,6 +1128,7 @@ tab2 dcpst dcpen if swv>=2011 & interview_count>=2 & first_appearance!=1, ///
 restore 
 */
 
+
 /****************************** NEW PARTNERSHIP *******************************/
 gen new_rel = 0 if dcpst == 1
 replace new_rel = 1 if dcpen == 1
@@ -1116,6 +1137,7 @@ lab var new_rel "Partnership in first year"
 
 tab new_rel year, col 
 bys swv: sum new_rel if new_rel >= 0 
+
 
 /**************************** EXIT PARTNERSHIP ********************************/
 /*
@@ -1148,7 +1170,7 @@ count if dag >= 65 & pb200 == 2 & idpartner == -9 & dcpex == 1
 
 preserve 
 
-keep idperson swv  pb190 pb200 pb205 rb110 rb120 flag_deceased
+keep idperson swv rb120 flag_deceased
 
 rename idperson idpartner 
 rename flag_deceased flag_deceased_sp
@@ -1182,6 +1204,7 @@ bys swv: sum dcpex if dcpex >= 0
 * Check consistency 
 tab dun dcpex
 
+
 /**************************** PARTNER AGE DIFFERENCE **************************/
 gen dcpagdf = dag - dagsp if dagsp != . & idpartner != -9
 
@@ -1190,6 +1213,7 @@ lab var dcpagdf "Partnership age difference"
 fre dcpagdf // 
 tab dcpagdf year, col
 bys swv: sum dcpagdf
+
 
 /************************ ECONOMIC ACTIVITY STATUS ****************************/
 /* 
@@ -1306,6 +1330,7 @@ bys swv: sum les_c3
 
 replace les_c3 = -9 if les_c3 == . 
 
+
 /******************** ECONOMIC ACTIVITY STATUS WITH RETIREMENT ****************/ 
 /*
 Variable construction choice seems to matter here. 
@@ -1385,6 +1410,7 @@ bys swv: sum les_c4
 
 replace les_c4 = -9 if les_c4 == . 
 
+
 /************************ LONG-TERM SICK OR DISABLED **************************/
 /*
 Effectively treat disabled/long-term sick as a mututlly exclusive activity 
@@ -1423,6 +1449,7 @@ bys swv: sum dlltsd
 tab les_c3 dll 
 tab les_c4 dll
 
+
 /******************* PARTNER LONG-TERM SICK OR DISABLED ***********************/
 preserve
 
@@ -1443,6 +1470,7 @@ drop _merge
 
 fre dlltsd_sp if idpartner > 0 
 tab dlltsd_sp year, col 
+
 
 /******************************* UNEMPLOYMENT *********************************/
 fre pl020 pl031
@@ -1476,6 +1504,7 @@ tab unemp dlltsd
 
 tab unemp les_c3 
 tab unemp les_c4 
+
 
 /*********************** IN INITIAL EDUCATION SPELL ***************************/
 /* 
@@ -1554,6 +1583,7 @@ tab ded dlltsd
 * Age in estimation limited to 16-29
 tab dag ded 
 
+
 /******************************** STUDENT *************************************/
 gen studentflag = -9 
 replace studentflag = 0 if les_c3 == 1 | les_c3 == 3
@@ -1561,8 +1591,9 @@ replace studentflag = 1 if les_c3 == 2
 
 label var studentflag "Student"
 
-tab les_c3 student 
-tab les_c4 student 
+tab les_c3 studentflag 
+tab les_c4 studentflag 
+
 
 /**************************** HOURS OF WORK ***********************************/
 /*
@@ -1799,6 +1830,7 @@ count if les_c3 == -9
 count if les_c4 == -9 
 count if les_c4 == -9  & lhw == . 	// 8,461
 
+
 /********************* LAGGED ECONOMIC ACTIVITY STATUS ************************/
 * Without retirement 
 xtset idperson swv
@@ -1820,6 +1852,7 @@ lab def l1_les_c4 1 "Employed or self_employed" 2 "Student" ///
 	3 "Not employed" 4 "Retired"
 lab val l1_les_c4 l1_les_c4
 lab var l1_les_c4 "LABOUR MARKET: Activity status, inc retirement, t-1"
+
 
 /************************** PARTNER'S ACTIVITY STATUS *************************/
 * Without retirement 
@@ -1861,6 +1894,7 @@ drop _merge
 fre lessp_c4
 tab lessp_c4 year, col 
 
+
 /********************** OWN AND SPOUSE ACTIVITY LEVELS ************************/
 gen lesdf_c4 = -9
 replace lesdf_c4 = 1 if les_c3 == 1 & lessp_c3 == 1 & dcpst == 1 
@@ -1882,6 +1916,7 @@ fre lesdf_c4
 tab lesdf_c4 year, col
 bys swv: sum lesdf_c4 if lesdf_c4 >= 0
 
+
 /*************************** EMPLOYMENT EXPERIENCE ****************************/
 gen liwwh = -9
 replace liwwh = pl200 if pl200 >= 0 & pl200 != . 
@@ -1892,6 +1927,7 @@ lab var liwwh "LABOUR MARKET: Number of years spent in paid work"
 fre liwwh 
 tab liwwh year, col 
 bys swv: sum liwwh if liwwh >= 0
+
 
 /************************* EDUCATIONAL ATTAINMENT *****************************/
 /* 
@@ -2057,7 +2093,7 @@ forvalues i = 4(-1)1 {
 	
 	* Low in the future, low today (min and monotonicity)
 	replace imp_deh_mono = imp_deh_mono[_n-1] if ///
-		idperson == idperson[_n-1] & imp_deh[_n-1] == 3 & ///
+		idperson == idperson[_n-1] & imp_deh_mono[_n-1] == 3 & ///
 		imp_deh_mono == . & count == `i' 	
 		
 	* Populate with future observation if:
@@ -2147,7 +2183,7 @@ missing values.
 */
 
 
-* Create four category version with an unassigned cat for those in iniital edu 
+* Create four category version with an unassigned cat for those in initial edu 
 * spell 
 gen deh_c4 = deh_c3 
 
@@ -2160,6 +2196,7 @@ lab values deh_c4 deh_c4
 
 count if deh_c4 == -9 	// 44,265
 count if deh_c4 == -9 & les_c4 == -9  	// 3,031
+
 
 /*************************** PARENT'S EDUCATION STATUS ************************/ 
 /* 
@@ -2175,9 +2212,9 @@ Create variables but leave missing so able to utilize the stadnard strucuture of
 SimPaths. 
 */
 
-gen dehm_c3 = .
-gen dehf_c3 = .
-gen dehmf_c3 = . 
+gen dehm_c4 = .
+gen dehf_c4 = .
+gen dehmf_c4 = . 
 
 /*
 preserve
@@ -2199,20 +2236,20 @@ merge m:1 swv idfather idhh using "$dir_data/father_edu"
 keep if _merge == 1 | _merge == 3
 drop _merge
 
-replace dehm_c3 = mother_educ
-replace dehf_c3 = father_educ
+replace dehm_c4 = mother_educ
+replace dehf_c4 = father_educ
 
-fre dehm_c3 if dgn > 0 & dag > 0
-fre dehf_c3 if dgn > 0 & dag > 0
+fre dehm_c4 if dgn > 0 & dag > 0
+fre dehf_c4 if dgn > 0 & dag > 0
 
 * Identify the highest parental education status 
-//recode dehm_c3 dehf_c3 (.=0) 
-egen dehmf_c3 = rowmax(dehm_c3 dehf_c3)
-lab var dehmf_c3 "highest parental education status"
-fre dehmf_c3
-//recode dehm_c3 dehf_c3 (0 = .) 
-fre dehmf_c3 if dehm_c3 == . 
-fre dehmf_c3 if dehf_c3 == . 
+//recode dehm_c4 dehf_c4 (.=0) 
+egen dehmf_c4 = rowmax(dehm_c4 dehf_c4)
+lab var dehmf_c4 "highest parental education status"
+fre dehmf_c4
+//recode dehm_c4 dehf_c4 (0 = .) 
+fre dehmf_c4 if dehm_c4 == . 
+fre dehmf_c4 if dehf_c4 == . 
 
 /* Only a third of the dataset has an observation for parental education and so 
 the following code used to predict the value is not very accurate. 
@@ -2222,49 +2259,49 @@ is coded out.
 *Predict highest parental education status if missing 
 *Recode education level (outcome variable) so 1 = Low education, 
 * 2 = Medium education, 3 = High education
-recode dehmf_c3 ///
+recode dehmf_c4 ///
 	(1 = 3) ///
 	(3 = 1) ///
-	, gen(dehmf_c3_recoded)
+	, gen(dehmf_c4_recoded)
 	
-la def dehmf_c3_recoded 1 "Low" 2 "Medium" 3 "High"
-la val dehmf_c3_recoded dehmf_c3_recoded
-fre dehmf_c3_recoded
+la def dehmf_c4_recoded 1 "Low" 2 "Medium" 3 "High"
+la val dehmf_c4_recoded dehmf_c4_recoded
+fre dehmf_c4_recoded
 
 *ordered probit model to replace missing values  
 recode dgn dag drgn1 (-9=.) , gen (dgn2 dag2 drgn12)
 fre dgn2 dag2 drgn12
 
-xi: oprobit dehmf_c3_recoded i.dgn2 dag2 ib8.drgn12 i.swv, vce(robust)
+xi: oprobit dehmf_c4_recoded i.dgn2 dag2 ib8.drgn12 i.swv, vce(robust)
 predict pred_probs1 pred_probs2 pred_probs3, pr
 
 //Identify the category with the highest predicted probability
 egen max_prob = rowmax(pred_probs1 pred_probs2 pred_probs3)
 //Impute missing values based on predicted probabilities
-gen imp_dehmf_c3_recoded = .
-replace imp_dehmf_c3_recoded = 1 if max_prob == pred_probs1
-replace imp_dehmf_c3_recoded = 2 if max_prob == pred_probs2
-replace imp_dehmf_c3_recoded = 3 if max_prob == pred_probs3
+gen imp_dehmf_c4_recoded = .
+replace imp_dehmf_c4_recoded = 1 if max_prob == pred_probs1
+replace imp_dehmf_c4_recoded = 2 if max_prob == pred_probs2
+replace imp_dehmf_c4_recoded = 3 if max_prob == pred_probs3
 
-fre imp_dehmf_c3_recoded if missing(dehmf_c3_recoded) 
-fre imp_dehmf_c3_recoded if !missing(dehmf_c3_recoded)
+fre imp_dehmf_c4_recoded if missing(dehmf_c4_recoded) 
+fre imp_dehmf_c4_recoded if !missing(dehmf_c4_recoded)
 
-recode imp_dehmf_c3_recoded ///
+recode imp_dehmf_c4_recoded ///
 	(1 = 3) ///
 	(3 = 1) ///
-	, gen(imp_dehmf_c3)
+	, gen(imp_dehmf_c4)
 
-tab2 imp_dehmf_c3_recoded imp_dehmf_c3
+tab2 imp_dehmf_c4_recoded imp_dehmf_c4
 
-cap gen dehmf_c3_flag = missing(dehmf_c3) 
-lab var dehmf_c3_flag "=1 if dehmf_c3 is imputed"
-replace dehmf_c3 = round(imp_dehmf_c3) if missing(dehmf_c3) 
-lab define dehmf_c3 1 "High" 2 "Medium" 3 "Low"
+cap gen dehmf_c4_flag = missing(dehmf_c4) 
+lab var dehmf_c4_flag "=1 if dehmf_c4 is imputed"
+replace dehmf_c4 = round(imp_dehmf_c4) if missing(dehmf_c4) 
+lab define dehmf_c4 1 "High" 2 "Medium" 3 "Low"
 
-bys dehmf_c3_flag: fre dehmf_c3
+bys dehmf_c4_flag: fre dehmf_c4
 
-drop dehmf_c3_recoded dgn2 dag2 drgn12 _Idgn2_1 _Iswv_* pred_probs* max_prob ///
-	imp_dehmf_c3_recoded imp_dehmf_c3
+drop dehmf_c4_recoded dgn2 dag2 drgn12 _Idgn2_1 _Iswv_* pred_probs* max_prob ///
+	imp_dehmf_c4_recoded imp_dehmf_c4
 */
 */
 
@@ -2300,6 +2337,7 @@ tab dag der
 tab der les_c3
 tab der les_c4
 	
+	
 /******************************* LEAVE EDUCATION ******************************/
 /*
 Only populated if can transition out of education 
@@ -2331,6 +2369,7 @@ tab sedex les_c4
 
 tab dag sedex 
 
+
 /****************************** RETIRED ***************************************/
 gen dlrtrd = 0
 replace dlrtrd = 1 if les_c4 == 4
@@ -2346,6 +2385,7 @@ tab dlrtrd year, col
 
 tab les_c3 dlrtrd
 tab les_c4 dlrtrd
+
 
 /**************************** ENTER RETIREMENT ********************************/
 /* 
@@ -2367,6 +2407,7 @@ fre drtren //54.5% missing
 tab drtren year, col
 
 tab drtren les_c4
+
 
 /**************************** PENSION AGE *************************************/
 /*cap gen bdt = mdy(1, 15, birthy) /*no month of birth available in /EU-SILC*/
@@ -2433,9 +2474,9 @@ replace dagpns_y = 1 if dgn == 1 & dag == 66 & stm >= 2016 & stm < 2018
 replace dagpns_y = 1 if dgn == 1 & dag == 65 & stm >= 2018 & stm <= 2024 
 
 * Women
-replace dagpns_y = 1 if dgn == 1 & dag == 60 & stm >= 2006 & stm < 2016
-replace dagpns_y = 1 if dgn == 1 & dag == 61 & stm >= 2016 & stm < 2018 
-replace dagpns_y = 1 if dgn == 1 & dag == 60 & stm >= 2018 & stm <= 2024 
+replace dagpns_y = 1 if dgn == 0 & dag == 60 & stm >= 2006 & stm < 2016
+replace dagpns_y = 1 if dgn == 0 & dag == 61 & stm >= 2016 & stm < 2018 
+replace dagpns_y = 1 if dgn == 0 & dag == 60 & stm >= 2018 & stm <= 2024 
 
 * Became eligable for state pension last year 
 gen dagpns_y1 = 0 
@@ -2446,15 +2487,16 @@ replace dagpns_y1 = 1 if dgn == 1 & dag == 67 & stm >= 2016 & stm < 2018
 replace dagpns_y1 = 1 if dgn == 1 & dag == 66 & stm >= 2018 & stm <= 2024 
 
 * Women
-replace dagpns_y1 = 1 if dgn == 1 & dag == 61 & stm >= 2005 & stm < 2016
-replace dagpns_y1 = 1 if dgn == 1 & dag == 62 & stm >= 2016 & stm < 2018 
-replace dagpns_y1 = 1 if dgn == 1 & dag == 61 & stm >= 2018 & stm <= 2024
+replace dagpns_y1 = 1 if dgn == 0 & dag == 61 & stm >= 2005 & stm < 2016
+replace dagpns_y1 = 1 if dgn == 0 & dag == 62 & stm >= 2016 & stm < 2018 
+replace dagpns_y1 = 1 if dgn == 0 & dag == 61 & stm >= 2018 & stm <= 2024
 
 lab var dagpns_y "Age became eligable for pension"
 lab var dagpns_y1 "Age+1 became eligable for pension"
 
 tab dag dagpns_y
 tab dag dagpns_y
+
 
 /**************************** PENSION AGE OF SPOUSE ***************************/
 * Above state pension age dummy 
@@ -2502,6 +2544,7 @@ fre dagpns_sp
 fre dagpns_y_sp
 fre dagpns_y1_sp
 
+
 /*************************** NOT RETIRED WORK STATUS **************************/
 gen lesnr_c2 = -9 
 
@@ -2515,6 +2558,7 @@ lab val lesnr_c2 lesnr_c2
 fre lesnr_c2 
 tab lesnr_c2 year, col
 
+
 /*************************** SAME SEX PARTNERSHIP *****************************/
 gen ssscp = 0 if idpartner > 0
 replace ssscp = 1 if dcpst == 1 & dgn == dgnsp & dgnsp != .
@@ -2524,6 +2568,7 @@ lab var ssscp "Partnership is same sex"
 
 fre ssscp //0.02%
 tab ssscp year, col
+
 
 /*************************** PARTNERSHIP DURATION *****************************/
 /*
@@ -2571,6 +2616,7 @@ tab dcpyy_st swv, col
 
 tab dcpst dcpyy_st
 
+
 /*********************** YEAR PRIOR TO ENDING RELATIONSHIP ********************/
 /* 
 Impossible to know for the most recent wave so set to 0 to keep the variable.
@@ -2588,6 +2634,7 @@ lab var scpexpy "Year prior to exiting partnership"
 fre scpexpy // 1%
 tab scpexpy year, col 
 
+
 /*************************** FEMALE FERTILE DUMMY *****************************/
 gen sprfm = 0
 replace sprfm = 1 if dgn == 0 & dag >= ${age_have_child_min} & ///
@@ -2598,6 +2645,7 @@ lab var sprfm "Woman in fertility range dummy (18-49)"
 
 fre sprfm 
 tab sprfm year, col
+
 
 /**************************** NUMBER OF CHILDREN ******************************/
 /* 
@@ -2698,6 +2746,7 @@ No age consistency imposed here
 count if dag > 42 & dgn == 0 & dnc02 > 0 & dnc02 != . // 246 cases 
 count if dag > 44 & dgn == 0 & dnc02 > 0 & dnc02 != . // 101 cases 
 
+
 /*********************** NUMBER OF NEW BORN CHILDREN **************************/
 gen child0 = 0
 replace child0 = 1 if dag < 1 
@@ -2766,6 +2815,7 @@ gen give_birth = (dchpd > 0 & dchpd < 4)
 tab dag give_birth if dgn == 0, col
 
 hist dag if give_birth == 1 &  dgn == 0
+
 
 /***************************** ADULT CHILD FLAG *******************************/
 /*
@@ -2853,6 +2903,7 @@ tab adultchildflag year, col
 
 tab dag if adultchildflag == 1 & swv > 2010
 
+
 /************************ EXIT THE PARENTAL HOME ******************************/
 /* 
 Only populated if eligable for transition. 1 means that the individual exits the 
@@ -2884,6 +2935,7 @@ bys swv: fre dlftphm
 tab dlftphm year, col
 
 tab dlftphm adultchildflag 
+
 
 /************************ HOUSEHOLD COMPOSITION *******************************/
 /*
@@ -2938,6 +2990,7 @@ fre dhhtp_c8 // 1.87% single parents
 tab dhhtp_c8 year, col 	
 bys swv: sum dhhtp_c8 
 
+
 /************************** OECD EQUIVALENCE SCALE ****************************/
 * Temporary number of children 0-13 and 14-18 to create OECD hh equiv scale
 gen depChild_013 = 1 if (dag >= 0 & dag <= 13) & (idmother > 0 | idfather > 0) 
@@ -2956,6 +3009,7 @@ replace moecd_eq = 0.3*dnc013 + 0.5*dnc1418 + 1 if dhhtp_c4 == 4
 
 drop dnc013 dnc1418
 
+
 /******************** IN INITIAL EDUCATION SPELL AGE RANGE ********************/
 gen sedag = 1 if dag >= $age_leave_school & dag <= $age_force_leave_spell1_edu
 replace sedag = 0 if missing(sedag)
@@ -2965,6 +3019,7 @@ lab var sedag "Initial education spell age range"
 
 fre sedag 
 tab sedag year, col 
+
 
 /***************** WAS IN INITIAL EDUCATION SPELL SAMPLE **********************/
 /* 
@@ -2981,6 +3036,7 @@ lab var sedcsmpl "SYSTEM: Continuous education sample"
 lab def sedcsmpl  1 "Aged 16-29 and were in continuous education"	
 lab val sedcsmpl sedcsmpl
 
+
 /********************** RETURN TO EDUCATION SAMPLE ****************************/
 /*
 Consists of those who have left their initial education spell above the age of 
@@ -2992,6 +3048,7 @@ replace sedrsmpl = 1 if dag >= ${age_leave_school} & les_c4 != 4 & ded == 0
 lab var sedrsmpl "SYSTEM : Return to education sample"
 lab def  sedrsmpl  1 "Aged 16+, not retired and not in initial education spell"
 lab val sedrsmpl sedrsmpl
+
 
 /******************* IN INITIAL EDUCATION SPELL SAMPLE ************************/
 /* 
@@ -3006,6 +3063,7 @@ lab var scedsmpl "SYSTEM : Not in continuous education sample"
 lab def scedsmpl  1 "Left continuous education"
 lab val scedsmpl scedsmpl
 
+
 /**************************** INCOME VARIABLES ********************************/
 /*
 A key difference here appears to be that income in EU-SILC is yearly, whereas 
@@ -3018,7 +3076,6 @@ below.
 
 Generate individual income variables:
 */
-/*************** GROSS PERSONAL NON-BENEFIT MONTHLY INCOME ********************/
 /* 
 UK version: egen ypnb = rowtotal(fimnlabgrs_dv fimnpen_dv fimnmisc_dv ///
 	inc_stp inc_tu inc_ma); 
@@ -3027,7 +3084,7 @@ inc_stp, inc_tu and inc_ma generated at the beginning from income file
 1 - fimnlabgrs_dv: 	total personal monthly labour income gross: employee 
 						cash or near cash income (gross). 
 						
-DP: Note that in UKHLS the variable fimnlabgrs_dv  contains “labour income” 
+DP: Note that in UKHLS the variable fimnlabgrs_dv  contains "labour income" 
 (see here: https://www.understandingsociety.ac.uk/documentation/...
 mainstage/variables/fihhmnlabgrs_dv/_) 
 so my understanding is that self-employment income should also be included here. 
@@ -3048,7 +3105,7 @@ These variables correspond to a the previous calender year.
 
 DP: The Usoc description says that this variable includes receipts reported in 
 the income data file where w_ficode equals [2] pension from a previous employer,
-or [3]  pension from a spouse’s previous employer.  
+or [3]  pension from a spouse's previous employer.  
 This is assumed to be reported net of tax. So in the UK these are occupational 
 pensions.  
 I think it is correct to use py080g in SILC as an equivalent. 
@@ -3098,138 +3155,6 @@ in relation to child income.  (in EUROMOD these types of incomes are split
 between the oldest couple in the household). 
 */
 
-* Household level variables are assigned to all adult hh members 
-* ==> split them equally among all adults in hh
-gen adult = (dag >= $age_adult) //18 yo and over 
-bysort stm idhh : egen n_adults = total(adult) 
-
-lab var n_adults "Number of adults in hh" 
-
-gen child = (dag < $age_adult) //below 18 yo 
-bysort stm idhh : egen n_child = total(child) 
-
-lab var n_child "Number of children in hh" 
-
-foreach var in hy080g hy110g hy040g hy090g {
-	
-	gen `var'_pc = `var'/n_adults
-	replace `var'_pc = 0 if child == 1
-	
-} 
-
-//order stm idhh dag hy080g hy110g hy040g hy090g hy080g_pc hy110g_pc ///
-//	hy040g_pc hy090g_pc, last
-
-egen ypnb_temp = rowtotal(py010g py050g py080g hy080g_pc hy110g_pc ///
-	hy040g_pc hy090g_pc)
-gen ypnb = ypnb_temp / 12
-
-fre ypnb if ypnb < 0 
-/* obs with negative income (due to negative self-employment income) but many of 
-these are close to zero ==> recode them to zero */
-
-* Impose non-negativity 
-replace ypnb = 0 if  ypnb < 0 
-
-sum ypnb 
-assert ypnb >= 0 
-
-sum ypnb if year == 2013
-sum ypnb if year == 2016
-sum ypnb if year == 2019
-sum ypnb if year == 2023
-
-* Check for missing values == if missing on all the components 
-count if py010g >= . &  py050g >= . &  py080g >= . & hy080g >= . & ///
-	hy110g >= . & hy040g >= . & hy090g >= . // 0 obs 
-	
-count if (py010g >= . |  py050g >= . | py080g >= . | hy080g >= . | ///
-	hy110g >= . | hy040g >= . | hy090g >= .) & dag >= 16 //  65,891 
-	
-count if dag >= 16 // 332,907
-//=> 20% of adult observations have some missing income information 
-
-/********** GROSS PERSONAL NON-EMPLOYMENT NON-BENEFIT MONTHLY INCOME **********/
-/*
-UK version:  egen yptc = rowtotal(fimnpen_dv fimnmisc_dv inc_stp inc_tu inc_ma)
-
-EU SILC use the same variables as indicated above.  
-*/
-
-egen yptc = rowtotal(py080g hy080g_pc hy110g_pc hy040g_pc hy090g_pc)
-replace yptc = yptc / 12
-
-sum yptc
-sum yptc if year == 2013
-sum yptc if year == 2016
-sum yptc if year == 2019
-sum yptc if year == 2023
-
-* Check for missing values == if missing on all the components 
-count if py080g >= . & hy080g >= . & hy110g >= . & hy040g >= . & ///
-	hy090g >= . // 0 obs with all missing elements  
-
-count if (py080g >= . | hy080g >= . | hy110g >= . | hy040g >= . | ///
-	hy090g >= .) & dag >= 16 
-	// 65,891 adult obs with at least one missing element 
-	// 20% of adult observations have some missing income information same as 
-	//	gross personal non-ben income 
-
-/***************** GROSS PERSONAL EMPLOYMENT MONTHLY INCOME *******************/
-/*
-UK version: gen yplgrs = fimnlabgrs_dv 
-EU SILC version: As above. 
-*/
-egen yplgrs = rowtotal(py010g py050g)
-replace yplgrs =  yplgrs / 12
-
-fre yplgrs if yplgrs < 0 // 0 obs
-
-* Impose non-negativity
-replace yplgrs = 0 if yplgrs < 0 
-
-drop *_temp
-
-* Check for missing values == if missing on all the components 
-count if py010g >= . & py050g >= .  & dag >= 16 // 22,426 adults missing both 
-count if (py010g >= . & py050g >= . ) & dag >= 16 & les_c3 == 1 
-	// 0 employed adults missing information 
-	
-replace yplgrs = -9 if (py010g >= . & py050g >= .) & dag >= 16 & les_c3 == 1
-
-sum yplgrs
-sum yplgrs if year == 2013
-sum yplgrs if year == 2016
-sum yplgrs if year == 2019
-sum yplgrs if year == 2023
-
-/************* SPOUSE GROSS PERSONAL NON-BENEFIT MONTHLY INCOME ***************/
-preserve
-keep swv idperson idhh ypnb
-rename ypnb ypnbsp
-rename idperson idpartner
-save "$dir_data/temp_ypnb", replace
-restore
-
-merge m:1 swv idpartner idhh using "$dir_data/temp_ypnb"
-keep if _merge == 1 | _merge == 3
-drop _merge
-
-/****************** HH/BEN UNIT GROSS NON-BENEFIT MONTHLY INCOME **************/
-/* 
-Couples = sum of partners incomes. Singles = own income 
-*/ 
-sum ypnb ypnbsp
-
-egen yhhnb = rowtotal(ypnb ypnbsp) if dhhtp_c4 == 1 | dhhtp_c4 == 2 
-
-replace yhhnb = ypnb if dhhtp_c4 == 3 | dhhtp_c4 == 4 
-
-sum yhhnb
-sum yhhnb if year == 2013
-sum yhhnb if year == 2016
-sum yhhnb if year == 2019
-sum yhhnb if year == 2023
 
 /************************************ CPI *************************************/
 /* 
@@ -3266,263 +3191,8 @@ replace CPI = 143.5 	if stm == 2023
 
 lab var CPI "HICP, all items, base 2015"
 
-/************************ REAL MONTHLY GROSS INCOMES **************************/
-* For household income, equivalise and adjust for inflation
-replace yhhnb = (yhhnb/moecd_eq)/(CPI/100)
 
-* Adjust for inflation:
-replace ypnb = ypnb/(CPI/100)
-replace yptc = yptc/(CPI/100)
-replace yplgrs = yplgrs/(CPI/100) 
-replace ypnbsp = ypnbsp/(CPI/100)
-
-lab var ypnb "Gross monthy real personal non-benefit income " 
-lab var yptc "Gross real monthly personal non-employment, non-benefit income"
-lab var yplgrs "Gross monthly real personal employment income"
-lab var ypnbsp "Spouse gross real monthly personal non-benefit income"
-
-/************ INVERSE HYPERBOLIC SINE REAL MONTHLY GROSS INCOME ***************/
-/* 
-This (monotonic) transformation is useful for data that exhibit highly skewed 
-distributions, as it can help stabilize variance and normalise the 
-distribution.
-*/
-gen yhhnb_asinh = asinh(yhhnb)
-gen ypnbihs_dv = asinh(ypnb)
-gen ypnbihs_dv_sp = asinh(ypnbsp)
-gen yptciihs_dv = asinh(yptc)
-gen yplgrs_dv = asinh(yplgrs)
-
-replace yplgrs_dv = -9 if yplgrs_dv < 0 
-	// to account for missing values in the raw data coded as -9 in yplgrs 
-	// (626 real changes made)
-
-lab var yhhnb_asinh "Gross real monthly household non-benefit income, asinh"
-lab var ypnbihs_dv 	"Gross real monthly personal non-benefit income, asinh"
-lab var ypnbihs_dv_sp ///
-	"Spoues gross real monthly personal non-benefit income, asinh"
-lab var yptciihs_dv ///
-	"Gross real monthly personal non-employment, non-benefit income, asinh"
-lab var yplgrs_dv 	"Gross real monthly personal employment income, asinh"	
-	
-/*
-sum ypnbihs_dv ypnbihs_dv_sp yptciihs_dv yplgrs_dv
-
-    Variable |        Obs        Mean    Std. dev.       Min        Max
--------------+---------------------------------------------------------
-  ypnbihs_dv |    754,135    2.907554    3.419338          0   11.12896
-ypnbihs_dv~p |    378,604     4.05074    3.494108          0   11.12896
- yptciihs_dv |    754,135    .3444508    1.204493          0   9.898644
-   yplgrs_dv |    754,135    2.734086    3.439811          0   11.12896
-
-*/ 
-
-/*********** HOUSEHOLD GROSS NON-BENEFIT MONTHLY INCOME QUINTILES *************/
-sum yhhnb_asinh
-
-/*
-    Variable |        Obs        Mean    Std. dev.       Min        Max
--------------+---------------------------------------------------------
- yhhnb_asinh |    754,135    3.390741    3.436031          0   10.57726
-*/
-
-/*
-cap drop ydses*
-forvalues stm=2005/2020 {
-	xtile ydses_c5_`stm' = yhhnb_asinh if depChild != 1 & stm==`stm', nq(5)
-	bys idhh: egen ydses_c5_tmp_`stm' = max(ydses_c5_`stm') if stm==`stm'
-	replace ydses_c5_`stm' = ydses_c5_tmp_`stm' if missing(ydses_c5_`stm')
-	drop ydses_c5_tmp_`stm'
-} 
-
-egen ydses_c5 = rowtotal(ydses_c5_2005 ydses_c5_2006 ydses_c5_2007 ///
-	ydses_c5_2008 ydses_c5_2009 ydses_c5_2010 ydses_c5_2011 ydses_c5_2012 ///
-	ydses_c5_2013 ydses_c5_2014 ydses_c5_2015 ydses_c5_2016 ydses_c5_2017 ///
-	ydses_c5_2018 ydses_c5_2019 ydses_c5_2020)
-recode ydses_c5 (0=-9) 
-drop ydses_c5_2*
-bys stm: fre ydses_c5
-*/
-
-/*
-Problem: if many observations in yhhnb_asinh have exactly the same value, 
-xtile would group them into a single quintile, causing one or more quintiles to 
-have very few observations. 
-This results in 2nd quintile being extremely small compared to the first 
-quintile, which probably has many similar values 
-Adding a very small random amount to yhhnb_asinh can help differentiate tied 
-values enough to distribute them more evenly across quintiles without distorting 
-the data meaningfully.
-*/
-sort idperson swv 
-
-gen yhhnb_asinh_jittered = yhhnb_asinh + runiform() * 1e-5
-
-cap drop ydses*
-forvalues stm = 2005/2023 {
-	
-	xtile ydses_c5_`stm' = yhhnb_asinh_jittered if depChild != 1 & ///
-		stm == `stm', nq(5)
-		
-	bys idhh: egen ydses_c5_tmp_`stm' = max(ydses_c5_`stm') if stm == `stm'
-	
-	replace ydses_c5_`stm' = ydses_c5_tmp_`stm' if missing(ydses_c5_`stm')
-	drop ydses_c5_tmp_`stm'
-	
-} 
-
-egen ydses_c5 = rowtotal(ydses_c5_2005 ydses_c5_2006 ydses_c5_2007 ///
-	ydses_c5_2008 ydses_c5_2009 ydses_c5_2010 ydses_c5_2011 ydses_c5_2012 ///
-	ydses_c5_2013 ydses_c5_2014 ydses_c5_2015 ydses_c5_2016 ///
-	ydses_c5_2017 ydses_c5_2018 ydses_c5_2019 ydses_c5_2020 ydses_c5_2021 ///
-	ydses_c5_2022 ydses_c5_2023)
-recode ydses_c5 (0 = -9) 
-drop ydses_c5_2*
-bys stm: fre ydses_c5
-
-lab var ydses_c5 "Gross real monthly household non-benefit income quintiles"
-
-/********** COUPLE DIFFERENCE IN GROSS PERSONAL NON-BENEFIT INCOME ************/
-gen ynbcpdf_dv = ypnbihs_dv - ypnbihs_dv_sp
-recode ynbcpdf_dv (. = -999) if idpartner < 0
-recode ynbcpdf_dv (. = -999) 
-sum ynbcpdf_dv 
-
-lab var ynbcpdf_dv 	///
-"Difference between own and spouse's gross personal non-benefit income, asinh"
-
-/****************************** GROSS NET RATIO  ******************************/
-/* 
-There are no net incomes in EU-SILC, will be computed using EUROMOD anyway
-*/  
-gen gross_net_ratio = 1 
-
-/******************** GROSS PERSONAL CAPITAL INCOME ***************************/
-/* 
-UK version:  
-gen ypncp = ///
-	asinh((fimninvnet_dv+fimnmisc_dv+fimnprben_dv)*gross_net_ratio*(1/CPI)) 
-	
-1 - fimninvnet_dv: 	Investment income
-
-2 -  fimnmisc_dv: 	Net miscellaneous income. Educational grant 
-					(not student loan or tuition fee loan), payments from a 
-					family member not living here, or any other regular payment 
-					(not asked in Wave 1).
-					
-3 -  fimnprben_dv: 	Net private benefit income. Trade union/friendly society 
-					payment, maintenance or alimony, or sickness and accident
-					insurance.  
-
-EU SILC version see above. 					
-*/
-egen ypncp_temp = rowtotal(hy080g_pc hy110g_pc hy040g_pc hy090g_pc)
-gen ypncp = ypncp_temp / 12
-replace ypncp = asinh(ypncp*(100/CPI)) 
-
-lab var ypncp "Gross real monthly personal non-employment capital income, asinh"
-
-gen ln_ypncp = ln(sinh(ypncp))
-
-lab var ln_ypncp "Gross real monthly personal non-employment capital income, ln"
-
-sum ypncp
-sum ypncp if year == 2013
-sum ypncp if year == 2016
-sum ypncp if year == 2019
-sum ypncp if year == 2023
-
-* Check for missing values == if missing on all the components 
-count if hy080g >= . & hy110g >= . &  hy040g >= . &  hy090g >= . // 0 obs 
-count if hy080g >= . | hy110g >= . |  hy040g >= . |  hy090g >= . 
-	// 0 obs have some missing capital income information 
-
-/************************* PRIVATE PENSION INCOME *****************************/
-/*
-UK version: 
-fimnpen_dv:	 Monthly amount of net pension income	
-
-Eu SILC version 
-py080g: 	Pension from individual private plans (gross) 
-*/
-gen ypnoab_lvl = (py080g/12)*(100/CPI)
-recode ypnoab_lvl (. = 0) 
-gen ypnoab = asinh(ypnoab_lvl)
-
-lab var ypnoab "Gross real monthly personal private pension income"
-
-sum ypnoab
-sum ypnoab if year == 2013
-sum ypnoab if year == 2016
-sum ypnoab if year == 2019
-sum ypnoab if year == 2023
-
-count if py080g >= . & dag >= 16 //  65,855 obs
-
-* Final check there are no missing values in income vars 
-foreach var in ydses_c5 ypnbihs_dv yptciihs_dv yplgrs_dv ynbcpdf_dv ///
-	ypncp ypnoab {
-	
-	assert `var'!= . 
-	
-} 
-
-/***************************** HOME OWNERSHIP *********************************/
-/* 
-Dhh_owned is the definition used in the initial population and in the model 
-predicting house ownership in the homeownership process of the simulation. 
-*/
-// bys swv: fre hh021
-gen dhh_owned = 0 
-replace dhh_owned = 1 if hh021 == 1 | hh021 == 2 
-
-lab var dhh_owned "Home ownership dummy"
-
-fre dhh_owned
-tab dhh_owned year, col 
-
-/*
-TO DO: Adjust for the new home ownership process? YES
-*/
-
-/**************************** DISABILITY BENEFIT ******************************/
-/* 
-In EU-SILC, the variables 
-- py130n: 	(disability benefits net), 
-- py130g: 	(disability benefits gross), 
-- py131g: 	(contributory and means-tested), 
-- py132g: 	(contributory and non means-tested), 
-- py133g: 	(non-contributory and means-tested), 
-- py134g: 	(non-contributory and non means-tested) 
-
-All may contain information on disability benefits. 
-
-For Poland, py131g only has zero entries
-
-The code below may well be PL specific as some of the coding of these variables 
-changes between countries. 
-I expect that there is probably a better/more efficient way of constructing this 
-code.
-*/
-recode py130n (0 = -9)(. = -9), gen(py130nr)
-recode py130g (0 = -9)(. = -9), gen(py130gr)
-recode py132g (0 = -9)(. = -9), gen(py132gr)
-recode py133g (0 = -9)(. = -9), gen(py133gr)
-recode py134g (0 = -9)(. = -9), gen(py134gr)
-
-gen bdi = 0
-replace bdi = 1 if py130gr >= 1 | py130gr >= 1 | py132gr >= 1 | ///
-	py133gr >= 1 | py134gr >= 1 
-lab val bdi dummy
-
-lab var bdi "Disability benefits (dummy)"
-
-drop py130nr py130gr py132gr py133gr py134gr
-
-fre bdi
-tab bdi year, col 
-
-/**************************** HOURLY LABOUR INCOME ****************************/
+/****************************** REAL HOURLY WAGES *****************************/
 /*
 There are data issues here: 
 	- Data is collected at the annual level 
@@ -3573,7 +3243,7 @@ lab var flag_neg_labour_annual "FLAG: negative labour income reported"
 
 replace yplgrs_annual = 0 if yplgrs_annual < 0
 
-* Turn into real gross labour income using lagged CPI to account for timing 
+* Turn into real gross annual labour income using lagged CPI to account for timing 
 gen CPI_5 = 80.2  	
 gen CPI_6 = 81.2  	
 gen CPI_7 = 83.3  	
@@ -3670,10 +3340,6 @@ replace yplgrs_mnth = yplgrs_annual / 12 if months_wrk == 0
 
 * Check 
 sum yplgrs_mnth 
-sum yplgrs
-sum yplgrs if yplgrs_mnth != .
-
-bys stm: sum yplgrs_mnth
 
 sort idperson swv 
 
@@ -3685,7 +3351,7 @@ gen obs_earnings_hourly = .
 replace obs_earnings_hourly = f.yplgrs_mnth/(lhw*4.33) if les_c4 == 1
 
 lab var obs_earnings_hourly ///
-	"Observed hourly wages, emp and self-emp, adjusted for timing"
+	"Observed hourly real wages, emp and self-emp, adjusted for timing"
 
 * Impose consistency  
 replace obs_earnings_hourly = 0 if les_c3 == 2 | les_c3 == 3 
@@ -3867,17 +3533,425 @@ gen l1_obs_earnings_hourly = .
 
 replace l1_obs_earnings_hourly = l.obs_earnings_hourly 
 lab var l1_obs_earnings_hourly ///
-	"Observed hourly wages, emp and self-emp, t-1, adjusted for timing"
+	"Observed hourly real wages, emp and self-emp, t-1, adjusted for timing"
 	
 sum obs_earnings_hourly if les_c3 == 1
 sum obs_earnings_hourly if les_c3 == 2
 sum obs_earnings_hourly if les_c3 == 3
 sum obs_earnings_hourly if les_c3 == -9
 
+drop yplgrs_annual yplgrs_mnth
+
+
+/************** GROSS REAL MONTHLY PERSONAL EMPLOYMENT INCOME *****************/
 /*
-Note that annual labour income is not aligned with activity status and hours, 
-but hourly wage is. 
+Use wage and hours worked info instead of reported amounts in py010g py050g
+Use real wages therefore already in real terms. 
 */
+/*
+egen yplgrs = rowtotal(py010g py050g)
+replace yplgrs =  yplgrs / 12
+
+fre yplgrs if yplgrs < 0 // 0 obs
+
+* Impose non-negativity
+replace yplgrs = 0 if yplgrs < 0 
+
+*/
+
+gen yplgrs = obs_earnings_hourly * lhw * 4.33
+assert yplgrs >= 0   
+
+count if yplgrs == . 	// 8,461
+
+* Checks 
+assert yplgrs == 0 if les_c4 != 1 & les_c4 > 0
+assert obs_earnings_hourly == 0 if les_c4 != 1 & les_c4 > 0
+
+sum obs_earnings_hourly if les_c3 == 2
+count if obs_earnings_hourly == . & les_c3 == 2
+count if lhw == . & les_c3 == 2
+
+sum obs_earnings_hourly if les_c3 == 3
+count if obs_earnings_hourly == . & les_c3 == 3
+count if lhw == . & les_c3 == 3
+// all missing for those who are working 
+
+count if obs_earnings_hourly == . & les_c3 < 0 
+count if lhw == . & les_c3 < 0 
+// if missing some, missing all relevant info 
+
+
+/**************** GROSS NOMINAL MONTHLY PERSONAL CAPITAL INCOME ***************/
+/* 
+UK version:  
+gen ypncp = ///
+	asinh((fimninvnet_dv+fimnmisc_dv+fimnprben_dv)*gross_net_ratio*(1/CPI)) 
+	
+1 - fimninvnet_dv: 	Investment income
+
+2 -  fimnmisc_dv: 	Net miscellaneous income. Educational grant 
+					(not student loan or tuition fee loan), payments from a 
+					family member not living here, or any other regular payment 
+					(not asked in Wave 1).
+					
+3 -  fimnprben_dv: 	Net private benefit income. Trade union/friendly society 
+					payment, maintenance or alimony, or sickness and accident
+					insurance.  
+
+EU SILC version see above. 		
+NOTE: The raw variables have no missing or negative values. 			
+
+*/
+
+* Household level variables are assigned to all adult hh members 
+* ==> split them equally among all adults in hh
+gen adult = (dag >= $age_adult) //18 yo and over 
+bysort stm idhh : egen n_adults = total(adult) 
+
+lab var n_adults "Number of adults in hh" 
+
+gen child = (dag < $age_adult) //below 18 yo 
+bysort stm idhh : egen n_child = total(child) 
+
+lab var n_child "Number of children in hh" 
+
+* NOTE: No negative values or missing values 
+foreach var in hy080g hy110g hy040g hy090g {
+	
+	gen `var'_pc = `var'/n_adults
+	replace `var'_pc = 0 if child == 1
+	
+} 
+
+egen ypncp_temp = rowtotal(hy080g_pc hy110g_pc hy040g_pc hy090g_pc)
+gen ypncp = ypncp_temp / 12
+
+* Check for missing values == if missing on all the components 
+count if hy080g == . & hy110g == . &  hy040g == . &  hy090g == . // 0 obs 
+count if hy080g == . | hy110g == . |  hy040g == . |  hy090g == . 
+
+	
+/*********** GROSS NONMINAL MONTHLY PERSONAL PRIVATE PENSION INCOME ***********/
+/*
+UK version: 
+fimnpen_dv:	 Monthly amount of net pension income	
+
+EU SILC version 
+py080g: 	Pension from individual private plans (gross) 
+
+NOTE: The raw variable has many missing (.) values. 
+*/
+
+gen ypnoab = py080g / 12
+
+* Code missing as zero 
+recode ypnoab (. = 0) 
+
+sum ypnoab
+sum ypnoab if year == 2013
+sum ypnoab if year == 2016
+sum ypnoab if year == 2019
+sum ypnoab if year == 2023
+
+count if py080g == . & dag >= 16 
+
+
+/*********** GROSS NOMINAL MONTHLY PERSONAL NON-BENEFIT INCOME ****************/
+/*
+Note: This is supposed to mirror UKMOD market income 
+
+	=  employment income +  private pensions income +  capital income 
+	
+Use components instead of raw vars so that changes feed through 
+*/
+/*
+egen ypnb_temp = rowtotal(py010g py050g py080g hy080g_pc hy110g_pc ///
+	hy040g_pc hy090g_pc)
+gen ypnb = ypnb_temp / 12
+
+fre ypnb if ypnb < 0 
+/* obs with negative income (due to negative self-employment income) but many of 
+these are close to zero ==> recode them to zero */
+
+* Impose non-negativity 
+replace ypnb = 0 if  ypnb < 0 
+
+sum ypnb 
+assert ypnb >= 0 
+*/
+
+* Adjust gross eomployment income (yplgrs) so in nominal terms 
+gen temp_yplgrs = yplgrs * (CPI/100)
+
+egen ypnb = rowtotal(temp_yplgrs ypncp ypnoab)
+
+sum ypnb if year == 2013
+sum ypnb if year == 2016
+sum ypnb if year == 2019
+sum ypnb if year == 2023
+
+* Check for missing values == if missing on all the components 
+count if  py080g >= . & hy080g >= . & ///
+	hy110g >= . & hy040g >= . & hy090g >= . 
+	
+count if (py080g >= . | hy080g >= . | ///
+	hy110g >= . | hy040g >= . | hy090g >= .) & dag >= 16 
+	
+count if dag >= 16 
+//=> 20% of adult observations have some missing income information 
+
+
+/****** GROSS NOMINAL MONTHLY PERSONAL NON-EMPLOYMENT NON-BENEFIT INCOME ******/
+/*
+ = capital income + private pension income 
+ 
+UK version:  egen yptc = rowtotal(fimnpen_dv fimnmisc_dv inc_stp inc_tu inc_ma)
+
+EU SILC use the same variables as indicated above.  
+*/
+
+egen yptc = rowtotal(ypncp ypnoab)
+
+
+/************* SPOUSE GROSS PERSONAL MONTHLY NON-BENEFIT INCOME ***************/
+preserve
+keep swv idperson idhh ypnb
+rename ypnb ypnbsp
+rename idperson idpartner
+save "$dir_data/temp_ypnb", replace
+restore
+
+merge m:1 swv idpartner idhh using "$dir_data/temp_ypnb"
+keep if _merge == 1 | _merge == 3
+drop _merge
+
+
+/************* EQUIV HH/BEN UNIT GROSS MONTHLY NON-BENEFIT INCOME *************/
+/* 
+Couples = sum of partners incomes. Singles = own income 
+*/ 
+sum ypnb ypnbsp
+
+egen yhhnb = rowtotal(ypnb ypnbsp) if dhhtp_c4 == 1 | dhhtp_c4 == 2 
+
+replace yhhnb = ypnb if dhhtp_c4 == 3 | dhhtp_c4 == 4 
+
+* Equivalise 
+replace yhhnb = (yhhnb/moecd_eq)
+
+sum yhhnb
+sum yhhnb if year == 2013
+sum yhhnb if year == 2016
+sum yhhnb if year == 2019
+sum yhhnb if year == 2023
+
+
+/****************** NOMINAL MONTHLY PERSONAL DISPOSABLE INCOME *****************/
+
+* Create hh value of company car variable 
+replace py021g = 0 if py021g == . 
+bysort stm idhh : egen hh_comp_car = total(py021g) 
+
+* Hh disp net company car 
+gen ydisp_hh = hy020 - hh_comp_car
+
+* Split hh level vars into individual amounts 
+gen ydisp = ydisp_hh/n_adults
+replace ydisp = 0 if child == 1
+
+* Create monthly amount 
+replace ydisp = ydisp / 12
+
+
+/************************ REAL MONTHLY GROSS INCOMES **************************/
+* Adjust for inflation:
+* NOTE: yplgrs already in real terms as derived from real wages 
+replace ypnb = ypnb/(CPI/100)
+replace yptc = yptc/(CPI/100)
+replace ypnbsp = ypnbsp/(CPI/100)
+replace ypncp  = ypncp/(CPI/100)
+replace ypnoab = ypnoab/(CPI/100)
+replace yhhnb = yhhnb/(CPI/100)
+replace ydisp = ydisp/(CPI/100)
+
+lab var ypnb "Gross real monthly personal non-benefit income" 
+lab var yptc "Gross real monthly personal non-employment, non-benefit income"
+lab var yplgrs "Gross real monthly personal employment income"	
+lab var ypnbsp "Spouse's gross real monthly personal non-benefit income"
+lab var ypncp "Gross real monthly personal capital income"
+lab var ypnoab "Gross real monthly personal private pension income"
+lab var yhhnb "Equivalized gross real monthly non-benefit hh income"
+lab var ydisp "Disposable real monthly personal income"
+
+gen ypnoab_lvl = ypnoab
+
+
+/*********** INVERSE HYPERBOLIC SINE REAL MONTHLY GROSS INCOMES ***************/
+/* 
+This (monotonic) transformation is useful for data that exhibit highly skewed 
+distributions, as it can help stabilize variance and normalise the 
+distribution.
+*/
+gen ypnbihs_dv = asinh(ypnb)
+gen yptciihs_dv = asinh(yptc)
+gen yplgrs_dv = asinh(yplgrs)
+gen ypnbihs_dv_sp = asinh(ypnbsp)
+replace ypncp = asinh(ypncp)
+replace ypnoab = asinh(ypnoab)
+gen yhhnb_asinh = asinh(yhhnb)
+
+lab var ypnbihs_dv 	"Gross real monthly personal non-benefit income, asinh"
+lab var yptciihs_dv ///
+	"Gross real monthly personal non-employment, non-benefit income, asinh"
+lab var yplgrs_dv 	"Gross real monthly personal employment income, asinh"	
+lab var ypnbihs_dv_sp ///
+	"Spouse's gross real monthly personal non-benefit income, asinh"
+lab var ypncp "Gross real monthly personal capital income, asinh"
+lab var ypnoab "Gross real monthly personal private pension income, asinh"
+lab var yhhnb_asinh "Gross real monthly household non-benefit income, asinh"
+	
+/*
+sum ypnbihs_dv ypnbihs_dv_sp yptciihs_dv yplgrs_dv ypncp ypnoab
+*/ 
+
+/************************ LOG CAPTIAL INCOME **********************************/
+
+gen ln_ypncp = ln(sinh(ypncp))
+ 
+lab var ln_ypncp "Gross real monthly personal non-employment capital income, ln"
+ 
+
+/***** GROSS REAL MONTHLY EQUIV HOUSEHOLD NON-BENEFIT INCOME QUINTILES ********/
+sum yhhnb_asinh
+
+/*
+cap drop ydses*
+forvalues stm=2005/2020 {
+	xtile ydses_c5_`stm' = yhhnb_asinh if depChild != 1 & stm==`stm', nq(5)
+	bys idhh: egen ydses_c5_tmp_`stm' = max(ydses_c5_`stm') if stm==`stm'
+	replace ydses_c5_`stm' = ydses_c5_tmp_`stm' if missing(ydses_c5_`stm')
+	drop ydses_c5_tmp_`stm'
+} 
+
+egen ydses_c5 = rowtotal(ydses_c5_2005 ydses_c5_2006 ydses_c5_2007 ///
+	ydses_c5_2008 ydses_c5_2009 ydses_c5_2010 ydses_c5_2011 ydses_c5_2012 ///
+	ydses_c5_2013 ydses_c5_2014 ydses_c5_2015 ydses_c5_2016 ydses_c5_2017 ///
+	ydses_c5_2018 ydses_c5_2019 ydses_c5_2020)
+recode ydses_c5 (0=-9) 
+drop ydses_c5_2*
+bys stm: fre ydses_c5
+*/
+
+/*
+Problem: if many observations in yhhnb_asinh have exactly the same value, 
+xtile would group them into a single quintile, causing one or more quintiles to 
+have very few observations. 
+This results in 2nd quintile being extremely small compared to the first 
+quintile, which probably has many similar values 
+Adding a very small random amount to yhhnb_asinh can help differentiate tied 
+values enough to distribute them more evenly across quintiles without distorting 
+the data meaningfully.
+*/
+sort idperson swv 
+
+gen yhhnb_asinh_jittered = yhhnb_asinh + runiform() * 1e-5
+
+cap drop ydses*
+forvalues stm = 2005/2023 {
+	
+	xtile ydses_c5_`stm' = yhhnb_asinh_jittered if depChild != 1 & ///
+		stm == `stm', nq(5)
+		
+	bys idhh: egen ydses_c5_tmp_`stm' = max(ydses_c5_`stm') if stm == `stm'
+	
+	replace ydses_c5_`stm' = ydses_c5_tmp_`stm' if missing(ydses_c5_`stm')
+	drop ydses_c5_tmp_`stm'
+	
+} 
+
+egen ydses_c5 = rowtotal(ydses_c5_2005 ydses_c5_2006 ydses_c5_2007 ///
+	ydses_c5_2008 ydses_c5_2009 ydses_c5_2010 ydses_c5_2011 ydses_c5_2012 ///
+	ydses_c5_2013 ydses_c5_2014 ydses_c5_2015 ydses_c5_2016 ///
+	ydses_c5_2017 ydses_c5_2018 ydses_c5_2019 ydses_c5_2020 ydses_c5_2021 ///
+	ydses_c5_2022 ydses_c5_2023)
+recode ydses_c5 (0 = -9) 
+drop ydses_c5_2*
+bys stm: fre ydses_c5
+
+lab var ydses_c5 "Gross real monthly household non-benefit income quintiles"
+
+
+/***** COUPLE DIFFERENCE IN GROSS REAL MONTHLY PERSONAL NON-BENEFIT INCOME ****/
+gen ynbcpdf_dv = ypnbihs_dv - ypnbihs_dv_sp
+recode ynbcpdf_dv (. = -999) if idpartner < 0
+recode ynbcpdf_dv (. = -999) 
+sum ynbcpdf_dv 
+
+lab var ynbcpdf_dv 	///
+"Difference between own and spouse's gross personal non-benefit income, asinh"
+
+
+/****************************** GROSS NET RATIO  ******************************/
+/* 
+There are no net incomes in EU-SILC, will be computed using EUROMOD anyway
+*/  
+gen gross_net_ratio = 1 
+
+
+/***************************** HOME OWNERSHIP *********************************/
+/* 
+Dhh_owned is the definition used in the initial population and in the model 
+predicting house ownership in the homeownership process of the simulation. 
+Thi variable is updated in the benefit unit constrcution do file. 
+*/
+// bys swv: fre hh021
+gen dhh_owned = 0 
+replace dhh_owned = 1 if hh021 == 1 | hh021 == 2 
+
+lab var dhh_owned "Home ownership dummy"
+
+fre dhh_owned
+tab dhh_owned year, col 
+
+
+/**************************** DISABILITY BENEFIT ******************************/
+/* 
+In EU-SILC, the variables 
+- py130n: 	(disability benefits net), 
+- py130g: 	(disability benefits gross), 
+- py131g: 	(contributory and means-tested), 
+- py132g: 	(contributory and non means-tested), 
+- py133g: 	(non-contributory and means-tested), 
+- py134g: 	(non-contributory and non means-tested) 
+
+All may contain information on disability benefits. 
+
+For Poland, py131g only has zero entries
+
+The code below may well be PL specific as some of the coding of these variables 
+changes between countries. 
+I expect that there is probably a better/more efficient way of constructing this 
+code.
+*/
+recode py130n (0 = -9)(. = -9), gen(py130nr)
+recode py130g (0 = -9)(. = -9), gen(py130gr)
+recode py132g (0 = -9)(. = -9), gen(py132gr)
+recode py133g (0 = -9)(. = -9), gen(py133gr)
+recode py134g (0 = -9)(. = -9), gen(py134gr)
+
+gen bdi = 0
+replace bdi = 1 if py130gr >= 1 | py130gr >= 1 | py132gr >= 1 | ///
+	py133gr >= 1 | py134gr >= 1 
+lab val bdi dummy
+
+lab var bdi "Disability benefits (dummy)"
+
+drop py130nr py130gr py132gr py133gr py134gr
+
+fre bdi
+tab bdi year, col 
+
 
 /*********************** EDUCATION STATUS - IMPUTATION 2 **********************/
 /* AB: At the point missing education level for those that transition out of
@@ -3975,7 +4049,6 @@ foreach k in 1 2 3 {
     sum p`k' if deh_c3 == `k'
 
 }
-
 
 * Impute 
 cap drop missing_edu 
@@ -4106,6 +4179,7 @@ graph drop _all
 	
 drop dgn2 dag2 dagsq2 drgn12 les_c42 dcpst2 ydses_c52 p1* p2 p3 rnd imp_deh*
 
+
 /******************** UPDATE PARTNER'S EDUCATION STATUS ***********************/
 preserve
 
@@ -4138,6 +4212,7 @@ tab dehsp_c4 year, col
 bys swv: sum dehsp_c4 if dehsp_c4 > 0 
 
 sort idperson swv 
+
 
 /***************************** WEIGHTS ****************************************/
 /*
@@ -4758,6 +4833,7 @@ Using the rescaled longitudinal weight did not work => use the rescaled base
 weight
 */
 
+
 /*************************** CONSISTENCY CHECKS *******************************/
 * Economic activity 
 tab les_c3 les_c4 
@@ -4799,6 +4875,9 @@ sum obs_earnings_hourly if les_c3 != 1
 sum obs_earnings_hourly if les_c4 == 1 
 sum obs_earnings_hourly if les_c4 != 1
 
+sum yplgrs_dv if les_c3 == 1 
+sum yplgrs_dv if les_c3 != 1
+
 * Partnership 
 tab dun dcpst
 
@@ -4816,6 +4895,7 @@ tab ded deh_c4
 
 tab deh_c3 deh_c4
 
+
 /*************************** KEEP RELEVANT WAVES ******************************/
 /* 
 Initial populations: longitudinal SILC for 2011-2023 
@@ -4826,11 +4906,13 @@ keep if swv >= 2010
 
 save "$dir_data/02_pre_drop.dta", replace
 
+
 /**************************** SENSE CHECK PLOTS *******************************/
 
 //do "$dir_do/02_01_checks"
 
 graph drop _all 
+
 
 /*********************** CREATE ASSUMPTION DESCRIPTIVES  **********************/
 
@@ -5129,29 +5211,31 @@ putexcel D70 = ("All")
 
 /*************************** KEEP REQUIRED VARIABLES **************************/
 keep idhh idperson idpartner idfather idmother dct drgn1 dnc02 dnc dgn dgnsp ///
-	dag dagsq dhe dhesp dcpst ded deh_c3 deh_c4 der dehsp_c3 dehm_c3 dehf_c3 ///
-	dehmf_c3 dcpen dcpyy dcpex dcpagdf dlltsd dlrtrd drtren dlftphm ///
+	dag dagsq dhe dhesp dcpst ded deh_c3 deh_c4 der dehsp_c3 dehm_c4 dehf_c4 ///
+	dehmf_c4 dcpen dcpyy dcpex dcpagdf dlltsd dlrtrd drtren dlftphm ///
 	dhhtp_c4 dimlwt dimxwt dhhwt dwt les_c3 les_c4 lessp_c3 lessp_c4 ///
 	lesdf_c4 ydses_c5 ypnbihs_dv yptciihs_dv yplgrs_dv ynbcpdf_dv ypncp ///
 	ln_ypncp ypnoab swv sedex ssscp sprfm sedag stm dagsp lhw der ///
 	adultchildflag sedcsmpl sedrsmpl scedsmpl dhh_owned dchpd dagpns ///
-	dagpns_sp CPI dlltsd_sp ypnoab_lvl flag_* Int_Date unemp yplgrs liwwh ///
-	dagpns_y dagpns_y1 dagpns_y_sp dagpns_y1_sp obs_earnings_hourly ///
-	l1_obs_earnings_hourly l1_les_c3 l1_les_c4 new_rel dcpyy_st student ///
+	dagpns_sp CPI dlltsd_sp ypnoab_lvl ydisp flag_* Int_Date unemp yplgrs ///
+	liwwh dagpns_y dagpns_y1 dagpns_y_sp dagpns_y1_sp obs_earnings_hourly ///
+	l1_obs_earnings_hourly l1_les_c3 l1_les_c4 new_rel dcpyy_st studentflag ///
 	dcpyy_st dhhtp_c8 dehsp_c4 widow rb110 flag_deceased flag_deceased_sp
 
 sort swv idhh idperson 
 
+
 /************************* RECODE MISSING VALUES ******************************/
 foreach var in idhh idperson idpartner idfather idmother dct drgn1 dnc02 ///
 	dnc dgn dgnsp dag dagsq dhe dhesp dcpst ded deh_c3 deh_c4 der dehsp_c3 ///
-	dehm_c3 dehf_c3 dehmf_c3 dcpen dcpyy dcpex dlltsd dlrtrd drtren ///
+	dehm_c4 dehf_c4 dehmf_c4 dcpen dcpyy dcpex dlltsd dlrtrd drtren ///
 	dlftphm dhhtp_c4 les_c3 les_c4 lessp_c3 lessp_c4 lesdf_c4 ydses_c5 ///
 	swv sedex ssscp sprfm sedag stm dagsp lhw der dhh_owned ///
 	dchpd dagpns dagpns_sp CPI dlltsd_sp flag* unemp liwwh ///
 	dagpns_y dagpns_y1 dagpns_y_sp dagpns_y1_sp obs_earnings_hourly ///
 	l1_obs_earnings_hourly l1_les_c3 l1_les_c4 new_rel dcpyy_st new_rel ///
-	dcpyy_st dhhtp_c8 student dehsp_c4 widow flag_deceased flag_deceased_sp {
+	dcpyy_st dhhtp_c8 studentflag dehsp_c4 widow flag_deceased ///
+	flag_deceased_sp {
 	
 		qui recode `var' (-9/-1 = -9) (. = -9) 
 
@@ -5207,15 +5291,16 @@ local files_to_drop
 	mother_dchpd.dta
 	temp_orig_econ_status.dta
 	temp_orig_edu.dta
+	temp_orig_occu.dta
 	temp_dagpns_y.dta
 	temp_depChild_mother.dta
 	temp_depChild_father.dta
-	temp_dehsp.dta
 	temp_mother_info.dta
 	temp_father_info.dta
 	temp_donorsN.dta
 	temp_lhw_donors.dta
 	temp_wages_donors.dta
+	temp_rel_end.dta
 	;
 #delimit cr 
 

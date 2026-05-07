@@ -1,4 +1,4 @@
-# CLAUDE.md
+can you# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -30,6 +30,14 @@ mvn test -Dtest=SimPathsStartTest
 ```
 
 CLI help: `java -jar singlerun.jar -h` or `java -jar multirun.jar -h`
+
+### Key CLI flags
+
+- `-c <CC>` country code (`EL`, `IT`, `HU`, `PL`); `-s` start year; `-e` end year; `-p` population size; `-g true|false` show GUI.
+- `-t true|false` (`--training`) — use the training-data subset under `input/<CC>/InitialPopulations/training/` and `EUROMODoutput/training/` (uses `TaxDonorParserTraining`). On `multirun.jar` this **overrides** `parameter_args.trainingFlag` from the YAML config.
+- `singlerun.jar -Setup` — setup phase only (build the H2 input DB, no simulation). Multi-run equivalent is `-DBSetup`.
+- `multirun.jar -r <seed>` random seed, `-n <N>` max runs, `-f` output to file, `-config <file.yml>` custom config (default `config/default.yml`).
+- **Training auto-detect**: if `-t` is omitted and `input/<CC>/InitialPopulations/*.csv` is empty, `Parameters.trainingFlag` is flipped to `true` automatically and a notice is printed to stdout (`SimPathsStart.java:363-368, 520-525`). To diagnose which mode is active at runtime, look for either `Training-data flag set explicitly via CLI: -t ...` or `auto-switching to training data` in the console output.
 
 ## Architecture
 
@@ -66,10 +74,22 @@ CLI help: `java -jar singlerun.jar -h` or `java -jar multirun.jar -h`
 ### Data Inputs
 
 - `input/input.mv.db` — H2 database with processed EU-SILC starting population
-- `input/[COUNTRY]/` — Country-specific Excel parameter files, EUROMOD output CSVs
+- `input/[COUNTRY]/InitialPopulations/` — actual starting-population CSVs; `…/training/` holds the shipped training subset
+- `input/[COUNTRY]/EUROMODoutput/` — EUROMOD donor CSVs; `…/training/` holds the training subset
+- `input/[COUNTRY]/` — country-specific Excel parameter files (e.g. `EUROMODpolicySchedule.xlsx`)
 - `input/DatabaseCountryYear.xlsx` — Cross-country/year index
 - `config/default.yml` — Default multi-run parameters (population size, year range, run count)
 - `config/alignment_*.yml` — Staged alignment configurations
+- `config/test_create_database.yml`, `config/test_run.yml` — Configs used by the integration test
+
+### Repository layout (beyond `src/`)
+
+- `scripts/` — shell wrappers for batch multi-runs (`run_alignment_multiruns.sh`, `run_multiruns-alignPopOFF.sh`, `run_TEST_multiruns.sh`, …)
+- `input_processing/` — Stata do-files that prepare model inputs upstream of the Java pipeline (master conditions, regression-estimate cleaning, lag-structure generation)
+- `tools/generate_simpaths_eu_variable_codebook.py` — variable codebook generator
+- `validation/` — Stata validation against EU-SILC/EUROMOD targets
+- `documentation/` — supplementary documentation
+- `output/` — timestamped simulation outputs (created at runtime)
 
 ### Tax/Benefit Imputation
 
@@ -87,6 +107,7 @@ JUnit 5 + Mockito. Tests in `src/test/java/simpaths/`:
 - `experiment/SimPathsMultiRunTest` — Multi-run configuration
 - `experiment/PersonTest` — Person entity logic
 - `data/MahalanobisDistanceTest` — Statistical matching
+- `integrationtest/RunSimPathsIntegrationTest` — End-to-end run using `config/test_create_database.yml` + `config/test_run.yml`
 
 ## Branch Conventions
 

@@ -290,8 +290,8 @@ graph combine ret2010 ret2011 ret2012 ret2013 ret2014 ret2015 ret2016 ret2017 re
 
 xtset idperson swv		
 
-probit drtren i.Dgn Dag Dag_sq i.Elig_pen i.Elig_pen_L1 i.Deh_c4_Medium ///
-	i.Deh_c4_Low i.Reached_Retirement_Age li.Les_c3_NotEmployed ///
+probit drtren i.Dgn Dag Dag_sq i.Elig_pen i.Elig_pen_L1 li.Deh_c4_Medium ///
+	li.Deh_c4_Low i.Reached_Retirement_Age li.Les_c3_NotEmployed ///
 	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 li.Dlltsd ///
 	$regions Year_transformed Post2015 ///
 	if ${r1a_if_condition} [pw=dwt], vce(robust)
@@ -316,7 +316,7 @@ title("Process R1a: Probability of Retirement, Single") ///
 gen in_sample = e(sample)	
 predict p
 
-* Save sample for estimte validation 
+* Save sample for estimate validation 
 save "$dir_data/R1a_sample", replace
 
 * Store model summary statistics
@@ -494,7 +494,7 @@ xtset idperson swv
 
 * Estimation 
 probit drtren i.Dgn Dag Dag_sq i.Elig_pen i.Elig_pen_L1 ///
-	i.Deh_c4_Medium i.Deh_c4_Low i.Reached_Retirement_Age ///
+	li.Deh_c4_Medium li.Deh_c4_Low i.Reached_Retirement_Age ///
 	li.Les_c3_NotEmployed i.Reached_Retirement_Age_Les ///
 	li.Ydses_c5_Q2 li.Ydses_c5_Q3 li.Ydses_c5_Q4 li.Ydses_c5_Q5 ///
 	li.Dlltsd i.Reached_Retirement_Age_Sp i.Elig_pen_Sp i.Elig_pen_L1_Sp ///

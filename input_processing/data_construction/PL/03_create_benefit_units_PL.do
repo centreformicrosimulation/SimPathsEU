@@ -833,19 +833,19 @@ count if dagsp == -9 & idpartner != -9 // 0 obs
 replace dropObs = 1 if dagsp == -9 & idpartner != -9
 
 * Health status - remove household if missing for those 16+ 
-count if (dhe == -9 ) & dag > ${age_sample_min} 
+count if (dhe == -9 ) & dag > ${age_becomes_semi_responsible} 
 	// 0 obs due to imputation  
-count if (dhe == -9 ) & dag > 0 & dag <= ${age_sample_min} 
+count if (dhe == -9 ) & dag > 0 & dag <= ${age_becomes_semi_responsible} 
 	// 0 obs due to imputation 
-replace dropObs = 1 if (dhe == -9) & dag > ${age_sample_min}
+replace dropObs = 1 if (dhe == -9) & dag > ${age_becomes_semi_responsible}
 
 * Health status of spouse - remove household if missing but ind has a spouse 
 count if dhesp == -9 & idpartner != -9 // 0 obs
 replace dropObs = 1 if (dhesp == -9) & idpartner != -9
 
 * Education - remove household if missing education level for 16+
-count if deh_c3 == -9 & dag >= ${age_sample_min} & ded == 0 
-replace dropObs = 1 if deh_c3 == -9 & dag >= ${age_sample_min} & ///
+count if deh_c3 == -9 & dag >= ${age_becomes_semi_responsible} & ded == 0 
+replace dropObs = 1 if deh_c3 == -9 & dag >= ${age_becomes_semi_responsible} & ///
 	ded == 0
 
 * Education of spouse - remove household if missing but individual has a spouse 
@@ -857,12 +857,12 @@ count if dcpst == -9 // 0 obs
 replace dropObs = 1 if dcpst == -9 
 
 * Activity status 
-count if les_c3 == -9 & dag >= ${age_sample_min} 
-replace dropObs = 1 if les_c3 == -9 & dag >= ${age_sample_min}
+count if les_c3 == -9 & dag >= ${age_becomes_semi_responsible} 
+replace dropObs = 1 if les_c3 == -9 & dag >= ${age_becomes_semi_responsible}
 
 * Activity status with retirement as a separate category 
-count if les_c4 == -9 & dag >= ${age_sample_min} 
-replace dropObs = 1 if les_c4 == -9 & dag >= ${age_sample_min}
+count if les_c4 == -9 & dag >= ${age_becomes_semi_responsible} 
+replace dropObs = 1 if les_c4 == -9 & dag >= ${age_becomes_semi_responsible}
 
 * Partner's activity status 
 count if lessp_c3 == -9 & idpartner != -9 // 2,536 obs 
@@ -879,29 +879,29 @@ replace dropObs = 1 if dhhtp_c4 == -9
 * Income 
 * Gross personal non-benefit income 
 //==> no missing values by construction, theoretically can be zero 
-count if ypnbihs_dv == 0 & dag >= ${age_sample_min} 
-count if ypnbihs_dv > 0 & dag >= ${age_sample_min} 
+count if ypnbihs_dv == 0 & dag >= ${age_becomes_semi_responsible} 
+count if ypnbihs_dv > 0 & dag >= ${age_becomes_semi_responsible} 
 
 * Gross personal employment income 
 //==> no missing values by construction but theoretically can be zero 
-count if yplgrs_dv < 0 & dag >= ${age_sample_min}  
-count if yplgrs_dv == 0 & dag >= ${age_sample_min}  
-count if yplgrs_dv > 0 & dag >= ${age_sample_min}  
+count if yplgrs_dv < 0 & dag >= ${age_becomes_semi_responsible}  
+count if yplgrs_dv == 0 & dag >= ${age_becomes_semi_responsible}  
+count if yplgrs_dv > 0 & dag >= ${age_becomes_semi_responsible}  
 
 * Household income quintile
 //==> a few missing values for kids who live w/t other adults
-count if ydses_c5 == -9 & dag >= ${age_sample_min}  // 0 obs 
+count if ydses_c5 == -9 & dag >= ${age_becomes_semi_responsible}  // 0 obs 
 
 * Gross personal non-employment capital income 
 //==> no missing values by construction 
-count if ypncp < 0 & dag >= ${age_sample_min} // 0 obs 
-count if ypncp == 0 & dag >= ${age_sample_min} 
-count if ypncp > 0 & dag >= ${age_sample_min} 
+count if ypncp < 0 & dag >= ${age_becomes_semi_responsible} // 0 obs 
+count if ypncp == 0 & dag >= ${age_becomes_semi_responsible} 
+count if ypncp > 0 & dag >= ${age_becomes_semi_responsible} 
 
-replace dropObs = 1 if ypnbihs_dv == -9 & dag >= ${age_sample_min}
-replace dropObs = 1 if yplgrs_dv == -9 & dag >= ${age_sample_min} 
+replace dropObs = 1 if ypnbihs_dv == -9 & dag >= ${age_becomes_semi_responsible}
+replace dropObs = 1 if yplgrs_dv == -9 & dag >= ${age_becomes_semi_responsible} 
 replace dropObs = 1 if ydses_c5 == -9 
-replace dropObs = 1 if ypncp == -9 & dag >= ${age_sample_min}
+replace dropObs = 1 if ypncp == -9 & dag >= ${age_becomes_semi_responsible}
 	
 	
 * Indicator for households with missing values 
@@ -1003,7 +1003,6 @@ drop dncold dnc02old
 
 
 * Home ownership variable 
-
 preserve
 
 egen tag_bu_wave = tag(idbenefitunit swv)
@@ -1044,13 +1043,25 @@ save "$dir_data/temp_dhh_owned", replace
 
 restore 
 
-rename dhh_owned dhh_owned_old
+rename dhh_owned dhh_owned_orig
 
 merge 1:1 idperson swv using "$dir_data/temp_dhh_owned"
 
 drop _m 
 
 replace dhh_owned = 0 if dhh_owned == . 
+
+rename dhh_owned dhh_owned_ind
+
+lab var dhh_owned_ind "Home ownership flag, only = 1 for benefit unit head"
+
+gen dhh_owned = dhh_owned_ind
+
+bysort idbenefitunit swv (dhh_owned): replace dhh_owned = dhh_owned[_N]
+	
+lab var dhh_owned "Home ownership flag, = 1 for all benefit unit members"
+
+sort idperson swv 
 
 
 /*************************** UPDATE FLAG EXCEL FILE ***************************/
@@ -1142,6 +1153,7 @@ local files_to_drop
 	orphans.dta
 	temp_depChild_mother.dta
 	temp_depChild_father.dta
+	temp_dhh_owned.dta
 	;
 #delimit cr // cr stands for carriage return
 

@@ -1,10 +1,37 @@
 # SimPathsEU
 
-by Matteo Richiardi, Patryk Bronka, Justin van de Ven, Mariia Vartuzova, David Sonnewald
+by CeMPA (Centre for Microsimulation and Policy Analysis).
+
+## Documentation
+
+The entire SimPaths documentation is available on its [website](https://simpaths.github.io/SimPaths/), which includes: a detailed description of its building blocks; instructions on how to set up and run the model; and information about contributing to the model's development. The `documentation/` directory contains supplementary materials that complements this README (model specifications, variable references, etc.).
 
 ## Introduction
 
-SimPaths is a family of models for individual and household life course events, all sharing common components. The framework is designed to project life histories through time, building up a detailed picture of career paths, family (inter)relations, health, and financial circumstances. The framework builds upon standardised assumptions and data sources, which facilitates adaptation to alternative countries. This repository, **SimPathsEU**, covers Greece (`EL`), Hungary (`HU`), Italy (`IT`), and Poland (`PL`), and integrates with EUROMOD for tax and benefit policy simulation. Careful attention is paid to model validation, and sensitivity of projections to key assumptions. The modular nature of the SimPaths framework is designed to facilitate analysis of alternative assumptions concerning the tax and benefit system, sensitivity to parameter estimates and alternative approaches for projecting labour/leisure and consumption/savings decisions. Projections for a workhorse model parameterised to the UK context are reported in [Bronka, P., Richiardi, M., & van de Ven, J. (2023). *SimPaths: an open-source microsimulation model for life course analysis* (No. CEMPA6/23), Centre for Microsimulation and Policy Analysis at the Institute for Social and Economic Research*](https://www.microsimulation.ac.uk/publications/publication-557738/), which closely reflect observed data throughout a 10-year validation window.
+SimPaths is a family of models for individual and household life course events, all sharing common components. The framework is designed to project life histories through time, building up a detailed picture of career paths, family (inter)relations, health, and financial circumstances. The framework builds upon standardised assumptions and data sources, which facilitates adaptation to alternative countries. This repository, **SimPathsEU**, covers Greece (`EL`), Hungary (`HU`), Italy (`IT`), and Poland (`PL`), and integrates with EUROMOD for tax and benefit policy simulation. Careful attention is paid to model validation, and sensitivity of projections to key assumptions. The modular nature of the SimPaths framework is designed to facilitate analysis of alternative assumptions concerning the tax and benefit system, sensitivity to parameter estimates and alternative approaches for projecting labour/leisure and consumption/savings decisions. 
+
+
+## License
+
+Released under the terms in [`license.txt`](license.txt).
+
+## Repository layout
+
+```
+SimPathsEU/
+├── src/                   # Java source (main + tests)
+├── input/                 # H2 DB + per-country starting populations and EUROMOD outputs
+│   └── <CC>/InitialPopulations/{,training/}
+│   └── <CC>/EUROMODoutput/{,training/}
+├── input_processing/      # Stata do-files that prepare regression estimates and inputs
+├── config/                # YAML configs (default.yml, alignment_*.yml, test_*.yml)
+├── scripts/               # Bash wrappers for batch multi-run scenarios
+├── validation/            # Stata validation against EU-SILC / EUROMOD targets
+├── documentation/         # Supplementary documentation
+├── output/                # Simulation outputs (created at runtime)
+├── pom.xml
+└── README.md
+```
 
 ## Getting Started
 
@@ -30,11 +57,11 @@ However, please note that _training_ data is provided. It allows the simulation 
 1. **Java Development Kit (JDK):** the project targets **Java 19 or later** (see `pom.xml`, which pins `source`/`target` to 19). Install a compatible JDK, e.g. OpenJDK 19+ from [Adoptium](https://adoptium.net/).
 2. **Maven:** required to build from the command line. See [installation instructions](https://maven.apache.org/install.html). (Not required if you only build via the IDE.)
 3. **Download an IDE** (integrated development environment) of your choice - we recommend [IntelliJ IDEA](https://www.jetbrains.com/idea/download/); download the Community (free) or Ultimate (paid) edition, depending on your needs.
-4. Clone your forked repository to your local machine. Import the cloned repository into IntelliJ as a Maven project
+4. Clone your forked repository to your local machine. Import the cloned repository into IntelliJ as a Maven project.
 
-### Compiling and running SimPaths with Maven in the CLI
+### Compiling and running SimPaths with Maven from the CLI
 
-SimPaths can also be compiled by Maven ([installation instructions here](https://maven.apache.org/install.html)) and run from the command line without an IDE. After cloning the repository and setting up the JDK, in the root directory you can run:
+SimPaths can also be compiled with Maven ([installation instructions here](https://maven.apache.org/install.html)) and run from the command line without an IDE. After cloning the repository and setting up the JDK, in the root directory you can run:
 ```
 $ mvn clean package
 ```
@@ -71,10 +98,10 @@ $ mvn verify -Dit.test=RunSimPathsIntegrationTest     # run just the integration
 - `-p` Simulated population size
 - `-g` [true/false] show/hide gui
 - `-r` Re-write policy schedule from detected policy files
-- `-Setup` do setup phases (creating input populations database) only
+- `-Setup` perform the setup phase only (build the input population database, then exit)
 - `--rebuild-db` Force a rebuild of `input/input.mv.db` instead of reusing it (headless mode)
 - `--reuse-existing-db` Reuse `input/input.mv.db` if present, otherwise build it (headless mode)
-- `-t` [true/false] use training data subset. When `true`, reads from `input/<COUNTRY>/InitialPopulations/training/` and `input/<COUNTRY>/EUROMODoutput/training/`, and uses `TaxDonorParserTraining` (which drops `deh`/`drgn1`/`lcs` and uses `idhh` as the tax-unit identifier). When `false` (default), reads from `InitialPopulations/` and `EUROMODoutput/` directly and uses the standard `TaxDonorDataParser`. If `-t` is omitted, an auto-detect kicks in: if `InitialPopulations/<country>/*.csv` is empty, the simulator falls back to training data and prints a console message.
+- `-t` [true/false] use training data subset. When `true`, reads from `input/<COUNTRY>/InitialPopulations/training/` and `input/<COUNTRY>/EUROMODoutput/training/`. When `false` (default), reads from `InitialPopulations/` and `EUROMODoutput/` directly. If `-t` is omitted, an auto-detect kicks in: if `InitialPopulations/<country>/*.csv` is empty, the simulator falls back to training data and prints a console message.
 
 **Important:** the country (`-c`) and start year (`-s`) must be specified when creating or rebuilding the input population database — the resulting `input/input.mv.db` is country- and year-specific.
 
@@ -153,9 +180,26 @@ $ java -jar multirun.jar -r 100 -p 50000 -n 20 -s 2017 -e 2020 -g false -f
 
 Run `java -jar singlerun.jar -h` or `java -jar multirun.jar -h` to show these help messages.
 
+#### Output layout
+
+Each simulation writes a timestamped subdirectory under `output/` (named `YYYYMMDDHHMMSS`), e.g.:
+
+```
+output/
+├── <YYYYMMDDHHMMSS>/            # one run's artefacts
+│   ├── database/                # H2 snapshot of the simulated population
+│   └── input/                   # copy of the inputs used for the run (for reproducibility)
+└── logs/
+    ├── run_<seed>.txt           # console log when multirun is invoked with -f
+    └── run_<seed>.log           # logger output for the same run
+```
+
+Batch scripts in `scripts/` move each scenario's outputs into `output/<scenario-name>/` after the runs finish.
+
+
 ### Batch scenario scripts
 
-Helper Bash scripts in `scripts/` run `multirun.jar` across multiple alignment configs in sequence and move each scenario's CSV output into `output/<scenario-name>/`:
+Helper Bash scripts in `scripts/` run `multirun.jar` across multiple alignment configs in sequence and move each scenario's output into `output/<scenario-name>/`:
 - `run_alignment_multiruns.sh` — full set of alignment scenarios
 
 
@@ -166,7 +210,7 @@ $ POP_SIZE=10000 RUNS_PER_SCENARIO=2 ./scripts/run_alignment_multiruns.sh
 
 ### Contributing
 
-1. Create a new branch for your contributions. This will likely be based on either the `main` branch of this repository (if you seek to modify the stable version of the model) or `develop` (if you seek to modify the most recent version of the model).  Please see branch naming convention below.
+1. Create a new branch for your contributions. This will likely be based on either the `main` branch of this repository (if you seek to modify the stable version of the model) or `develop` (if you seek to modify the most recent version of the model).
 2. Make your changes, add your code, and write tests if applicable.
 3. Commit your changes.
 4. Push your changes to your fork.

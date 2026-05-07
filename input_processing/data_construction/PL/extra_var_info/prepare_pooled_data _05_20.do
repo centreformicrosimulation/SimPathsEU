@@ -1,5 +1,5 @@
 ********************************************************************************
-* PROJECT:              ESPON
+* PROJECT:              SimPaths EU
 * DO-FILE NAME:         prepare_pooled_data_05_20.do
 * DESCRIPTION:          Compiles 2005-2020 panel dataset from 2005-2020 EU-SILC  
 ********************************************************************************

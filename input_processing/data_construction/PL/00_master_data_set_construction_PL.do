@@ -9,10 +9,12 @@
 * DATA:         	    Longitudinal EU-SILC UDB version, 2005 - 2020 
 * AUTHORS: 				Clare Fenwick, Daria Popova, Ashley Burdett, 
 * 						Aleksandra Kolndrekaj
-* LAST UPDATE:          Jan 2026 AB
+* LAST UPDATE:          March 2026 AB
 * 
 ********************************************************************************
 * NOTES:
+*	ENSURE HAVE ALREADY RUN 00_master_conditions.do FILE.
+*
 *   Before running these files, the cumulative panel for each file type 
 * 	(D, H, R, P) must be constructed. These cumulative panels should be created 
 * 	following the procedure set out in *GESIS Papers 2022/10*. The do-files to 
@@ -115,7 +117,7 @@ global dir_ind "/Users/ashleyburdett/Library/CloudStorage/Box-Box"
 // Aleksandra - C:/Users/ak25793/Box
 
 * Working directory
-global dir_work "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/initial_populations/PL"
+global dir_work "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/input_processing/initial_populations/PL"
 
 * Directory containing do files
 global dir_do "$dir_work/do_files"
@@ -146,7 +148,7 @@ global dir_data_05_20 "$dir_data/orig_panel_2005_2020"
 * DEFINE PARAMETERS & PROCESS IF CONDITIONS
 *******************************************************************************/
 
-do "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/00_master_conditions.do"
+do "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/input_processing/00_master_conditions_PL.do"
 
 
 /*******************************************************************************
@@ -154,13 +156,13 @@ do "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/00_master_conditions.do"
 *******************************************************************************/
 //do "$dir_do/01_prepare_pooled_data.do"
 
-do "$dir_do/02_create_variables_PL.do"
+do "$dir_do/02_create_variables_${country}.do"
 
-do "$dir_do/03_create_benefit_units_PL.do"
+do "$dir_do/03_create_benefit_units_${country}.do"
 
-do "$dir_do/04_reweight_PL.do"
+do "$dir_do/04_reweight_${country}.do"
 
-do "$dir_do/05_drop_hholds_and_slice_PL.do"
+do "$dir_do/05_drop_hholds_slice_and_refactoring_${country}.do"
 
-do "$dir_do/06_check_yearly_data_PL.do"
+do "$dir_do/06_check_yearly_data_${country}.do"
 
