@@ -9,7 +9,9 @@
 * NOTES: 			
 ********************************************************************************
 
+local align "output_refactored_runs3_popsize30000"
 
+global dir_simulated_data "$path/simulated_data/`align'/csv"
 
 
 * Import required variables from household file

@@ -340,8 +340,6 @@ public class SimPathsStart implements ExperimentBuilder {
 	@Override
 	public void buildExperiment(SimulationEngine engine) {
 
-		Parameters.validateStartYear(startYear);
-
 		// instantiate simulation processes
 		SimPathsModel model = new SimPathsModel(country, startYear);
 		model.setEndYear(endYear);
@@ -370,8 +368,6 @@ public class SimPathsStart implements ExperimentBuilder {
 						+ " — auto-switching to training data (Parameters.trainingFlag = true).");
 			}
 		}
-
-		Parameters.validateStartYear(startYear);
 
 		writeSelectedCountryAndYear();
 
