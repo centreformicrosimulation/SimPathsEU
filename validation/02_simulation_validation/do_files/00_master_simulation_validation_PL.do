@@ -23,6 +23,20 @@
 *******************************************************************************/
 clear all
 
+/*******************************************************************************
+* Ensure required user-written packages are installed
+*******************************************************************************/
+local ssc_pkgs "ineqdeco fre unique grc1leg2"
+foreach pkg of local ssc_pkgs {
+    capture which `pkg'
+    if _rc ssc install `pkg', replace
+}
+
+* grc1leg lives on Vince Wiggins' site, not SSC
+capture which grc1leg
+if _rc net install grc1leg, from("http://www.stata.com/users/vwiggins/")
+/*******************************************************************************/
+
 set logtype smcl
 set more off
 set mem 200m
@@ -80,6 +94,8 @@ global max_age 65
 * Observations up to and including this simulated year will be kept in the sample
 global min_year 2011
 global max_year 2023
+global min_sim_year ${min_year}
+global max_sim_year ${max_year}
 
 * Define age to become responsible as defined in the simulation
 global age_become_responsible 16
@@ -105,9 +121,9 @@ do "${dir_do_files}/03_create_EU_SILC_validation_targets.do"
 *******************************************************************************/
 
 * List of SimPath Set ups to loop through
-local alignments "output_refactored_runs3_popsize30000"
+global alignments "alignment_00_populationOFF alignment_01_population alignment_02a_population_fertility alignment_02b_population_cohabitation alignment_02c_population_disability alignment_02d_population_inschool alignment_02e_population_retirement alignment_03_population_fertility_cohabitation alignment_04_population_fertility_cohabitation_employment"
 
-foreach align in `alignments' {
+foreach align in $alignments {
 
 
 /*******************************************************************************
