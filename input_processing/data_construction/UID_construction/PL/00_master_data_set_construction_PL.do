@@ -13,7 +13,8 @@
 * 
 ********************************************************************************
 * NOTES:
-*	ENSURE HAVE ALREADY RUN 00_master_conditions.do FILE.
+*	ENSURE HAVE ALREADY RUN 00_master_conditions_PL.do FILE.
+* 	This can be found in the main "input_processing" folder. Called below. 
 *
 *	The input data for this process comes from longitudinal EU-SILC. We 
 * 	follow the procedure set out in the *GESIS Papers 2022/10* to construct 

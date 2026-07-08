@@ -9,7 +9,9 @@
 * 						Aleksandra Kolndrekaj 
 * LAST UPDATE:          March 2026 (AB)
 ********************************************************************************
-* NOTES: 				
+* NOTES: 	
+*	ENSURE HAVE ALREADY RUN 00_master_conditions_PL.do FILE.
+* 	This can be found in the main "input_processing" folder. Called below. 
 * 			
 *******************************************************************************/
 
