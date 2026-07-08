@@ -156,7 +156,7 @@ do "$dir_ind/CeMPA shared area/_SimPaths/_SimPathsEU/input_processing/00_master_
 /*******************************************************************************
 * EXECUTE FILES
 *******************************************************************************/
-//do "$dir_do/01_prepare_pooled_data.do"
+do "$dir_do/01_prepare_pooled_data_${country}.do"
 
 do "$dir_do/02_create_variables_${country}.do"
 
