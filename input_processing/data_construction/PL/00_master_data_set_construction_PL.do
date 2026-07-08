@@ -2,11 +2,11 @@
 * PROJECT:             	SimPaths EU
 * DO-FILE NAME:        	00_master.do
 * DESCRIPTION:         	Main do-file to set the main parameters (country, paths)
-*  						and call sub-scripts to construct dataset for 
+*  						and call sub-scripts to construct the dataset for the 
 * 						analysis of Poland. 
 ********************************************************************************
 * COUNTRY:              PL
-* DATA:         	    Longitudinal EU-SILC UDB version, 2005 - 2020 
+* DATA:         	    Longitudinal EU-SILC UDB version, 2005 - 2024 
 * AUTHORS: 				Clare Fenwick, Daria Popova, Ashley Burdett, 
 * 						Aleksandra Kolndrekaj
 * LAST UPDATE:          March 2026 AB
@@ -15,21 +15,23 @@
 * NOTES:
 *	ENSURE HAVE ALREADY RUN 00_master_conditions.do FILE.
 *
-*   Before running these files, the cumulative panel for each file type 
-* 	(D, H, R, P) must be constructed. These cumulative panels should be created 
-* 	following the procedure set out in *GESIS Papers 2022/10*. The do-files to 
-* 	perform this procedure are contained in the "GESIS set-ups" subfolder 
-* 	located in the same directory as this file.
-*
+*	The input data for this process comes from longitudinal EU-SILC. We 
+* 	follow the procedure set out in the *GESIS Papers 2022/10* to construct 
+* 	the cumulative panel for each file type (D, H, R, P). 
+* 	This process utilises the program "eusilc_2020" and the "GESIS set-ups". 
 *   Currently, compiling the master* files is done separately to avoid data  
-*   storage constraints.
+*   storage constraints. See the read me file in the SILC_panel subfolder
+* 	for additional information (README_SILC_panel_construction). 
 *
 *   -----------------------------------------------------------------------
 *    Assumptions imposed to align the SILC data with simulation rules:
 *   -----------------------------------------------------------------------
 *
+* 	During data processing, we impose several restrictions on the SILC data
+* 	so that it closely aligns with the assumptions in SimPaths. Specifically: 
+*
 *   - Retirement:
-*       - Treated as an absorbing state
+*       - Treat as an absorbing state
 *       - Must retire by a specified maximum age
 *       - Cannot retire before a specified minimum age
 *
@@ -49,7 +51,7 @@
 *   - Leaving the parental home:
 *       - Can leave from a specified minimum age
 * 		- Become the effective head of hh even when living with parents when 
-* 			paretns retire or reach state retirment age
+* 			parents retire or reach state retirement age
 *
 *   - Home ownership:
 *       - Can own a home from a specified minimum age
@@ -62,7 +64,7 @@
 *
 *   The relevant age thresholds are defined in globals defined in "DEFINE 
 * 	PARAMETERS" section below. 
-* 	Throughout also construct relevant flags and produce a log file 
+* 	Throughout, also construct relevant flags and produce a log file 
 * 	"flag_descriptives.xlsx" to see the extent of the adjustments to the raw 
 * 	data. 
 *
@@ -70,11 +72,11 @@
 *    Additional notes on implementation: 
 *   -----------------------------------------------------------------------
 *
-*   - Impute health score (generalized ordered logit model).
-*   - Constructing age is not straight forward as not directly reported in the 
-* 	  data, therefore: 
+*   - Impute health score (generalised ordered logit model).
+*   - Constructing age is not straightforward, as it is not directly reported in  
+* 	  the data, therefore: 
 *       → Use interview age (RX010) where available
-*       → Otherwise use age at end of interview year (PX020). This results in 
+*       → Otherwise, use age at end of interview year (PX020). This results in 
 * 			upward bias of age.
 *   - Set education = 0 (na) while in initial education spell. 
 *
@@ -85,7 +87,7 @@
 *   - Ages at which females can have a child. [Be informed by the sample?]
 *	  Permit teenage mothers in this script (deal with in 03_ )
 *   - A few higher/older education spells (30+) that last multiple years 
-*     in the simulation can only return to education for single year spells. 
+*     in the simulation can only return to education for single-year spells. 
 * 	- Number of children vars (all ages or 0-2) don't account for feasibility 
 * 		of age at birth of the mother. 
 *
