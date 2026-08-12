@@ -3188,6 +3188,245 @@ public class BenefitUnit implements EventListener, IDoubleSource, Weight, Compar
             }
         }
 
+        // ES specific cases
+        if (Objects.equals(COUNTRY_STRING, "ES")){
+            switch ((Regressors) variableID) {
+
+                case Hrs_40plus_Male -> {
+                    return (getMale() != null && (getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) || getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2))) ? 1. :0.;
+                }
+                case Hrs_40plus_Female -> {
+                    return (getFemale() != null && (getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) || getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2))) ? 1. :0.;
+                }
+                //Liwwh TOADD
+                case Liwwh_1 -> {
+                    // Coefficient to be applied to lagged hours of work of female member of BU interacted with "alternative 1" of hours of labour supply
+                    // Note: labour supply value for person under evaluation is set to the alternative being considered in the update labour supply process
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_1 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_10 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_10 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_2 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_2 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_20 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_20 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_3 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_3 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_30 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_30 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_1 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_1 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_1 -> {
+                    // (Male=0, Female=cat1). For SingleAC females there is no male partner — treat absent male as Male=0.
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_1 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_2 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_2 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_2 -> {
+                    // (Male=0, Female=cat2). For SingleAC females there is no male partner — treat absent male as Male=0.
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_2 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_3 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_3 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.ZERO) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_3 -> {
+                    // (Male=0, Female=cat3). For SingleAC females there is no male partner — treat absent male as Male=0.
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_3 -> {
+                    return (getFemale() != null && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && (getMale() == null || getMale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_10 -> {
+                    // (Male=cat1, Female=0). For SingleAC males there is no female partner — treat absent female as Female=0.
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_10 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_10 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_10 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_11 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_11 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_11 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_11 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_12 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_12 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_12 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_12 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_13 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_13 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_13 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_13 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_20 -> {
+                    // (Male=cat2, Female=0). For SingleAC males there is no female partner — treat absent female as Female=0.
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_20 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_20 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_20 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_21 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_21 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_21 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_21 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_22 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_22 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_22 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_22 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_23 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_23 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_23 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_23 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_30 -> {
+                    // (Male=cat3, Female=0). For SingleAC males there is no female partner — treat absent female as Female=0.
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_30 -> {
+                    return (getMale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && (getFemale() == null || getFemale().getLabourSupplyWeekly().equals(Labour.ZERO))) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_30 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_30 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.ZERO)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_31 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_31 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_31 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_31 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_1)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_32 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_32 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_32 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_32 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_2)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Male_33 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getMale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Male_33 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getMale().getLiwwh(), 2) : 0.;
+                }
+                case Liwwh_Female_33 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? getFemale().getLiwwh() : 0.;
+                }
+                case LiwwhSq_Female_33 -> {
+                    return (getMale() != null && getFemale() != null && getMale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3) && getFemale().getLabourSupplyWeekly().equals(Labour.CATEGORY_ES_3)) ? Math.pow(getFemale().getLiwwh(), 2) : 0.;
+                }
+            }
+        }
+
+
         // EL specific cases
         if (Objects.equals(COUNTRY_STRING, "EL")){
             switch ((Regressors) variableID) {

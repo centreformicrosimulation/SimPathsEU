@@ -20,6 +20,11 @@ public enum Labour implements IntegerValuedEnum {
     CATEGORY_PL_1(21, 1, 39, 1, 39),  //sub categoryId 20 to 1
     CATEGORY_PL_2(22, 40, 40, 40, 40),
     CATEGORY_PL_3(23, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK),
+
+    //ES; for now same as PL and EL
+    CATEGORY_ES_1(51, 1, 39, 1, 39),  //sub categoryId 20 to 1
+    CATEGORY_ES_2(52, 40, 40, 40, 40),
+    CATEGORY_ES_3(53, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK, 41, Parameters.MAX_LABOUR_HOURS_IN_WEEK),
     //IT
     CATEGORY_IT_1(31, 1, 29,   1, 35),   // [1-29] vs [1-35]
     CATEGORY_IT_2(32, 30, 35,  36, 39),  // [30-35] vs [36-39]
@@ -61,23 +66,30 @@ public enum Labour implements IntegerValuedEnum {
     }
 
     private static Labour convertFemaleHours(double hours) {
-        if (Objects.equals(COUNTRY_STRING, "EL")) {
+
+        String country = COUNTRY_STRING;
+        if (Objects.equals(country, "EL")) {
             if (hours <= 39) return CATEGORY_EL_1;
             else if (hours <= 40) return CATEGORY_EL_2;
             else return CATEGORY_EL_3;
         }
-        else if (Objects.equals(COUNTRY_STRING, "IT")) {
+        else if (Objects.equals(country, "IT")) {
             if (hours <= 29) return CATEGORY_IT_1;
             else if (hours <= 35) return CATEGORY_IT_2;
             else if (hours <= 39) return CATEGORY_IT_3;
             else return CATEGORY_IT_4;
         }
-        else if (Objects.equals(COUNTRY_STRING, "PL")) {
+        else if (Objects.equals(country, "PL")) {
             if (hours <= 39) return CATEGORY_PL_1;
             else if (hours <= 40) return CATEGORY_PL_2;
             else return CATEGORY_PL_3;
         }
-        else if (Objects.equals(COUNTRY_STRING, "HU")) {
+        else if (Objects.equals(country, "ES")) {
+            if (hours <= 39) return CATEGORY_ES_1;
+            else if (hours <= 40) return CATEGORY_ES_2;
+            else return CATEGORY_ES_3;
+        }
+        else if (Objects.equals(country, "HU")) {
             if (hours <= 39) return CATEGORY_HU_1;
             else if (hours <= 40) return CATEGORY_HU_2;
             else return CATEGORY_HU_3;
@@ -89,23 +101,29 @@ public enum Labour implements IntegerValuedEnum {
 
 
     private static Labour convertMaleHours(double hours) {
-        if (Objects.equals(COUNTRY_STRING, "EL")) {
+        String country = COUNTRY_STRING;
+        if (Objects.equals(country, "EL")) {
             if (hours <= 39) return CATEGORY_EL_1;
             else if (hours <= 40) return CATEGORY_EL_2;
             else return CATEGORY_EL_3;
         }
-        else if (Objects.equals(COUNTRY_STRING, "IT")) {
+        else if (Objects.equals(country, "IT")) {
             if (hours <= 35) return CATEGORY_IT_1;
             else if (hours <= 39) return CATEGORY_IT_2;
             else if (hours <= 49) return CATEGORY_IT_3;
             else return CATEGORY_IT_4;
         }
-        else if (Objects.equals(COUNTRY_STRING, "PL")) {
+        else if (Objects.equals(country, "PL")) {
             if (hours <= 39) return CATEGORY_PL_1;
             else if (hours <= 40) return CATEGORY_PL_2;
             else return CATEGORY_PL_3;
         }
-        else if (Objects.equals(COUNTRY_STRING, "HU")) {
+        else if (Objects.equals(country, "ES")) {
+            if (hours <= 39) return CATEGORY_ES_1;
+            else if (hours <= 40) return CATEGORY_ES_2;
+            else return CATEGORY_ES_3;
+        }
+        else if (Objects.equals(country, "HU")) {
             if (hours <= 39) return CATEGORY_HU_1;
             else if (hours <= 40) return CATEGORY_HU_2;
             else return CATEGORY_HU_3;
@@ -127,6 +145,7 @@ public enum Labour implements IntegerValuedEnum {
             case "EL" -> new Labour[]{ZERO, CATEGORY_EL_1, CATEGORY_EL_2, CATEGORY_EL_3};
             case "IT" -> new Labour[]{ZERO, CATEGORY_IT_1, CATEGORY_IT_2, CATEGORY_IT_3, CATEGORY_IT_4};
             case "PL" -> new Labour[]{ZERO, CATEGORY_PL_1, CATEGORY_PL_2, CATEGORY_PL_3};
+            case "ES" -> new Labour[]{ZERO, CATEGORY_ES_1, CATEGORY_ES_2, CATEGORY_ES_3};
             case "HU" -> new Labour[]{ZERO, CATEGORY_HU_1, CATEGORY_HU_2, CATEGORY_HU_3};
             default -> values();
         };

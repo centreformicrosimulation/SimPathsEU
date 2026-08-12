@@ -2693,10 +2693,11 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
     private static void setMapBounds(MapBounds map, String countryString) {
 
         String rgn = switch (countryString) {
-            case "EL" -> countryString + "3";
-            case "HU" -> countryString + "C";
-            case "IT" -> countryString + "C";
-            case "PL" -> countryString + "2";
+            case "EL" -> "EL3";
+            case "HU" -> "HUC";
+            case "IT" -> "ITC";
+            case "PL" -> "PL2";
+            case "ES" -> "ES5";
             default -> null;
         };
 
@@ -2813,6 +2814,21 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
                     else if (year >= 2016 && year < 2018)   spa = 61;
                     else if (year >= 2018 )                 spa = 60;
                 }
+                break;
+
+            case "ES":                                      // Spain
+                // Men and women: ordinary pension age gradually rises
+                // from 65 before 2013 to 67 from 2027.
+                //
+                // Spain's statutory ages are specified in years and months.
+                // As spa stores integer years, ages are rounded to the
+                // nearest whole year:
+                // 2005–2017: 65
+                // 2018–2023: 66
+                // 2024+:     67
+                if      (year >= 2005 && year < 2018)       spa = 65;
+                else if (year >= 2018 && year < 2024)       spa = 66;
+                else if (year >= 2024)                      spa = 67;
                 break;
 
             case "EL":                                      // Greece

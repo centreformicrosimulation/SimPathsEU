@@ -83,11 +83,13 @@ public class SimPathsMultiRun extends MultiRun {
 			countryString = "Hungary";
 		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[IT]"))) {
 			countryString = "Italy";
+		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[ES]"))) {
+			countryString = "Spain";
 		} else if (lastDatabaseCountryAndYear.keySet().stream().anyMatch(key -> key.toString().equals("MultiKey[PL]"))) {
 			countryString = "Poland";
 		} else {
 			throw new IllegalArgumentException(
-					"Country not recognised. Restart the simulation and choose one of the available countries (EL, HU, IT, PL)."
+					"Country not recognised. Restart the simulation and choose one of the available countries (EL, HU, IT, ES, PL)."
 			);
 		}
 

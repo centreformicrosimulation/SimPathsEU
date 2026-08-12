@@ -2137,6 +2137,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Ded_Yplgrs_dv_L1,
         Ded_Yplgrs_dv_L2,
         Ded_Ypncp_L1,
+        Ded_Dehsp_c4_Low_L1,
 
         Ded_Dnc_L1,
         Ded_Dnc02_L1,
@@ -2228,6 +2229,13 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         GrossEarningsYearly,
         GrossLabourIncomeMonthly,
         InverseMillsRatio,
+        ES1, // Spain
+        ES2,
+        ES3,
+        ES4,
+        ES5,
+        ES6,
+        ES7,
         HUA, // Hungary
         HUB,
         HUC,
@@ -2588,6 +2596,9 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case Ded_Ypncp_L1 -> {
                 return Indicator.True.equals(eduSpellFlag) ? yCapitalPersMonthL1 : 0;
+            }
+            case Ded_Dehsp_c4_Low_L1 -> {
+                return (Indicator.True.equals(eduSpellFlag) && Education.Low.equals(eduDehspC4L1)) ? 1.0 : 0.0;
             }
 
             case Ded_Dnc_L1 -> {
@@ -3532,6 +3543,28 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             }
             case Deh_c4_Medium_Dag -> {
                 return (Education.Medium.equals(eduHighestC4)) ? demAge : 0.0;
+            }
+            // Spain
+            case ES1 -> {
+                return Region.ES1.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case ES2 -> {
+                return Region.ES2.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case ES3 -> {
+                return Region.ES3.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case ES4 -> {
+                return Region.ES4.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case ES5 -> {
+                return Region.ES5.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case ES6 -> {
+                return Region.ES6.equals(getRegion()) ? 1.0 : 0.0;
+            }
+            case ES7 -> {
+                return Region.ES7.equals(getRegion()) ? 1.0 : 0.0;
             }
             // Hungary
             case HUA -> {
