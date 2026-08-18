@@ -194,6 +194,8 @@ input/~$scenario_uprating_factor.xlsx
 /input/PL/InitialPopulations/*.csv
 /input/EL/EUROMODoutput/*.txt
 /input/EL/InitialPopulations/*.csv
+/input/ES/EUROMODoutput/*.txt
+/input/ES/InitialPopulations/*.csv
 /input/*/EUROMODoutput/training/.DS_Store
 /input/*/InitialPopulations/training/.DS_Store
 !/input/*/EUROMODoutput/training/*.txt
@@ -245,6 +247,7 @@ input/tax_donor_population_HU.csv
 input/tax_donor_population_PL.csv
 input/tax_donor_population_IT.csv
 input/tax_donor_population_EL.csv
+input/tax_donor_population_ES.csv
 
 # Integration-test golden CSVs for the REAL-DATA baseline — generated locally
 # per developer because real EUROMOD input data is not shareable. Do not commit.
