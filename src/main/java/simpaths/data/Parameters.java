@@ -2034,7 +2034,17 @@ public class Parameters {
         rebaseIndexMap(TimeSeriesVariable.WageGrowth);
 
         // load year-specific fiscal policy parameters
-        socialCarePolicy = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "social_care_parameters.xlsx"), "social care", 1);
+        // Social care is optional: the workbook is only consulted when flagSocialCare is on
+        // (TaxEvaluation -> SocialCareExpenditureSupport -> getSocialCarePolicyValue), and countries
+        // that do not model it need not ship the file. The guard tests for the file rather than the
+        // flag because this method runs before flagSocialCare is assigned in loadParameters, and is
+        // also called standalone from SimPathsStart where the flag is not set at all.
+        String socialCareParametersFile = resolveCountryFile(country, "social_care_parameters.xlsx");
+        if (new File(socialCareParametersFile).exists()) {
+            socialCarePolicy = ExcelAssistant.loadCoefficientMap(socialCareParametersFile, "social care", 1);
+        } else {
+            socialCarePolicy = null;
+        }
         partneredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_partnered_share.xlsx"), "partnered", 1);
         retiredShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_retirement.xlsx"), "retirement", 1);
         disabledShare = ExcelAssistant.loadCoefficientMap(resolveCountryFile(country, "alignment_targets_disability.xlsx"), "disability", 1);
@@ -2571,6 +2581,9 @@ public static void putPrevOrNewTarget(int year, Object newTarget, TimeSeriesVari
 
     public static double getSocialCarePolicyValue(int year, String param) {
 
+        if (socialCarePolicy == null)
+            throw new RuntimeException("social care projection is enabled, but input/" + COUNTRY_STRING
+                    + "/social_care_parameters.xlsx was not found - supply the workbook or disable projectSocialCare");
         Object val = socialCarePolicy.getRowColumnValue(year, param);
         if (val == null)
             val = extendSocialCarePolicy(year, param);
