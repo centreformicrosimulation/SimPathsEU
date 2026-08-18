@@ -1,22 +1,33 @@
 /*******************************************************************************
 * PROJECT:              SimPaths EU
-* DO-FILE NAME:         03_create_benefit_units.do
-* DESCRIPTION:          Screens data and creates benefit units 
-********************************************************************************
+* DO-FILE NAME:         03_create_benefit_units_PL.do
+* DESCRIPTION:          Screens data and creates benefit units
 * COUNTRY:              PL
-* DATA:         	    EU-SILC panel dataset  
+* DATA:         	    EU-SILC panel dataset
 * AUTHORS: 				Daria Popova, Ashley Burdett
-* LAST UPDATE:          Jan 2026 
-* NOTE:					
-* 						This do-file: 
-* 							1. Creates benefit units ensuring the 
-*							characteristics are consistent with the simulation
-* 							assumptions.
+* LAST UPDATE:          Jan 2026
+********************************************************************************
+* NOTE:
+*   This do-file:
 *
-* 							2. Identifies household to be dropped in the sample 
-* 							due to missing values. 
+*   1. Splits households into benefit units, assigning responsible male/
+*      female, children, and other members according to the rules and
+*      assumptions documented in the SPLIT HOUSEHOLD INTO BENEFIT UNITS
+*      section below.
 *
-* 							3. Creates benefit level homeownership variable. 					
+*   2. Enforces partnership/parenting consistency with simulation rules -
+*      removes children with no identified parent, reassigns teenage
+*      mothers' children to grandparents, converts under-18 partners to
+*      age 18, and removes unreciprocated partnerships.
+*
+*   3. Builds dependent-children counts (dnc, dnc02) via mother/father
+*      merges, and a benefit-unit-level home ownership variable
+*      (dhh_owned).
+*
+*   4. Writes imputation/adjustment summary statistics to the flag
+*      descriptives Excel file.
+*
+*   5. Saves ${country}-SILC_pooled_all_obs_03.dta.
 *******************************************************************************/
 
 cap log close 

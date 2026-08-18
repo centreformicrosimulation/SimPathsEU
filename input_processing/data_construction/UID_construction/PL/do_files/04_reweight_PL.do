@@ -1,35 +1,54 @@
-********************************************************************************
+/*******************************************************************************
 * PROJECT:              SimPaths EU
 * DO-FILE NAME:         04_reweight_PL.do
-* DESCRIPTION:          Weight adjustment to account for using households 
-* 						without missing values. 
-********************************************************************************
+* DESCRIPTION:          Weight adjustment to account for using households
+* 						without missing values.
 * COUNTRY:              PL
-* DATA:         	    EU-SILC panel dataset  
-* AUTHORS: 				Daria Popova 
+* DATA:         	    EU-SILC panel dataset
+* AUTHORS: 				Daria Popova
 * LAST UPDATE:          Jan 2025
-* NOTE:					Called from 00_master.do - see master file for further 
-* 						details
-*						Use -9 for missing values 
-* 						Adjust weights using the inverse probability of not 
-* 						having missing data at the household level. 
-* 						HH mean individual weights, shared across hh? 
 ********************************************************************************
+* NOTE:
+*   Called from 00_master.do - see master file for further details.
+*   Use -9 for missing values.
+*
+*   This do-file:
+*
+*   1. Adjusts household weights (dwt) using the inverse probability of
+*      not having missing data at the household level (a probit model for
+*      inclusion in the restricted "complete household" sample).
+*
+*   2. Collapses the adjusted weight to a household-level mean and merges
+*      it back so all members of a household share the same dwt.
+*
+*   3. Enforces consistency within benefit units - forces dwt, drgn1,
+*      dhhtp_c4, ydses_c5, dnc02, and dnc to be identical across all
+*      members of the same benefit unit.
+*
+*   4. Saves ${country}-SILC_pooled_all_obs_04.dta.
+*
+*   5. Slices that file into one dataset per simulation year
+*      ($first_sim_year-$last_sim_year), dropping zero-weight
+*      observations, saved as population_initial_fs_${country}_<year>.dta.
+*******************************************************************************/
 
-cap log close 
-//log using "$dir_log/06_reweight_and_slice.log", replace
+cap log close
+//log using "$dir_log/04_reweight.log", replace
 
 use "$dir_data/${country}-SILC_pooled_all_obs_03.dta", clear
 
-* 1. Adjust weights by estimating a probit model for inclusion in the 
+
+/************************ PROBIT MODEL FOR HH INCLUSION ***********************/
+
+* Adjust weights by estimating a probit model for inclusion in the
 * restricted sample of households without missing values.
-assert stm == swv //swv = year 
+assert stm == swv //swv = year
 sort stm idhh
 
-* 1.1. Define a dummy variable classifying households as complete or not
+* Define a dummy variable classifying households as complete or not
 cap gen complete_hh = (dropHH != 1)
 
-* 1.2. Define independent variables for probit
+* Define independent variables for probit
 sum dgn dag drgn1
 cap gen drop_indicator = .
 replace drop_indicator = 1 if dgn < 0 | dag < 0 | drgn1 < 0
@@ -61,7 +80,7 @@ foreach var in _IdehXdag_2_20 _IdehXdag_2_30 _IdehXdag_2_40 _IdehXdag_2_50 ///
 
 }
  
-* 1.3. Create hh level dataset 
+* Create hh level dataset 
 collapse (firstnm) drgn1 (max) _IdehXdag* dcpstcat* complete_hh (mean) ///
 	hh_size dwt, by(stm idhh)
 	
@@ -77,9 +96,9 @@ recode hh_size (1=1) (2=2) (3=3) (4/max=4) , gen(hhsize_cat2)
 fre hhsize_cat*
 
 
-* 1.4. Household-level probit
+* Household-level probit
 /* 
-Model probabiltiy of being a complete household conditional on presence of
+Model probability of being a complete household conditional on presence of
 people of certain education age gender combination, marital status and region.
 */
 probit complete_hh _Ideh* dcpstcat* i.hhsize_cat2 ib10.drgn1 i.stm , ///
@@ -100,7 +119,10 @@ sample, so drop the rest
 */
 keep if complete_hh == 1 // (11,611 observations deleted)
 
-*2. Multiply ind weights by the inverse of the predicted prob of inclusion
+
+/*************************** ADJUST & MERGE WEIGHTS ***************************/
+
+* Multiply ind weights by the inverse of the predicted prob of inclusion
 gen dwt_adjusted = dwt*inv_pr_comphh
 
 replace dwt_adjusted = dwt if missing(dwt_adjusted) 
@@ -113,8 +135,8 @@ count
 
 save "$dir_data/temp_adjusted_dwt", replace
 
-*3. Weight adjustment to account for using household without missing values  	
-use "$dir_data/${country}-SILC_pooled_all_obs_03.dta", clear 
+* Weight adjustment to account for using household without missing values
+use "$dir_data/${country}-SILC_pooled_all_obs_03.dta", clear
 
 count  //547,160 obs 
 
@@ -152,8 +174,10 @@ recode dcpyy dcpagdf ynbcpdf_dv dnc02 dnc ypnbihs_dv yptciihs_dv ypncp ///
 	ypnoab yplgrs_dv stm swv /*dhe dhesp*/ (-9 . = 0)
 */
  
+/************************** BENEFIT UNIT CONSISTENCY ****************************/
+
 * Ensure consistency of benefit unit data
-// nto fully sorted so can result in slightly different dataset each time 
+// not fully sorted so can result in slightly different dataset each time
 gsort stm idbenefitunit -dag
 
 foreach vv of varlist dwt drgn1 dhhtp_c4 ydses_c5 dnc02 dnc {
@@ -171,7 +195,9 @@ save "$dir_data/${country}-SILC_pooled_all_obs_04.dta", replace
 
 
 
-* Slice the original pooled dataset into years 
+/******************************* SLICE BY YEAR **********************************/
+
+* Slice the original pooled dataset into years for later dataset checks 
 forvalues yy = $first_sim_year/$last_sim_year {
 
 	use "$dir_data/${country}-SILC_pooled_all_obs_04.dta", clear

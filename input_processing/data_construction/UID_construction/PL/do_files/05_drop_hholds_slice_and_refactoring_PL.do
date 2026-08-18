@@ -1,16 +1,32 @@
-********************************************************************************
+/*******************************************************************************
 * PROJECT:              SimPaths EU
-* DO-FILE NAME:         05_drop_hhold_an_slice_PL.do
-* DESCRIPTION:          This file generates data for importing into SimPaths
-********************************************************************************
+* DO-FILE NAME:         05_drop_hholds_slice_and_refactoring_PL.do
+* DESCRIPTION:          Final consistency checks, reweighting to national
+* 						population totals, and renaming variables to the
+* 						SimPaths codebook naming convention.
 * COUNTRY:              PL
-* DATA:         	    EU-SILC panel dataset  
+* DATA:         	    EU-SILC panel dataset
 * AUTHORS: 				Daria Popova
 * LAST UPDATE:         	Jan 2025
-* NOTE:					Called from 00_master.do - see master file for further 
-* 						details
-*						Use -9 for missing values 
 ********************************************************************************
+* NOTE:
+*
+*   This do-file:
+*
+*   1. LIMIT SAMPLE - drops incomplete households and final consistency
+*      checks (same-sex households, adult counts, orphans, duplicates).
+*      Saves ${country}_pooled_ipop_pre.dta.
+*
+*   2. GENERATE FREQUENCY WEIGHTS - rescales dwt against hardcoded Poland
+*      population totals (Eurostat, 2011-2023) to produce a frequency
+*      weight (dwtfq). Saves ${country}_pooled_ipop.dta.
+*
+*   3. SLICE UP DATA INTO CROSS SECTIONS AND REFACTOR - loops over each
+*      simulation year, runs further consistency checks, then renames
+*      ~50 variables to the SimPaths codebook naming convention (e.g.
+*      dhe -> healthSelfRated). Saves one .dta and .csv per year to
+*      $dir_data/.
+*******************************************************************************/
 
 cap log close 
 //log using "${dir_log}/05_finalise_input_data.log", replace
@@ -76,6 +92,7 @@ sort idperson swv
 save "$dir_data/${country}_pooled_ipop_pre.dta", replace 
 // panel dataset with missing values removed
 
+
 /*************************** GENERATE FREQUENCY WEIGHTS ***********************/
 /*
 Total population figures for Poland from 2011 to 2023:
@@ -123,7 +140,7 @@ save "$dir_data/${country}_pooled_ipop.dta", replace
 // our unique data set :)
 
 
-/*********************** SLICE UP DATA INTO CROSS SECTIONS *******************/
+/************* SLICE UP DATA INTO CROSS SECTIONS AND REFACTOR *****************/
 forvalues yy = $first_sim_year/$last_sim_year {
 	
 	* Load pooled data with missing values removed  
@@ -301,13 +318,13 @@ forvalues yy = $first_sim_year/$last_sim_year {
 	
 	gsort idHh idBu idPers
 	
-	save "$dir_data/refactored/population_initial_${country}_${year}.dta", ///
+	save "$dir_data/population_initial_${country}_${year}.dta", ///
 		replace
 	
 	recode demMaleFlag (-9 = 0)
 	
 	export delimited using ///
-		"$dir_data/refactored/population_initial_${country}_${year}.csv", ///
+		"$dir_data/population_initial_${country}_${year}.csv", ///
 		nolabel replace
 
 }

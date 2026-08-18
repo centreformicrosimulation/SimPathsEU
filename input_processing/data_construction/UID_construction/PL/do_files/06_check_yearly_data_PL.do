@@ -1,18 +1,36 @@
-********************************************************************************
+/*******************************************************************************
 * PROJECT:              SimPaths EU
 * DO-FILE NAME:         06_check_yearly_data_PL.do
-* DESCRIPTION:          This file checks the new 2011 data against the previous 
-* 						version of 2011 input data 
-********************************************************************************
+* DESCRIPTION:          Generates categorical dummy variables and exports
+* 						summary statistics for the final per-year initial
+* 						populations datasets.
 * COUNTRY:              PL
-* DATA:         	    EU-SILC panel dataset  
-* AUTHORS: 				Daria Popova 
+* DATA:         	    EU-SILC panel dataset
+* AUTHORS: 				Daria Popova
 * LAST UPDATE:         	Jan 2025
-* NOTE:					Called from 00_master.do - see master file for further 
-* 						details
-*						Use -9 for missing values 
-* 						Alter number of regions in the locals for each country 
 ********************************************************************************
+* NOTE:
+*   Called from 00_master.do - see master file for further details.
+*   Use -9 for missing values.
+*
+*   This do-file:
+*
+*   1. SUMMARY STATS FOR FINAL INITIAL POPULATIONS - for each simulation
+*      year ($first_sim_year-$last_sim_year), loads
+*      population_initial_${country}_<year>.dta, recodes missing
+*      categorical values, generates dummy variables via tab ..., gen(),
+*      and exports summary statistics to
+*      population_initial_${country}_sumstats.xls via outreg2.
+*
+*   2. SUMMARY STATS FOR INITIAL POPULATIONS PRE-DROP - same process
+*      applied to the pre-drop weighted files
+*      (population_initial_fs_${country}_<year>.dta), exporting to
+*      population_initial_fs_${country}_sumstats.xls.
+*
+*   The number of region dummies (drgn1_1-drgn1_5 in varlist2) is
+*   hardcoded to Poland's 5 NUTS1 regions - update this list (and any
+*   other category-count-dependent dummy lists) for a new country.
+*******************************************************************************/
 
 cap log close 
 //log using "${dir_log}/06_check_yearly_data.log", replace
@@ -208,8 +226,9 @@ cap erase "$dir_data/population_initial_fs_${country}_sumstats.xls"
 cap erase "$dir_data/population_initial_${country}_sumstats.txt"
 cap erase "$dir_data/population_initial_fs_${country}_sumstats.txt"
 
-/******************** SUMMARY STATA FOR FINAL INITIAL POPULATIONS *************/
-forvalues year = 2011/2023 {
+
+/******************** SUMMARY STATS FOR FINAL INITIAL POPULATIONS *************/
+forvalues year = ${first_sim_year}/${last_sim_year} {
 	
 	use "$dir_data/population_initial_${country}_`year'.dta", clear  
 	
@@ -240,9 +259,9 @@ forvalues year = 2011/2023 {
 }
 
 
-/**************** SUMMARY STATA FOR INITIAL POPULATIONS PRE-DROP **************/
+/**************** SUMMARY STATS FOR INITIAL POPULATIONS PRE-DROP **************/
 
-forvalues year = 2011/2023 {
+forvalues year = $first_sim_year/$last_sim_year {
 	
 	use "$dir_data/population_initial_fs_${country}_`year'.dta", clear  
 
@@ -284,22 +303,3 @@ cap erase "$dir_data/population_initial_fs_${country}_sumstats.txt"
 
 cap log close            
    
-  
-/*
-*************************************************************
-*clean up new initial populations - keep only required vars * 
-*************************************************************
-forvalues year=2011/2020 {
-insheet using "$dir_data/population_initial_HU_`year'.csv", clear  
-
-keep idhh idbenefitunit idperson idpartner idmother idfather swv dgn dag dcpst dnc02 dnc ded deh_c3 sedex les_c3 dlltsd dhe ///
-ydses_c5 yplgrs_dv ypnbihs_dv yptciihs_dv dhhtp_c8 ssscp dcpen dcpyy dcpex dcpagdf ynbcpdf_dv der sedag sprfm dagsp dehsp_c3 dhesp ///
-lessp_c3 stm lesdf_c4 dhh_owned lhw drgn1 dct dwt_sampling les_c4 ///
-lessp_c4 adultchildflag multiplier dwt obs_earnings_hourly l1_obs_earnings_hourly ///
-ypncp ypnoab
-
-save "$dir_data/population_initial_HU_`year'.dta", replace
-outsheet using "$dir_data/population_initial_HU_`year'.csv", nolabel replace
-}
-
-

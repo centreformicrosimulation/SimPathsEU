@@ -1,8 +1,7 @@
 /*******************************************************************************
 * PROJECT:              SimPaths EU
-* DO-FILE NAME:         02_create_variables.do
+* DO-FILE NAME:         02_create_variables_PL.do
 * DESCRIPTION:          Creates variables from SILC.  
-********************************************************************************
 * COUNTRY:              PL
 * DATA:         	    EU-SILC panel dataset  
 * AUTHORS: 				Claire Fenwick, Daria Popova, Ashley Burdett, 
@@ -12,31 +11,79 @@
 * NOTES:				This do-file creates the main variables used in SimPaths
 *						from the variable in SILC. Impose consistency with 
 * 						simulation assumptions as noted in the master file. 
-* 
-* 						To preserve our sample size we impute values for self-
-* 						reported health (dhe_c5) and educational attainment 
-* 						(deh_c3, deh_c4)
-* 
-* 						Impute ages of individuals top coded in SILC (78+) using 
-* 						information from SHARE dataset. Now age top-coded at 100 
-* 						to align with population projections. 
-* 
-*						-9 for missing values 
-* 						"upid uhid year" uniquely identifies observations in the 
-* 						loaded dataset
-* 
-* 						Things to change for each country: 
-* 						- CPI
-* 						- Fertility rate // UPDATE
-* 						- Check if any bugs in the rotation groups when 
-* 							constructing the weights. 
-* 						- NUTS1 regions (Check if have remained constant 
-*							throughout the observation window)
-* 						- Country code 
-* 						- Pension age
-* 						- Max age a female can have a child
 *
-* TO DO: 				
+*   -----------------------------------------------------------------------
+*    Section groups (see /**** SECTION ****/ markers in the code)
+*   -----------------------------------------------------------------------
+*   Identifiers, panel setup & demographics
+*     Data collection wave, interview date, household/person IDs, set
+*     panel, deceased flag, gender, parent/partner IDs, age, region, country
+*
+*   Partnership & family relationships
+*     Union status, partner's age, enter/exit partnership, partner age
+*     difference, partnership duration
+*
+*   Health
+*     Own and partner's health status (imputed - see dhe above)
+*
+*   Economic activity, work & disability
+*     Activity status, long-term sick/disabled, unemployment, hours of
+*     work, employment experience, disability benefit
+*
+*   Education
+*     Initial education spell, educational attainment (deh_c3/deh_c4),
+*     parent's education, return to/leave education
+*
+*   Retirement & pensions
+*     Retired flag, enter retirement, pension age (own and spouse)
+*
+*   Children & household composition
+*     Fertility, number/timing of children, adult child flag, exit
+*     parental home, household composition, OECD equivalence scale
+*
+*   Income, wages & weights
+*     CPI, real hourly wages, personal/household income variables,
+*     home ownership, survey weights (line 4216)
+*
+*   Final checks & save
+*     Consistency checks, keep relevant waves/variables, recode missing
+*     values, save ${country}-SILC_pooled_all_obs_02.dta
+*
+*   -----------------------------------------------------------------------
+*    Variable imputation
+*   -----------------------------------------------------------------------
+*   To preserve our sample size, the following are imputed:
+*
+*   - Health (dhe) and partner's health - generalized ordered logit
+*   - Educational attainment (deh_c3, deh_c4) - generalized ordered logit,
+*     with deductive logic used first where monotonicity of education
+*     allows it
+*   - Partner's educational attainment - ordered probit
+*   - Age of individuals top-coded in SILC (78+) - deductive logic where
+*     possible, otherwise a regression model informed by the SHARE dataset.
+*     Now age top-coded at 100 to align with population projections
+*   - Hours of work (lhw) when missing - hot-deck imputation by donor
+*     strata
+*   - Wages (obs_earnings_hourly) when missing - carried forward from an
+*     adjacent panel cell where available, otherwise hot-deck imputation
+*
+*   Each imputed variable has a corresponding flag (e.g. flag_dhe_imp,
+*   flag_wage_hotdeck) - see the "CREATE ASSUMPTION DESCRIPTIVES" section
+*   for the full summary of imputation rates.
+*
+*   -----------------------------------------------------------------------
+*    Changes that need to be made for a new country
+*   -----------------------------------------------------------------------
+*   - CPI
+*   - Fertility rate // UPDATE
+*   - Check if any bugs in the rotation groups when constructing the weights
+*   - NUTS1 regions (check if they have remained constant throughout the
+*     observation window)
+*   - Country code
+*   - Pension age
+*   - Max age a female can have a child
+*
+* TO DO:
 *******************************************************************************/
 
 cap log close 
@@ -48,10 +95,10 @@ set seed 98765
 
 /* 
 Obtain values of variables that change between 2020 and 2023 from the 
-original panel 
+2005-2020 panel 
 */
  
-do "$dir_do/extra_var_info/vars_05_20_${country}2.do"
+do "$dir_do/vars_05_20/select_vars_${country}.do"
 
 * Load data 
 use "$dir_data/${country}-SILC_pooled_all_obs_01.dta", clear
@@ -1532,11 +1579,11 @@ Decision 25/10/2024: We opted to revise this variable to ensure that individuals
 who are observed out of thei initial education spell in one year, aren't 
 recorded as being in initial education spell in future years. 
 We include current students who were not observed in the previous wave if 
-they are aged <= 25  because the average age of graduates in HU after Master's  
+they are aged <= 25 because the average age of graduates in HU after Master's  
 is 25.2 years 
 (https://gpseducation.oecd.org/...
 CountryProfile?primaryCountry=HUN&treshold=10&topic=EO) 
-SImilar figures found for PL. 
+Similar figures found for PL. 
 */
 sort idperson swv 
 xtset idperson swv
