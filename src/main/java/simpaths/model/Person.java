@@ -128,6 +128,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
     @Enumerated(EnumType.STRING) private Indicator eduExitSampleFlag;    // year left education
     @Transient private Boolean demGiveBirthFlag;
     @Transient private Boolean labToRetire;
+    @Transient private Boolean demLeaveHome;
     @Transient private Boolean eduLeaveSchoolFlag;
     @Transient private Boolean demBePartnerFlag;
     @Transient private Boolean demAlignPartnerProcess;
@@ -663,6 +664,7 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         Cohabitation,
         ConsiderMortality,
         ConsiderRetirement,
+        ConsiderLeavingHome,
         Fertility,
         GiveBirth,
         Health,
@@ -709,6 +711,10 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             case ConsiderRetirement -> {
                 considerRetirement();
                 retire();
+            }
+            case ConsiderLeavingHome -> {
+                considerLeavingHome();
+                leaveHome();
             }
             case Fertility -> {
                 fertility();
@@ -835,10 +841,8 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         demAge++;
         if (demAge == Parameters.AGE_TO_BECOME_RESPONSIBLE) {
             setupNewBenefitUnit(true);
-            considerLeavingHome();
-        } else if (demAge > Parameters.AGE_TO_BECOME_RESPONSIBLE && Indicator.True.equals(demAdultChildFlag)) {
-            considerLeavingHome();
         }
+        // Leaving the parental home is evaluated by Processes.ConsiderLeavingHome, scheduled after the education module
         updateAgeGroup();   //Update ageGroup as person ages
      }
 
@@ -858,74 +862,6 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
         }
         if (flagDies || demAge > Parameters.maxAge)
             demExitSample = SampleExit.Death;
-    }
-
-    // This process should be applied to those at the age to become responsible / leave home OR above if they have the adultChildFlag set to True (i.e. people can move out, but not move back in).
-    /// Adult child: an adult who lives with parents who are not yet in need of care
-    /// (e.g. at least one parent is below pension age and not yet retired)
-    private void considerLeavingHome() {
-
-        //For those who are moving out, evaluate whether they should have stayed with parents and if yes, set the adultchildflag to true
-        double prob = Parameters.getRegLeaveHomeP1().getProbability(this, Person.DoublesVariables.class);
-        boolean toLeaveHome = (innovations.getDoubleDraw(21) < prob);
-
-        // Students are assumed not to leave the parental home
-        if (Les_c4.Student.equals(labC4) && !(eduLeftEduFlag == true)) {demAdultChildFlag = Indicator.True;}
-
-        if ((!Les_c4.Student.equals(labC4) || (eduLeftEduFlag == true)) && (demAge>=AGE_LEAVE_PARENTAL_HOME-1)) {
-
-            if (!toLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true (although they still set up a new benefitUnit in the simulation, it's treated differently in the labour supply)
-                demAdultChildFlag = Indicator.True;
-            } else {
-                demAdultChildFlag = Indicator.False;
-                setupNewHousehold(); //If person leaves home, they set up a new household
-            }
-
-            if (demAdultChildFlag.equals(Indicator.True)){
-
-
-                // --- Parent existence checks
-                Person iDad = null;
-                Person iMom = null;
-
-                boolean dadExist = (getFatherImmutable() != null);
-                boolean momExist = (getMotherImmutable() != null);
-
-                if (dadExist) {iDad = getFatherImmutable();}
-                if (momExist) {iMom = getMotherImmutable();}
-
-                // Compute state pension ages for parents if they exist
-                int iDadPSA = -9;
-                int iMomPSA = -9;
-
-                if (dadExist) {
-                    iDadPSA = Parameters.getStatePensionAge(model.getYear(), iDad.getDgn());
-                }
-                if (momExist) {
-                    iMomPSA = Parameters.getStatePensionAge(model.getYear(), iMom.getDgn());
-                }
-
-                // Identify whether each parent is at/above pension age or already retired
-                boolean dadNeedsCare = false;
-                boolean momNeedsCare = false;
-
-                if (dadExist) {dadNeedsCare = (iDad.getDag() >= iDadPSA || iDad.getRetired() == 1.0);}
-                if (momExist) {momNeedsCare = (iMom.getDag() >= iMomPSA || iMom.getRetired() == 1.0);}
-
-                // Check if there is effectively no non-retired / sub-PSA parent available
-                boolean noParentAvailable =
-                        (!dadExist && !momExist) ||                       // no parents
-                        (!dadExist && momNeedsCare) ||                    // only mother exists and she’s at/above PSA or retired
-                        (!momExist && dadNeedsCare) ||                    // only father exists and he’s at/above PSA or retired
-                        (dadExist && momExist && dadNeedsCare && momNeedsCare); // both exist and both at/above PSA or retired
-
-                if (noParentAvailable) {
-                    demAdultChildFlag = Indicator.False; // If no eligible parent is available then the person is no longer considered an adult child and will not consider leaving parental home in future
-                }
-
-
-            }
-        }
     }
 
     public boolean considerRetirement() {
@@ -962,6 +898,59 @@ public class Person implements EventListener, IDoubleSource, IIntSource, Weight,
             healthDsblLongtermFlag = Indicator.False;
         }
     }
+
+
+    // This process should be applied to those at the age to become responsible / leave home OR above if they have the adultChildFlag set to True (i.e. people can move out, but not move back in).
+    /// Adult child: an adult who lives with parents and has not yet reached MAX_AGE_ADULT_CHILD
+    public boolean considerLeavingHome() {
+
+        demLeaveHome = false;
+
+        // Exclude those below the age of maturity, and adults who have already left the parental home
+        // Everyone is considered in the year they reach the age of maturity, because the flag carried over from childhood says nothing about living with parents as an adult.
+        if (demAge < AGE_TO_BECOME_RESPONSIBLE ||
+                (demAge > AGE_TO_BECOME_RESPONSIBLE && Indicator.False.equals(demAdultChildFlag))) {
+            return demLeaveHome;
+        }
+
+        // Students are assumed not to leave the parental home
+        if (Les_c4.Student.equals(labC4) && !Boolean.TRUE.equals(eduLeftEduFlag)) {
+            demAdultChildFlag = Indicator.True;
+            return demLeaveHome;
+        }
+
+        // Person above MAX_AGE_ADULT_CHILD stops being an A.C. and does not consider leaving parental home
+        if (demAge > MAX_AGE_ADULT_CHILD) {
+            demAdultChildFlag = Indicator.False;
+            return demLeaveHome;
+        }
+
+        // Adult, but not yet old enough to leave: remains an adult child and is reconsidered next year
+        if (demAge < MIN_AGE_LEAVE_PH) {
+            demAdultChildFlag = Indicator.True;
+            return demLeaveHome;
+        }
+
+        //For those who are eligible evaluate whether they should have stayed with parents and if yes, set the adultchildflag to true
+        double prob = Parameters.getRegLeaveHomeP1().getProbability(this, Person.DoublesVariables.class);
+        demLeaveHome = (innovations.getDoubleDraw(21) < prob);
+
+        if (!demLeaveHome) { //If at the age to leave home but regression outcome is negative, person has adultchildflag set to true
+            demAdultChildFlag = Indicator.True;
+        } else {
+            demAdultChildFlag = Indicator.False;
+        }
+
+        return demLeaveHome;
+    }
+
+
+    public void leaveHome() {
+        if (Boolean.TRUE.equals(demLeaveHome)) {
+            setupNewHousehold(); //If person leaves home, they set up a new household
+        }
+    }
+
 
     
     /*

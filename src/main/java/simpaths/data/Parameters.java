@@ -166,7 +166,9 @@ public class Parameters {
 
     public static int AGE_TO_BECOME_RESPONSIBLE = 18;            // Age become reference person of own benefit unit
     public static int AGE_TO_BECOME_SEMI_RESPONSIBLE = 16;      //Age used in health processes H1, H2
-    public static int AGE_LEAVE_PARENTAL_HOME = 18;
+    public static int MIN_AGE_LEAVE_PH = 18;                // Minimum age to leave the parental home (Stata: age_leave_parental_home)
+    public static int MAX_AGE_ADULT_CHILD = 45;             // Maximum age at which a person can still be considered as an Adult Child;
+                                                            // demAdultChildFlag is reset to 0 above this age
     public static int MIN_AGE_TO_LEAVE_EDUCATION = 16;        // Minimum age for a person to leave (full-time) education
     public static int MAX_AGE_TO_STAY_IN_CONTINUOUS_EDUCATION = 29;
 
