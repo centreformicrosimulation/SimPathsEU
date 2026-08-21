@@ -143,22 +143,16 @@ public class SimPathsMultiRun extends MultiRun {
 			engine.setup();		//This is needed to update model attributes (from model_args in config file)
 
 			if (integrationTest) {
-				// Redirect all output into a fixed, well-known folder so the
-				// integration test can locate results deterministically. The folder
-				// name depends on Parameters.trainingFlag (set from parameter_args
-				// in YAML before this block runs) so the real-data and training-data
-				// baselines never collide.
-				String integrationSubFolder = Parameters.trainingFlag
-						? "INTEGRATION_TESTS_TRAINING"
-						: "INTEGRATION_TESTS";
-				String integrationOutputFolder = "." + File.separator + "output"
-						+ File.separator + integrationSubFolder;
-				Experiment.testOutputFolder = integrationOutputFolder;
+				// Write to a predictable folder the integration test can find, named per
+				// country and data mode so no two baselines collide. Wiped first so the
+				// diff never sees stale results.
+				File outputFolder = new File("." + File.separator + "output" + File.separator
+						+ "INTEGRATION_TESTS" + (Parameters.trainingFlag ? "_TRAINING" : "") + "_" + country);
+				Experiment.testOutputFolder = outputFolder.getPath();
 
 				try {
-					File folder = new File(integrationOutputFolder);
-					if (FileUtils.isDirectory(folder)) {
-						FileUtils.deleteDirectory(folder);
+					if (FileUtils.isDirectory(outputFolder)) {
+						FileUtils.deleteDirectory(outputFolder);
 					}
 				} catch (IOException e) {
 					throw new RuntimeException(e);
