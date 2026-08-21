@@ -11,6 +11,7 @@ Spain (ES) is being added. **The Java code treats ES as a first-class country** 
 **Most of `input/ES/` is now genuine Spanish data** (verified Aug 2026):
 
 - `InitialPopulations/population_initial_ES_2011..2024.csv` — real Spanish populations on the current 44-column camelCase schema, `demRgn ∈ {1…7}`, so all seven NUTS-1 regions resolve. The earlier `ES_TBC/` staging folder is gone.
+- `InitialPopulations/training/population_initial_ES_2011..2024.csv` — the shareable ES training subset (committed, added Aug 2026), so `-t true` and the ES integration test both work.
 - `EUROMODoutput/es_2005..2025_std.txt` — genuine Spanish EUROMOD output (`dct = 13`, 344 columns); the tax-unit identifier is `tu_nucfam_HeadID`, mapped in `input/system_bu_names.xlsx`. The leftover `EUROMODoutput/pl/` folder is gone.
 - Eleven of the twelve `reg_*.xlsx` carry ES coefficients with `ES1`–`ES6` region dummies (`reg_wages`, `reg_employmentSelection` and `reg_fertility` also include `ES7`; `reg_RMSE` has no region dummies). `align_popProjections.xlsx` is keyed on `ES1`–`ES7`, and `time_series_factor.xlsx` is Spain's own uprating series, no longer Poland's.
 - `input/DatabaseCountryYear.xlsx` includes ES, and `src/main/resources/images/ES.png` supplies the GUI flag.
@@ -20,7 +21,6 @@ Spain (ES) is being added. **The Java code treats ES as a first-class country** 
 - Three files under `input/ES/` remain byte-identical PL clones and still need Spanish values: `reg_labourSupplyUtility.xlsx` (so the ES block in `BenefitUnit` is still estimated on Polish coefficients), `align_educLevel.xlsx`, `social_care_parameters.xlsx`.
 - `alignment_adjustment_factors.xlsx` is **expected** to be identical across countries — do not flag it as a stale PL clone. All 13 data sheets are zero-filled, and zero is the neutral cold start for a fresh calibration. Aligned runs search for the adjustment path and overwrite the in-memory map only; the workbook is never written back, so calibrated values are copied in by hand if you want to reuse them (see the file's own `Info` sheet).
 - `scenario_retirementAgeFixed.xlsx` was rebuilt with Spain's schedule (65 to 2017, 66 for 2018–2023, 67 from 2024, gender-neutral) to match `Parameters.getStatePensionAge` case `"ES"`; it is no longer a PL clone.
-- `input/ES/InitialPopulations/training/` is **empty** while `EUROMODoutput/training/` holds 21 files (501 columns, against 344 in the production files), so `-t true` has no ES starting population to read.
 - The `Region.ES1`–`ES7` code↔name mapping is still unverified against the EUROMOD ES country report (TODO at `Region.java:22`).
 
 **Data access**: The input data is not freely shareable. Training data is provided for development, but results from training data should not be interpreted beyond development purposes. Contact maintainers via GitHub issues for real data access.
@@ -97,7 +97,7 @@ CLI help: `java -jar singlerun.jar -h` or `java -jar multirun.jar -h`
 - `input/DatabaseCountryYear.xlsx` — Cross-country/year index
 - `config/default.yml` — Default multi-run parameters (population size, year range, run count)
 - `config/alignment_*.yml` — Staged alignment configurations
-- `config/test_create_database.yml`, `config/test_run.yml` — Configs used by the integration test
+- `config/test_create_database_<CC>.yml`, `config/test_run_<CC>.yml` — Configs used by that country's integration test (`PL`, `ES`)
 
 ### Repository layout (beyond `src/`)
 
@@ -125,7 +125,29 @@ JUnit 5 + Mockito. Tests in `src/test/java/simpaths/`:
 - `experiment/SimPathsMultiRunTest` — Multi-run configuration
 - `experiment/PersonTest` — Person entity logic
 - `data/MahalanobisDistanceTest` — Statistical matching
-- `integrationtest/RunSimPathsIntegrationTest` — End-to-end run using `config/test_create_database.yml` + `config/test_run.yml`
+- `integrationtest/SimPathsIntegrationTestBase` — the shared, country-agnostic machinery; a country test is a subclass naming only its two configs
+- `integrationtest/RunSimPathsPLIntegrationTest` — end-to-end run for **Poland**, `config/test_create_database_PL.yml` + `config/test_run_PL.yml` (`trainingFlag: true`)
+- `integrationtest/RunSimPathsESIntegrationTest` — the same run for **Spain**, `config/test_create_database_ES.yml` + `config/test_run_ES.yml` (`trainingFlag: true`)
+
+The integration tests are excluded from `mvn test` (surefire) and run under failsafe:
+
+```bash
+mvn clean package -DskipTests                       # the tests shell out to multirun.jar, so build it first
+mvn verify -Dit.test=RunSimPathsPLIntegrationTest   # Poland only
+mvn verify -Dit.test=RunSimPathsESIntegrationTest   # Spain only
+mvn verify                                          # both, sequentially
+```
+
+Output folders and golden-file folders are both derived from the country code and `parameter_args.trainingFlag`, so adding a country needs no path wiring:
+
+```
+output/INTEGRATION_TESTS[_TRAINING]_<CC>/csv/                    # produced by the run
+src/test/java/simpaths/integrationtest/expected[_training]_<CC>/ # diffed against
+```
+
+Both countries default to `trainingFlag: true`, so both baselines are **committed** and CI-checked; the real-data baselines are gitignored and captured locally per developer (see each `expected*` folder's README). The flag lives only in the run config — the test passes it to the `-DBSetup` step as `-t`, so the `test_create_database_<CC>.yml` files do not repeat it.
+
+Because each country has its own folders, either test can be run on its own, in any order. They do share `input/input.mv.db` and `input/DatabaseCountryYear.xlsx`, which each test rebuilds in its own `-DBSetup` step, so never run them concurrently.
 
 ## Branch Conventions
 
