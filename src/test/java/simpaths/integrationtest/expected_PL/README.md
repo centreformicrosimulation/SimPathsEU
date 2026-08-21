@@ -1,16 +1,18 @@
-# Integration-test golden files — real-data baseline
+# Integration-test golden files — Poland (PL), real-data baseline
 
-This directory holds the golden CSV outputs that `RunSimPathsIntegrationTest`
+This directory holds the golden CSV outputs that `RunSimPathsPLIntegrationTest`
 diffs the simulation output against **when `parameter_args.trainingFlag: false`
-in `config/test_run.yml`** (the real-EUROMOD-data baseline).
+in `config/test_run_PL.yml`** (the real-EUROMOD-data baseline).
 
 The CSV files in this directory are **not committed** (see the matching entry
 in `.gitignore`) because real EU-SILC / EUROMOD inputs are not shareable —
 each developer must capture a local baseline against their own input data
 before making behavioural changes.
 
-> For the **training-data baseline** (committed, CI-ready), see
-> [`../expected_training/README.md`](../expected_training/README.md).
+> For the **training-data baseline** (committed, CI-ready, and the default), see
+> [`../expected_training_PL/README.md`](../expected_training_PL/README.md).
+> Spain follows the identical convention under [`../expected_ES/`](../expected_ES/README.md)
+> and [`../expected_training_ES/`](../expected_training_ES/README.md).
 
 ## When to use this test
 
@@ -21,7 +23,7 @@ verify that nothing moved.
 
 ## Regenerating the golden files locally
 
-1. Confirm `config/test_run.yml` has `parameter_args.trainingFlag: false`.
+1. Confirm `config/test_run_PL.yml` has `parameter_args.trainingFlag: false`.
 
 2. Build the project:
 
@@ -33,17 +35,16 @@ verify that nothing moved.
    the expected CSVs do not yet exist:
 
     ```sh
-    mvn verify -Dit.test=RunSimPathsIntegrationTest
+    mvn verify -Dit.test=RunSimPathsPLIntegrationTest
     ```
 
 4. Copy the actual outputs into this directory as the baseline:
 
     ```sh
-    SRC=output/INTEGRATION_TESTS/csv
-    cp "$SRC/Statistics1.csv"                 src/test/java/simpaths/integrationtest/expected/
-    cp "$SRC/Statistics21.csv"                src/test/java/simpaths/integrationtest/expected/
-    cp "$SRC/HealthStatistics1.csv"           src/test/java/simpaths/integrationtest/expected/
-    cp "$SRC/EmploymentStatistics1.csv"       src/test/java/simpaths/integrationtest/expected/
+    SRC=output/INTEGRATION_TESTS_PL/csv
+    DST=src/test/java/simpaths/integrationtest/expected_PL
+    cp "$SRC/Statistics1.csv" "$SRC/Statistics21.csv" \
+       "$SRC/HealthStatistics1.csv" "$SRC/EmploymentStatistics1.csv" "$DST/"
     # AlignmentAdjustmentFactors1.csv is only checked for existence, no diff.
     ```
 
@@ -58,7 +59,8 @@ exactly the signal this test exists to provide — investigate before moving on.
 ## Comparison rules
 
 The test uses a **hybrid numeric tolerance** (see
-`RunSimPathsIntegrationTest.tokensMatchWithTolerance`):
+`SimPathsIntegrationTestBase.tokensMatchWithTolerance`), shared by every country
+baseline:
 
 - numeric tokens match when `|a - b| <= max(1e-9, 1e-6 * max(|a|, |b|))`
 - `NaN` is treated as equal to `NaN`

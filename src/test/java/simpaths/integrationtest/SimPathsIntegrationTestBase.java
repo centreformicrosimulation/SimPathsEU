@@ -19,58 +19,105 @@ import org.yaml.snakeyaml.Yaml;
 import simpaths.model.enums.Country;
 
 /**
- * End-to-end regression test for SimPathsEU.
+ * Country-agnostic end-to-end regression test for SimPathsEU.
+ *
+ * <p>Subclass this once per country, supplying only the two YAML configs — everything
+ * else (flow, tolerances, diff messages, and all the paths below) is shared, so the
+ * country baselines stay directly comparable. Concrete subclasses:
+ * {@link RunSimPathsPLIntegrationTest} (Poland) and {@link RunSimPathsESIntegrationTest}
+ * (Spain).
+ *
+ * <p><b>Everything is keyed on country code and data mode.</b> Both are read from the
+ * run config ({@code countryString} and {@code parameter_args.trainingFlag}), and both
+ * paths follow the same convention, so adding a country — or switching one from real
+ * data to training data — needs no code change here:
+ *
+ * <pre>
+ *   output folder : output/INTEGRATION_TESTS[_TRAINING]_&lt;CC&gt;/csv/
+ *   golden files  : src/test/java/simpaths/integrationtest/expected[_training]_&lt;CC&gt;/
+ * </pre>
+ *
+ * <p>Training-data baselines are committed (shareable data, CI-ready); real-data
+ * baselines are gitignored and captured locally per developer. See each
+ * {@code expected*} folder's README.
  *
  * Flow (ordered):
  *   1. Build a fresh input database from the EU inputs via {@code multirun.jar -DBSetup}
- *      using {@code config/test_create_database.yml} (Poland, seed 606, pop 30000).
+ *      using {@link #createDatabaseConfig()}.
  *   2. Verify that the expected input artefacts were produced.
- *   3. Run a short deterministic simulation via {@code multirun.jar}
- *      using {@code config/test_run.yml} (Poland, seed 100, 2019-2022, pop 20000,
- *      integrationTest=true).
+ *   3. Run a short deterministic simulation via {@code multirun.jar} using
+ *      {@link #runConfig()}.
  *   4. Diff each produced CSV against a committed golden file with a hybrid
  *      absolute/relative numeric tolerance (see {@link #tokensMatchWithTolerance}).
  *
- * Two baselines are supported, picked automatically from
- * {@code parameter_args.trainingFlag} in {@code config/test_run.yml}:
- *
- * <ul>
- *   <li>{@code trainingFlag: false} (real EUROMOD data) — the simulation writes
- *       into {@code output/INTEGRATION_TESTS/} and is diffed against
- *       {@code src/test/java/simpaths/integrationtest/expected/}. Those CSVs are
- *       NOT committed ({@code .gitignore}) because real data is not shareable.</li>
- *   <li>{@code trainingFlag: true} (shared training data) — the simulation writes
- *       into {@code output/INTEGRATION_TESTS_TRAINING/} and is diffed against
- *       {@code src/test/java/simpaths/integrationtest/expected_training/}. Those
- *       CSVs <b>are</b> committed and act as a CI-ready regression baseline.</li>
- * </ul>
+ * <p><b>Shared global state.</b> All countries share one {@code input/input.mv.db}
+ * and one {@code input/DatabaseCountryYear.xlsx}, both rewritten by the {@code -DBSetup}
+ * step. The country tests are therefore safe to run one after another (each rebuilds
+ * the database it needs) but must never be run <i>concurrently</i>.
  */
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class RunSimPathsIntegrationTest {
+public abstract class SimPathsIntegrationTestBase {
 
     /** Absolute epsilon for numeric comparison. */
     private static final double ABS_EPSILON = 1e-9;
     /** Relative epsilon for numeric comparison. */
     private static final double REL_EPSILON = 1e-6;
-    private static final Path TEST_RUN_CONFIG = Paths.get("config", "test_run.yml");
-    private static final Map<String, Object> TEST_RUN_CONFIG_MAP = loadTestRunConfig();
-    private static final boolean TRAINING_FLAG = resolveTrainingFlag();
-    private static final Path COUNTRY_POLICY_SCHEDULE = resolveCountryPolicySchedule();
-    /** Name of the sub-folder under {@code output/} that the integration run writes into. */
-    private static final String OUTPUT_SUBFOLDER =
-            TRAINING_FLAG ? "INTEGRATION_TESTS_TRAINING" : "INTEGRATION_TESTS";
-    /** Directory holding golden CSVs to diff against. */
-    private static final Path EXPECTED_DIR = Paths.get(
-            "src", "test", "java", "simpaths", "integrationtest",
-            TRAINING_FLAG ? "expected_training" : "expected");
+
+    // ------------------------------------------------------------------
+    // Per-country hooks
+    // ------------------------------------------------------------------
+
+    /** File name (inside {@code config/}) of the {@code -DBSetup} config. */
+    protected abstract String createDatabaseConfig();
+
+    /** File name (inside {@code config/}) of the simulation-run config. */
+    protected abstract String runConfig();
+
+    // ------------------------------------------------------------------
+    // Resolved from the run config
+    // ------------------------------------------------------------------
+
+    /** Root of the golden-file directories, one {@code expected[_training]_<CC>} per country. */
+    private static final Path INTEGRATION_TEST_DIR =
+            Paths.get("src", "test", "java", "simpaths", "integrationtest");
+
+    private Path runConfigPath;
+    private Map<String, Object> runConfigMap;
+    private String countryCode;
+    private boolean trainingFlag;
+    private Path countryPolicySchedule;
+    private Path outputDir;
+    private Path expectedDir;
+
+    protected final boolean isTrainingRun() {
+        return trainingFlag;
+    }
+
+    @BeforeAll
+    void resolveConfiguration() {
+        runConfigPath = Paths.get("config", runConfig());
+        runConfigMap = loadYaml(runConfigPath);
+        countryCode = resolveCountryCode();
+        trainingFlag = resolveTrainingFlag();
+        countryPolicySchedule = Paths.get("input", countryCode, "EUROMODpolicySchedule.xlsx");
+        outputDir = Paths.get("output", resolveOutputSubFolder());
+        expectedDir = INTEGRATION_TEST_DIR.resolve(
+                "expected" + (trainingFlag ? "_training" : "") + "_" + countryCode);
+
+    }
+
+    // ------------------------------------------------------------------
+    // The test flow
+    // ------------------------------------------------------------------
 
     @Test
     @DisplayName("Initial database setup runs successfully")
     @Order(1)
     void testRunSetup() {
         runCommand(
-                "java", "-jar", "multirun.jar", "-DBSetup", "-config", "test_create_database.yml",
-                "-t", String.valueOf(TRAINING_FLAG)
+                "java", "-jar", "multirun.jar", "-DBSetup", "-config", createDatabaseConfig(),
+                "-t", String.valueOf(trainingFlag)
         );
     }
 
@@ -79,7 +126,7 @@ public class RunSimPathsIntegrationTest {
     @Order(2)
     void testVerifySetupOutput() {
         assertFileExists("input/input.mv.db");
-        assertFileExists(COUNTRY_POLICY_SCHEDULE.toString());
+        assertFileExists(countryPolicySchedule.toString());
         assertFileExists("input/DatabaseCountryYear.xlsx");
     }
 
@@ -88,73 +135,57 @@ public class RunSimPathsIntegrationTest {
     @Order(3)
     void testRunSimulation() {
         runCommand(
-                "java", "-jar", "multirun.jar", "-config", "test_run.yml",
-                "-t", String.valueOf(TRAINING_FLAG)
+                "java", "-jar", "multirun.jar", "-config", runConfig(),
+                "-t", String.valueOf(trainingFlag)
         );
     }
 
-    @Nested
-    @DisplayName("Simulation output matches golden CSVs")
+    @Test
+    @DisplayName("Simulation output directory exists")
     @Order(4)
-    class testVerifySimulationOutput {
+    void testOutputDirectoryExists() {
+        assertTrue(
+                Files.isDirectory(outputDir),
+                "Integration-test output directory is missing: " + outputDir
+                        + " (resolved from " + runConfigPath + ", country=" + countryCode
+                        + ", trainingFlag=" + trainingFlag + ")"
+        );
+    }
 
-        /**
-         * Fixed-name output directory written by {@code SimPathsMultiRun} when
-         * {@code integrationTest=true}. The exact sub-folder name is chosen by
-         * {@link RunSimPathsIntegrationTest#TRAINING_FLAG} so real-data and
-         * training-data runs never overwrite each other.
-         */
-        private static final Path OUTPUT_DIR = Paths.get("output", OUTPUT_SUBFOLDER);
+    @Test
+    @DisplayName("Statistics1.csv matches the golden file")
+    @Order(5)
+    void compareStatistics1() throws IOException {
+        compareFiles(outputDir.resolve("csv/Statistics1.csv"), expectedDir.resolve("Statistics1.csv"));
+    }
 
-        @BeforeAll
-        public static void loadResults() {
-            assertTrue(
-                    Files.isDirectory(OUTPUT_DIR),
-                    "Integration-test output directory is missing: " + OUTPUT_DIR
-                            + " (expected because parameter_args.trainingFlag="
-                            + TRAINING_FLAG + " in " + TEST_RUN_CONFIG + ")"
-            );
-        }
+    @Test
+    @DisplayName("Statistics21.csv matches the golden file")
+    @Order(6)
+    void compareStatistics21() throws IOException {
+        compareFiles(outputDir.resolve("csv/Statistics21.csv"), expectedDir.resolve("Statistics21.csv"));
+    }
 
-        @Test
-        public void compareStatistics1() throws IOException {
-            compareFiles(
-                    OUTPUT_DIR.resolve("csv/Statistics1.csv"),
-                    EXPECTED_DIR.resolve("Statistics1.csv")
-            );
-        }
+    @Test
+    @DisplayName("AlignmentAdjustmentFactors1.csv was exported")
+    @Order(7)
+    void verifyAlignmentAdjustmentFactorsExported() {
+        Path file = outputDir.resolve("csv/AlignmentAdjustmentFactors1.csv");
+        assertTrue(Files.exists(file), "Expected output file is missing: " + file);
+    }
 
-        @Test
-        public void compareStatistics21() throws IOException {
-            compareFiles(
-                    OUTPUT_DIR.resolve("csv/Statistics21.csv"),
-                    EXPECTED_DIR.resolve("Statistics21.csv")
-            );
-        }
+    @Test
+    @DisplayName("HealthStatistics1.csv matches the golden file")
+    @Order(8)
+    void compareHealthStatistics1() throws IOException {
+        compareFiles(outputDir.resolve("csv/HealthStatistics1.csv"), expectedDir.resolve("HealthStatistics1.csv"));
+    }
 
-        @Test
-        public void verifyAlignmentAdjustmentFactorsExported() {
-            assertTrue(
-                    Files.exists(OUTPUT_DIR.resolve("csv/AlignmentAdjustmentFactors1.csv")),
-                    "Expected output file is missing: " + OUTPUT_DIR.resolve("csv/AlignmentAdjustmentFactors1.csv")
-            );
-        }
-
-        @Test
-        public void compareHealthStatistics1() throws IOException {
-            compareFiles(
-                    OUTPUT_DIR.resolve("csv/HealthStatistics1.csv"),
-                    EXPECTED_DIR.resolve("HealthStatistics1.csv")
-            );
-        }
-
-        @Test
-        public void compareEmploymentStatistics1() throws IOException {
-            compareFiles(
-                    OUTPUT_DIR.resolve("csv/EmploymentStatistics1.csv"),
-                    EXPECTED_DIR.resolve("EmploymentStatistics1.csv")
-            );
-        }
+    @Test
+    @DisplayName("EmploymentStatistics1.csv matches the golden file")
+    @Order(9)
+    void compareEmploymentStatistics1() throws IOException {
+        compareFiles(outputDir.resolve("csv/EmploymentStatistics1.csv"), expectedDir.resolve("EmploymentStatistics1.csv"));
     }
 
     // ------------------------------------------------------------------
@@ -288,46 +319,57 @@ public class RunSimPathsIntegrationTest {
         }
     }
 
-    private static Map<String, Object> loadTestRunConfig() {
-        try (FileInputStream inputStream = new FileInputStream(TEST_RUN_CONFIG.toFile())) {
+    // ------------------------------------------------------------------
+    // Config resolution
+    // ------------------------------------------------------------------
+
+    private static Map<String, Object> loadYaml(Path path) {
+        try (FileInputStream inputStream = new FileInputStream(path.toFile())) {
             Map<String, Object> config = new Yaml().load(inputStream);
             if (config == null) {
-                throw new IllegalStateException("Integration test config is empty: " + TEST_RUN_CONFIG);
+                throw new IllegalStateException("Integration test config is empty: " + path);
             }
             return config;
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to read integration test config: " + TEST_RUN_CONFIG, e);
+            throw new IllegalStateException("Failed to read integration test config: " + path, e);
         }
     }
 
     /**
-     * Read {@code parameter_args.trainingFlag} from {@code test_run.yml}. Defaults
-     * to {@code false} (real-data baseline) when the key is absent.
+     * Read {@code parameter_args.trainingFlag} from the run config. Defaults to
+     * {@code false} (real-data baseline) when the key is absent.
      */
     @SuppressWarnings("unchecked")
-    private static boolean resolveTrainingFlag() {
-        Object parameterArgs = TEST_RUN_CONFIG_MAP.get("parameter_args");
+    private boolean resolveTrainingFlag() {
+        Object parameterArgs = runConfigMap.get("parameter_args");
         if (!(parameterArgs instanceof Map)) {
             return false;
         }
-        Object trainingFlag = ((Map<String, Object>) parameterArgs).get("trainingFlag");
-        if (trainingFlag instanceof Boolean) {
-            return (Boolean) trainingFlag;
+        Object flag = ((Map<String, Object>) parameterArgs).get("trainingFlag");
+        if (flag instanceof Boolean) {
+            return (Boolean) flag;
         }
-        if (trainingFlag instanceof String) {
-            return Boolean.parseBoolean((String) trainingFlag);
+        if (flag instanceof String) {
+            return Boolean.parseBoolean((String) flag);
         }
         return false;
     }
 
-    private static Path resolveCountryPolicySchedule() {
-        Object countryName = TEST_RUN_CONFIG_MAP.get("countryString");
-        if (!(countryName instanceof String countryString)) {
-            throw new IllegalStateException("Integration test config is missing a valid countryString: " + TEST_RUN_CONFIG);
-        }
+    /**
+     * Name of the sub-folder under {@code output/} that the run writes into. Must stay in
+     * lockstep with the same expression in {@code SimPathsMultiRun}.
+     */
+    private String resolveOutputSubFolder() {
+        return "INTEGRATION_TESTS" + (trainingFlag ? "_TRAINING" : "") + "_" + countryCode;
+    }
 
-        String countryCode = Country.getCountryFromNameString(countryString).toString();
-        return Paths.get("input", countryCode, "EUROMODpolicySchedule.xlsx");
+    /** Two-letter country code (e.g. {@code PL}, {@code ES}) from the config's {@code countryString}. */
+    private String resolveCountryCode() {
+        Object countryName = runConfigMap.get("countryString");
+        if (!(countryName instanceof String countryString)) {
+            throw new IllegalStateException("Integration test config is missing a valid countryString: " + runConfigPath);
+        }
+        return Country.getCountryFromNameString(countryString).toString();
     }
 
     // ------------------------------------------------------------------

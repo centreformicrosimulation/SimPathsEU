@@ -1,9 +1,9 @@
 # FOR TESTING
 # CONFIG FILE TO CREATE NEW DATABASE OBJECTS
 #
-# Used by the integration test (RunSimPathsIntegrationTest) to set up a fresh
-# input H2 database from the EUROMOD Polish input files before running the
-# deterministic simulation scenario defined in test_run.yml.
+# Used by RunSimPathsPLIntegrationTest to set up a fresh input H2 database from
+# the EUROMOD Polish input files before running the deterministic simulation
+# scenario defined in test_run_PL.yml.
 
 # Arguments of the SimPathsMultiRun object overridden by the command-line
 countryString: "Poland"
