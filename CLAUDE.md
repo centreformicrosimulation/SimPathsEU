@@ -88,6 +88,57 @@ CLI help: `java -jar singlerun.jar -h` or `java -jar multirun.jar -h`
 4. **Alignment**: Mahalanobis-distance resampling adjusts distributions to match targets (YAML configs in `config/alignment_*.yml`)
 5. **Collection**: `SimPathsCollector` exports CSV statistics and optional DB snapshots to timestamped `output/` subdirectories
 
+### Statistics output files
+
+Six domain CSVs are written to `output/<run>/csv/`, one row per simulated year unless noted:
+
+| File | Cols | Contents | Toggle |
+|------|------|----------|--------|
+| `WealthIncomeStatistics.csv` | 31 | Gini, income percentiles, median EDI, S-Index, plus income and wealth by age band | `persistWealthIncomeStatistics` |
+| `DemographicStatistics.csv` | 9 | Partnership rates, dependent children, population counts by age band | `persistDemographicStatistics` |
+| `HealthStatistics.csv` | 6 | Mean self-rated health and disability shares by age band | `persistHealthStatistics` |
+| `LabourStatistics.csv` | 10 | Transitions and participation (16–64), full-time / part-time shares by age band | `persistLabourStatistics` |
+| `AlignmentStatistics.csv` | 36 | Alignment adjustment factors, simulated shares, target shares | `persistAlignmentStatistics` |
+| `HealthByGender.csv` | 10 | Self-rated health and disability, ages 16–64, Total / Male / Female — **3 rows per year** | `persistHealthByGender` |
+
+Age bands throughout are 18–29, 30–54 and 55–74. `DemographicStatistics.csv` carries the
+population counts that are the denominator for the age-band statistics in the other three
+wide files, so keep it enabled when interpreting them.
+
+Two rules in JAS-mine's `microsim.data.ExportCSV` (verified against 4.3.24) govern all of this:
+
+1. **The filename is the runtime type handed to `DataExport`.** For a `Collection` it is
+   `getSimpleName()`; for a bare object it is `getSimpleName() + <PanelEntityKey id>`. That
+   trailing `1` is why these files used to be `Statistics1.csv`, `Statistics21.csv`,
+   `EmploymentStatistics1.csv`, `HealthStatistics1.csv` and
+   `AlignmentAdjustmentFactors1.csv`. They are now wrapped in `List.of(...)` in
+   `SimPathsCollector.buildObjects()` so they take the collection branch. Renaming an output
+   therefore means renaming its class.
+2. **CSV columns are Java field names, sorted alphabetically** (a `TreeSet` over non-`@Transient`
+   fields). The `@Column` annotation names only the H2 database column — renaming it changes
+   nothing in the CSV, while renaming a field renames *and reorders* the CSV column.
+
+The four wide outputs are fed from one shared traversal of the population,
+`AgeBandAggregates`, cached per simulated year in `SimPathsCollector.ageBands()`. Each output
+has an independent toggle and its own dump event, so none may assume another has run.
+
+Twelve columns of the former `Statistics21.csv` were calibration loss-function terms, not
+statistics: a hard-coded pooled-2019-UKHLS target was subtracted from the simulated value
+invisibly, so shares were reported negative and expenditure below zero. Nothing read them and
+the targets were meaningless for the EU countries, so they were deleted —
+`labNoWork*Share` (recoverable as 1 − full-time − part-time), `x*Avg`, `xToLeisureRatio` and
+`statYDisp*Avg`. `statYDispGrossOfLosses*Avg` is a level and survives. `statYLab*Avg` was
+renamed `statYLabWeeklyPerWorker*Avg` because, unlike every income column beside it, it is
+weekly, unequivalised and per worker rather than monthly, equivalised and per capita.
+
+**When renaming an exported entity**, an IDE rename does not reach everything: the class in
+`data/statistics/`, the `SimPathsCollector` fields / `Processes` constants / `onEvent` cases /
+`buildObjects` / `buildSchedule` / `@GUIparameter` toggles and accessors, the
+`persistence.xml` entity list, the `persist*` **YAML config keys** (resolved via
+`getDeclaredField`, so a stale key is silently ignored rather than an error), the integration
+test paths and method names, the golden CSVs (including the `id_<ClassName>` header label),
+the Stata validation do-files under `validation/`, and this file.
+
 ### Data Inputs
 
 - `input/input.mv.db` — H2 database with processed EU-SILC starting population

@@ -43,9 +43,10 @@ verify that nothing moved.
     ```sh
     SRC=output/INTEGRATION_TESTS_PL/csv
     DST=src/test/java/simpaths/integrationtest/expected_PL
-    cp "$SRC/Statistics1.csv" "$SRC/Statistics21.csv" \
-       "$SRC/HealthStatistics1.csv" "$SRC/EmploymentStatistics1.csv" "$DST/"
-    # AlignmentAdjustmentFactors1.csv is only checked for existence, no diff.
+    cp "$SRC/WealthIncomeStatistics.csv" "$SRC/DemographicStatistics.csv" \
+       "$SRC/HealthStatistics.csv" "$SRC/HealthByGender.csv" \
+       "$SRC/LabourStatistics.csv" "$DST/"
+    # AlignmentStatistics.csv is only checked for existence, no diff.
     ```
 
 5. Rerun `mvn verify` — it should now pass.

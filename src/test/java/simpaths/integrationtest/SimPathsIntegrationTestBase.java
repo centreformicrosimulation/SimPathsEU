@@ -153,39 +153,46 @@ public abstract class SimPathsIntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Statistics1.csv matches the golden file")
+    @DisplayName("WealthIncomeStatistics.csv matches the golden file")
     @Order(5)
-    void compareStatistics1() throws IOException {
-        compareFiles(outputDir.resolve("csv/Statistics1.csv"), expectedDir.resolve("Statistics1.csv"));
+    void compareWealthIncomeStatistics() throws IOException {
+        compareFiles(outputDir.resolve("csv/WealthIncomeStatistics.csv"), expectedDir.resolve("WealthIncomeStatistics.csv"));
     }
 
     @Test
-    @DisplayName("Statistics21.csv matches the golden file")
+    @DisplayName("DemographicStatistics.csv matches the golden file")
     @Order(6)
-    void compareStatistics21() throws IOException {
-        compareFiles(outputDir.resolve("csv/Statistics21.csv"), expectedDir.resolve("Statistics21.csv"));
+    void compareDemographicStatistics() throws IOException {
+        compareFiles(outputDir.resolve("csv/DemographicStatistics.csv"), expectedDir.resolve("DemographicStatistics.csv"));
     }
 
     @Test
-    @DisplayName("AlignmentAdjustmentFactors1.csv was exported")
+    @DisplayName("AlignmentStatistics.csv was exported")
     @Order(7)
-    void verifyAlignmentAdjustmentFactorsExported() {
-        Path file = outputDir.resolve("csv/AlignmentAdjustmentFactors1.csv");
+    void verifyAlignmentStatisticsExported() {
+        Path file = outputDir.resolve("csv/AlignmentStatistics.csv");
         assertTrue(Files.exists(file), "Expected output file is missing: " + file);
     }
 
     @Test
-    @DisplayName("HealthStatistics1.csv matches the golden file")
+    @DisplayName("HealthStatistics.csv matches the golden file")
     @Order(8)
-    void compareHealthStatistics1() throws IOException {
-        compareFiles(outputDir.resolve("csv/HealthStatistics1.csv"), expectedDir.resolve("HealthStatistics1.csv"));
+    void compareHealthStatistics() throws IOException {
+        compareFiles(outputDir.resolve("csv/HealthStatistics.csv"), expectedDir.resolve("HealthStatistics.csv"));
     }
 
     @Test
-    @DisplayName("EmploymentStatistics1.csv matches the golden file")
+    @DisplayName("HealthByGender.csv matches the golden file")
     @Order(9)
-    void compareEmploymentStatistics1() throws IOException {
-        compareFiles(outputDir.resolve("csv/EmploymentStatistics1.csv"), expectedDir.resolve("EmploymentStatistics1.csv"));
+    void compareHealthByGender() throws IOException {
+        compareFiles(outputDir.resolve("csv/HealthByGender.csv"), expectedDir.resolve("HealthByGender.csv"));
+    }
+
+    @Test
+    @DisplayName("LabourStatistics.csv matches the golden file")
+    @Order(10)
+    void compareLabourStatistics() throws IOException {
+        compareFiles(outputDir.resolve("csv/LabourStatistics.csv"), expectedDir.resolve("LabourStatistics.csv"));
     }
 
     // ------------------------------------------------------------------

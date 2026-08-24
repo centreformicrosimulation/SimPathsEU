@@ -54,6 +54,11 @@ public class SimPathsMultiRun extends MultiRun {
 	// EU runs the integration test against real input data until a training set exists.
 	private static boolean integrationTest = false;
 
+	// true once main() has run, i.e. this JVM is executing a multi-run rather than a
+	// single run through SimPathsStart. Read by OutputReadme, which reports how many runs
+	// the output folder is expected to hold.
+	private static boolean multiRunMode = false;
+
 	// passing args for config file
 	private static Map<String, Object> modelArgs;
 	private static Map<String, Object> innovationArgs;
@@ -74,6 +79,8 @@ public class SimPathsMultiRun extends MultiRun {
 	 *
 	 */
 	public static void main(String[] args) {
+
+		multiRunMode = true;
 
 		// set default values for country and start year
 		MultiKeyCoefficientMap lastDatabaseCountryAndYear = ExcelAssistant.loadCoefficientMap("input" + File.separator + Parameters.DatabaseCountryYearFilename + ".xlsx", "Data", 1);
@@ -504,6 +511,16 @@ public class SimPathsMultiRun extends MultiRun {
 		}
 	}
 	
+	/** Whether this JVM is executing a multi-run (as opposed to a single run). */
+	public static boolean isMultiRunMode() {
+		return multiRunMode;
+	}
+
+	/** Number of runs this experiment will execute. */
+	public static int getMaxNumberOfRuns() {
+		return maxNumberOfRuns;
+	}
+
 	@Override
 	public boolean nextModel() {
 		counter++;

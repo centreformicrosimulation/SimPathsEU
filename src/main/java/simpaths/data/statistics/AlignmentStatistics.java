@@ -19,8 +19,17 @@ import simpaths.model.enums.TimeSeriesVariable;
 
 import java.util.Map;
 
+/**
+ * Alignment statistics. One row per simulated year, exported to
+ * {@code AlignmentStatistics.csv}: the alignment adjustment factors together with the
+ * simulated and target shares they are calibrated against.
+ *
+ * <p>Formerly {@code AlignmentAdjustmentFactors}, exported as
+ * {@code AlignmentAdjustmentFactors1.csv} - the trailing digit was the entity id, not
+ * part of the name.
+ */
 @Entity
-public class AlignmentAdjustmentFactors {
+public class AlignmentStatistics {
 
     @Id
     private PanelEntityKey key = new PanelEntityKey(1L);

@@ -30,9 +30,10 @@ baseline against their own input data before making behavioural changes.
     ```sh
     SRC=output/INTEGRATION_TESTS_ES/csv
     DST=src/test/java/simpaths/integrationtest/expected_ES
-    cp "$SRC/Statistics1.csv" "$SRC/Statistics21.csv" \
-       "$SRC/HealthStatistics1.csv" "$SRC/EmploymentStatistics1.csv" "$DST/"
-    # AlignmentAdjustmentFactors1.csv is only checked for existence, no diff.
+    cp "$SRC/WealthIncomeStatistics.csv" "$SRC/DemographicStatistics.csv" \
+       "$SRC/HealthStatistics.csv" "$SRC/HealthByGender.csv" \
+       "$SRC/LabourStatistics.csv" "$DST/"
+    # AlignmentStatistics.csv is only checked for existence, no diff.
     ```
 
 4. Rerun — it should now pass.

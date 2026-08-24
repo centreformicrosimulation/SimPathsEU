@@ -23,11 +23,12 @@ parameter_args:
   # trainingFlag: false # → INTEGRATION_TESTS_PL/          + expected_PL/          (not committed)
 
 collector_args:
-    persistStatistics: true
-    persistStatistics2: true
-    persistAlignmentAdjustmentFactors: true
-    persistEmploymentStatistics: true
+    persistWealthIncomeStatistics: true
+    persistDemographicStatistics: true
+    persistAlignmentStatistics: true
+    persistLabourStatistics: true
     persistHealthStatistics: true
+    persistHealthByGender: true
     persistPersons: false
     persistBenefitUnits: false
     persistHouseholds: false

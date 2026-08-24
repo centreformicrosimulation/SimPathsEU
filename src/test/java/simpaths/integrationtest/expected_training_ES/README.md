@@ -27,14 +27,15 @@ mvn verify -Dit.test=RunSimPathsESIntegrationTest
 
 SRC=output/INTEGRATION_TESTS_TRAINING_ES/csv
 DST=src/test/java/simpaths/integrationtest/expected_training_ES
-cp "$SRC/Statistics1.csv" "$SRC/Statistics21.csv" \
-   "$SRC/HealthStatistics1.csv" "$SRC/EmploymentStatistics1.csv" "$DST/"
+cp "$SRC/WealthIncomeStatistics.csv" "$SRC/DemographicStatistics.csv" \
+   "$SRC/HealthStatistics.csv" "$SRC/HealthByGender.csv" \
+   "$SRC/LabourStatistics.csv" "$DST/"
 git add "$DST"/*.csv
 
 mvn verify -Dit.test=RunSimPathsESIntegrationTest   # confirm green, then commit
 ```
 
-`AlignmentAdjustmentFactors1.csv` is only checked for existence, not diffed.
+`AlignmentStatistics.csv` is only checked for existence, not diffed.
 
 ## When the diff fires on someone else's PR
 
