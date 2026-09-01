@@ -2842,12 +2842,20 @@ public class SimPathsModel extends AbstractSimulationManager implements EventLis
         saveImperfectTaxDBMatches = flag;
     }
 
+    public boolean isAlignPopulation() {
+        return alignPopulation;
+    }
+
     public void setAlignPopulation(boolean flag) {
         alignPopulation = flag;
     }
 
     public void setAlignCohabitation(boolean flag) {
         alignCohabitation = flag;
+    }
+
+    public boolean isAlignEducation() {
+        return alignEducation;
     }
 
     public void setAlignEducation(boolean flag) {

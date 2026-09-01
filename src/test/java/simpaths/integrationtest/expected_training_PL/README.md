@@ -41,8 +41,9 @@ PR is diffed against.
     ```sh
     SRC=output/INTEGRATION_TESTS_TRAINING_PL/csv
     DST=src/test/java/simpaths/integrationtest/expected_training_PL
-    cp "$SRC/Statistics1.csv" "$SRC/Statistics21.csv" \
-       "$SRC/HealthStatistics1.csv" "$SRC/EmploymentStatistics1.csv" "$DST/"
+    cp "$SRC/WealthIncomeStatistics.csv" "$SRC/DemographicStatistics.csv" \
+       "$SRC/HealthStatistics.csv" "$SRC/HealthByGender.csv" \
+       "$SRC/LabourStatistics.csv" "$DST/"
     git add "$DST"/*.csv
     ```
 
