@@ -265,7 +265,7 @@ count if temp_with_singles==1 &temp_with_couples==1  //0 obs
 //count if there are more than one flexible workers (lone parent+child aged between 16 and 18 and not student) in a "singles"' household
 gen worker_count=(temp_not_flexible==0)
 bysort idhh: egen number_workers_singleshh=total(worker_count) if temp_singles==1, missing
-su number_workers_singles
+su number_workers_singleshh
 count if number_workers_singleshh>1 & temp_singles==1   //0 obs
 //duplicates report idhh if number_workers_singleshh>1 & temp_singles==1  
 
